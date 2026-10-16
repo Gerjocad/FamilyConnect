@@ -22,7 +22,23 @@ export function createApp(db, { staticDir } = {}) {
   const auth = requireUser(db);
   const member = requireMember(db);
 
+  // Die Android-App läuft unter einer eigenen Herkunft (http://localhost) und ruft die API
+  // daher fremd-origin auf. Die Anmeldung läuft über Bearer-Token statt Cookies, deshalb
+  // ist es unbedenklich, jede Herkunft zuzulassen.
+  app.use('/api', (req, res, next) => {
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      'Access-Control-Max-Age': '86400',
+    });
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    next();
+  });
+
   app.use(express.json({ limit: '100kb' }));
+
+  app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
 
   const familiesOf = (userId) =>
     db.prepare(

@@ -1,4 +1,4 @@
-import { getToken } from './api';
+import { getServerUrl, getToken } from './api';
 
 type Listener = (resource: string) => void;
 
@@ -14,7 +14,7 @@ export function connectLive(familyId: number | null) {
   currentFamily = familyId;
   const token = getToken();
   if (familyId === null || !token) return;
-  source = new EventSource(`/api/families/${familyId}/stream?token=${encodeURIComponent(token)}`);
+  source = new EventSource(`${getServerUrl()}/api/families/${familyId}/stream?token=${encodeURIComponent(token)}`);
   source.onmessage = (e) => {
     const { resource } = JSON.parse(e.data) as { resource: string };
     for (const l of listeners) l(resource);

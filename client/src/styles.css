@@ -124,6 +124,7 @@ textarea { resize: vertical; }
 .row.align-end { align-items: flex-end; }
 .form-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .member-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
 .code-input { font-family: ui-monospace, monospace; letter-spacing: 0.15em; text-transform: uppercase; }
 .search { margin-bottom: 4px; }
 

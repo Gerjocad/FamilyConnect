@@ -49,6 +49,17 @@ async function familyWithTwoMembers() {
   return { anna, ben, family: details };
 }
 
+describe('App-Anbindung', () => {
+  test('Health-Check und CORS für die Android-App', async () => {
+    const res = await fetch(`${base}/health`, { headers: { Origin: 'http://localhost' } });
+    assert.equal(res.headers.get('access-control-allow-origin'), '*');
+    assert.deepEqual(await res.json(), { app: 'familyconnect', ok: true });
+    const preflight = await fetch(`${base}/me`, { method: 'OPTIONS' });
+    assert.equal(preflight.status, 204);
+    assert.match(preflight.headers.get('access-control-allow-headers'), /Authorization/);
+  });
+});
+
 describe('Konto', () => {
   test('Registrierung, Login und Logout', async () => {
     await api('/auth/register', {

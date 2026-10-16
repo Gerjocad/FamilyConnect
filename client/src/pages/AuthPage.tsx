@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { api } from '../api';
+import { api, checkServer, getServerUrl, isNativeApp, normalizeServerUrl, setServerUrl } from '../api';
 import { useAsync } from '../components/useAsync';
 import { useSession } from '../session';
 
@@ -9,11 +9,18 @@ export function AuthPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [server, setServer] = useState(getServerUrl);
   const { busy, error, run, setError } = useAsync();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
+      if (isNativeApp) {
+        const url = normalizeServerUrl(server);
+        await checkServer(url);
+        setServerUrl(url);
+        setServer(url);
+      }
       const path = mode === 'login' ? '/auth/login' : '/auth/register';
       const body = mode === 'login' ? { email, password } : { name, email, password };
       const { token } = await api<{ token: string }>(path, { method: 'POST', body });
@@ -47,6 +54,21 @@ export function AuthPage() {
         </div>
 
         <form onSubmit={submit} className="form">
+          {isNativeApp && (
+            <label>
+              Server-Adresse
+              <input
+                value={server}
+                onChange={(e) => setServer(e.target.value)}
+                placeholder="z. B. 192.168.178.20:3001"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                required
+              />
+              <small className="hint">Die Adresse des Rechners, auf dem der FamilyConnect-Server läuft.</small>
+            </label>
+          )}
           {mode === 'register' && (
             <label>
               Dein Name

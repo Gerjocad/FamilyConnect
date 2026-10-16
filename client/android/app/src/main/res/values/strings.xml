@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FamilyConnect</string>
+    <string name="title_activity_main">FamilyConnect</string>
+    <string name="package_name">de.familyconnect.app</string>
+    <string name="custom_url_scheme">de.familyconnect.app</string>
+</resources>

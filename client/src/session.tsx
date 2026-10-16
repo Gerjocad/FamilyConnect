@@ -1,12 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { api, setToken, getToken } from './api';
+import { api, ApiError, setToken, getToken } from './api';
 import { connectLive, onLiveChange } from './live';
 import type { Family, Member, User } from './types';
 
 const FAMILY_KEY = 'familyconnect.family';
 
 interface Session {
-  status: 'loading' | 'anonymous' | 'ready';
+  status: 'loading' | 'offline' | 'anonymous' | 'ready';
   user: User | null;
   family: Family | null;
   signIn(token: string): Promise<void>;
@@ -44,6 +44,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [family, setFamilyState] = useState<Family | null>(null);
 
   const refreshUser = useCallback(async () => {
+    setStatus((s) => (s === 'offline' ? 'loading' : s));
     if (!getToken()) {
       setUser(null);
       setStatus('anonymous');
@@ -54,7 +55,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setUser(me);
       setStatus('ready');
       return me;
-    } catch {
+    } catch (err) {
+      // Nur bei abgelaufener Sitzung abmelden, nicht wenn das Netz kurz weg ist
+      if (!(err instanceof ApiError) || err.status !== 401) {
+        setStatus((s) => (s === 'loading' ? 'offline' : s));
+        return null;
+      }
       setToken(null);
       setUser(null);
       setStatus('anonymous');

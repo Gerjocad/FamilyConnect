@@ -13,10 +13,23 @@ import { TasksPage } from './pages/TasksPage';
 import { useSession } from './session';
 
 export function App() {
-  const { status, user, family } = useSession();
+  const { status, user, family, refreshUser, signOut } = useSession();
 
   if (status === 'loading' || (user && user.families.length > 0 && !family)) {
     return <div className="splash"><img src="/icon.svg" alt="" width={56} height={56} /></div>;
+  }
+  if (status === 'offline') {
+    return (
+      <div className="auth">
+        <div className="auth-card card">
+          <img src="/icon.svg" alt="" width={56} height={56} />
+          <h1>Keine Verbindung</h1>
+          <p className="muted">Der FamilyConnect-Server ist gerade nicht erreichbar.</p>
+          <button className="button primary" onClick={() => void refreshUser()}>Erneut versuchen</button>
+          <button className="link-button" onClick={() => void signOut()}>Abmelden / Server ändern</button>
+        </div>
+      </div>
+    );
   }
   if (!user) return <AuthPage />;
   if (!family) return <OnboardingPage />;

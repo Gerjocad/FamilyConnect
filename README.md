@@ -19,6 +19,7 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 | Teil | Technik |
 | --- | --- |
 | Frontend (`client/`) | React 19, TypeScript, Vite, React Router |
+| Android (`client/android/`) | Capacitor 8 |
 | Backend (`server/`) | Node.js 22, Express 5, eingebautes SQLite (`node:sqlite`) |
 
 Es wird keine externe Datenbank gebraucht, alle Daten liegen in `data/familyconnect.db`.
@@ -39,6 +40,30 @@ npm start            # http://localhost:3001
 ```
 
 Umgebungsvariablen: `PORT` (Standard 3001) und `DATABASE_FILE` (Standard `data/familyconnect.db`).
+
+## Android-App (APK)
+
+Die Android-App ist eine Hülle um dieselbe Oberfläche (Capacitor). Sie spricht mit dem FamilyConnect-Server,
+die gemeinsamen Daten liegen weiterhin dort.
+
+1. **Server starten** auf einem Rechner, der läuft, solange die Familie die App nutzt (PC, Raspberry Pi, NAS oder ein Server im Internet):
+   ```bash
+   npm install && npm run build && npm start
+   ```
+   Beim Start zeigt der Server die Adresse im Heimnetz an, z. B. `http://192.168.178.20:3001`.
+2. **APK installieren**: `FamilyConnect.apk` aufs Handy kopieren, antippen und die Installation aus unbekannten Quellen erlauben.
+3. **Anmelden**: In der App die Server-Adresse eintragen (z. B. `192.168.178.20:3001`), dann registrieren oder anmelden.
+
+Wer die App auch unterwegs nutzen will, braucht einen Server mit öffentlicher Adresse. Dafür am besten HTTPS verwenden,
+z. B. über einen Reverse-Proxy wie Caddy.
+
+APK selbst bauen (benötigt JDK 21 und das Android-SDK, `ANDROID_HOME` gesetzt):
+
+```bash
+npm run apk          # Ergebnis: client/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Die APK ist mit einem Debug-Schlüssel signiert. Für eine Veröffentlichung im Play Store braucht man einen eigenen Release-Schlüssel.
 
 ## Tests
 
