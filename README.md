@@ -41,6 +41,12 @@ npm start            # http://localhost:3001
 
 Umgebungsvariablen: `PORT` (Standard 3001) und `DATABASE_FILE` (Standard `data/familyconnect.db`).
 
+## Online betreiben (ohne laufenden PC)
+
+`deploy/install.sh` richtet FamilyConnect auf einem Ubuntu-Server mit einem Befehl ein: Node.js, Dienst mit Autostart,
+HTTPS über Caddy, Firewall und tägliche Backups. Wie das kostenlos bei Oracle Cloud geht, steht Schritt für Schritt
+in [deploy/ORACLE.md](deploy/ORACLE.md).
+
 ## Android-App (APK)
 
 Die Android-App ist eine Hülle um dieselbe Oberfläche (Capacitor). Sie spricht mit dem FamilyConnect-Server,
