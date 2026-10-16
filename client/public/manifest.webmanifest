@@ -1,0 +1,9 @@
+{
+  "name": "FamilyConnect",
+  "short_name": "FamilyConnect",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f3",
+  "theme_color": "#e8590c",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
