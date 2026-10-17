@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { api, checkServer, getServerUrl, isNativeApp, normalizeServerUrl, setServerUrl } from '../api';
+import { api, checkServer, DEFAULT_SERVER, getServerUrl, isNativeApp, normalizeServerUrl, setServerUrl } from '../api';
 import { useAsync } from '../components/useAsync';
 import { useSession } from '../session';
 
@@ -10,12 +10,14 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [server, setServer] = useState(getServerUrl);
+  // Mit voreingestellter Adresse bleibt das Feld versteckt, bis man bewusst einen anderen Server wählt
+  const [editServer, setEditServer] = useState(() => !DEFAULT_SERVER || getServerUrl() !== DEFAULT_SERVER);
   const { busy, error, run, setError } = useAsync();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      if (isNativeApp) {
+      if (isNativeApp && editServer) {
         const url = normalizeServerUrl(server);
         await checkServer(url);
         setServerUrl(url);
@@ -54,7 +56,7 @@ export function AuthPage() {
         </div>
 
         <form onSubmit={submit} className="form">
-          {isNativeApp && (
+          {isNativeApp && editServer && (
             <label>
               Server-Adresse
               <input
@@ -67,6 +69,19 @@ export function AuthPage() {
                 required
               />
               <small className="hint">Die Adresse des Rechners, auf dem der FamilyConnect-Server läuft.</small>
+              {DEFAULT_SERVER && (
+                <button
+                  type="button"
+                  className="link-button align-start"
+                  onClick={() => {
+                    setServerUrl('');
+                    setServer(DEFAULT_SERVER);
+                    setEditServer(false);
+                  }}
+                >
+                  Standard-Server verwenden
+                </button>
+              )}
             </label>
           )}
           {mode === 'register' && (
@@ -95,6 +110,11 @@ export function AuthPage() {
             {mode === 'login' ? 'Anmelden' : 'Konto erstellen'}
           </button>
         </form>
+        {isNativeApp && !editServer && (
+          <button type="button" className="link-button" onClick={() => setEditServer(true)}>
+            Anderen Server verwenden
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,17 +1,21 @@
 import { Capacitor } from '@capacitor/core';
 
 const TOKEN_KEY = 'familyconnect.token';
-const SERVER_KEY = 'familyconnect.server';
+// Neuer Schlüssel: alte Einträge (z. B. die frühere PC-Adresse) werden so ignoriert
+const SERVER_KEY = 'familyconnect.customServer';
 
 /** In der Android-App gibt es keinen eigenen Webserver – die Server-Adresse wird beim Anmelden eingetragen. */
 export const isNativeApp = Capacitor.isNativePlatform();
 
+/** Beim Bauen der App festgelegte Server-Adresse (VITE_DEFAULT_SERVER in client/.env.production) */
+export const DEFAULT_SERVER: string = import.meta.env.VITE_DEFAULT_SERVER ?? '';
+
 export function getServerUrl(): string {
   if (!isNativeApp) return '';
   try {
-    return localStorage.getItem(SERVER_KEY) ?? '';
+    return localStorage.getItem(SERVER_KEY) || DEFAULT_SERVER;
   } catch {
-    return '';
+    return DEFAULT_SERVER;
   }
 }
 
@@ -23,7 +27,8 @@ export function normalizeServerUrl(input: string): string {
 
 export function setServerUrl(url: string) {
   try {
-    localStorage.setItem(SERVER_KEY, url);
+    if (!url || url === DEFAULT_SERVER) localStorage.removeItem(SERVER_KEY);
+    else localStorage.setItem(SERVER_KEY, url);
   } catch {
     // ohne Speicher muss die Adresse beim nächsten Start erneut eingegeben werden
   }
@@ -69,6 +74,8 @@ export async function api<T = unknown>(path: string, options: { method?: string;
   let res: Response;
   try {
     res = await fetch(`${getServerUrl()}/api${path}`, {
+      // Ohne Zeitlimit hängt die App, wenn der Server nicht antwortet
+      signal: AbortSignal.timeout(15_000),
       method: options.method ?? 'GET',
       headers: {
         ...(options.body !== undefined && { 'Content-Type': 'application/json' }),

@@ -12,6 +12,8 @@ interface Session {
   signIn(token: string): Promise<void>;
   signOut(): Promise<void>;
   refreshUser(): Promise<User | null>;
+  /** Nach einem Verbindungsfehler alles neu laden */
+  retry(): Promise<void>;
   selectFamily(id: number | null): void;
   setFamily(family: Family): void;
   member(id: number | null | undefined): Member | undefined;
@@ -83,10 +85,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (id === null) return setFamilyState(null);
     try {
       setFamilyState(await api<Family>(`/families/${id}`));
-    } catch {
+    } catch (err) {
       setFamilyState(null);
+      // Nicht mehr Mitglied → Familienliste neu laden; sonst ist der Server nicht erreichbar
+      if (err instanceof ApiError && (err.status === 403 || err.status === 404)) void refreshUser();
+      else setStatus('offline');
     }
-  }, []);
+  }, [refreshUser]);
 
   useEffect(() => {
     connectLive(activeId);
@@ -113,11 +118,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       await refreshUser();
     },
     async signOut() {
-      try {
-        await api('/auth/logout', { method: 'POST' });
-      } catch {
-        // Sitzung war ohnehin ungültig
-      }
+      // Nicht auf den Server warten – er ist evtl. gerade nicht erreichbar
+      void api('/auth/logout', { method: 'POST' }).catch(() => {});
       setToken(null);
       connectLive(null);
       setUser(null);
@@ -125,6 +127,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setStatus('anonymous');
     },
     refreshUser,
+    async retry() {
+      const me = await refreshUser();
+      if (me) await loadFamily(activeId ?? me.families[0]?.id ?? null);
+    },
     selectFamily(id) {
       storeFamilyId(id);
       setFamilyId(id);
