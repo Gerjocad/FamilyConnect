@@ -7,7 +7,7 @@ import type { CalendarEvent, Meal, Post, Task } from '../types';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
 import { OccurrenceRow } from './CalendarPage';
-import { TaskRow } from './TasksPage';
+import { TaskRow, useTaskToggle } from './TasksPage';
 
 function greeting() {
   const h = new Date().getHours();
@@ -24,6 +24,7 @@ export function DashboardPage() {
   const tasks = useResource<Task>('tasks');
   const posts = useResource<Post>('posts');
   const meals = useResource<Meal>('meals');
+  const { toggle, toast } = useTaskToggle(tasks);
 
   const today = startOfDay(new Date());
   const upcoming = occurrencesInRange(events.items, today, addDays(today, 7));
@@ -80,7 +81,7 @@ export function DashboardPage() {
             <EmptyState icon="check" title="Nichts offen" />
           ) : (
             <ul className="check-list">
-              {myTasks.map((t) => <TaskRow key={t.id} task={t} onToggle={() => void tasks.update(t.id, { done: !t.done })} />)}
+              {myTasks.map((t) => <TaskRow key={t.id} task={t} onToggle={() => void toggle(t)} />)}
             </ul>
           )}
         </section>
@@ -116,6 +117,7 @@ export function DashboardPage() {
           )}
         </section>
       </div>
+      {toast}
     </div>
   );
 }

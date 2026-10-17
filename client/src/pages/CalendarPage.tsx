@@ -10,6 +10,7 @@ import { useFamily } from '../session';
 import type { CalendarEvent } from '../types';
 import { useResource } from '../useResource';
 import { EventForm } from './EventForm';
+import { deleteEvent, saveEvent } from '../eventSeries';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
@@ -46,7 +47,7 @@ export function CalendarPage() {
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState<number | null>(null);
-  const [editing, setEditing] = useState<CalendarEvent | 'new' | null>(null);
+  const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
   const visible = useMemo(
@@ -138,7 +139,7 @@ export function CalendarPage() {
           ) : (
             <div className="stack">
               {selectedOccurrences.map((o, i) => (
-                <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} onClick={() => setEditing(o.event)} />
+                <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} onClick={() => setEditing({ event: o.event, occurrence: o })} />
               ))}
             </div>
           )}
@@ -147,11 +148,13 @@ export function CalendarPage() {
 
       {editing && (
         <EventForm
-          event={editing === 'new' ? undefined : editing}
+          event={editing === 'new' ? undefined : editing.event}
+          occurrence={editing === 'new' ? undefined : editing.occurrence}
           defaultDay={selected}
           onClose={() => setEditing(null)}
-          onSave={(data) => (editing === 'new' ? events.create(data) : events.update(editing.id, data))}
-          onDelete={editing === 'new' ? undefined : () => events.remove(editing.id)}
+          onSave={(data, scope) =>
+            editing === 'new' ? saveEvent(events, data) : saveEvent(events, data, editing.event, editing.occurrence, scope)}
+          onDelete={editing === 'new' ? undefined : (scope) => deleteEvent(events, editing.event, editing.occurrence, scope)}
         />
       )}
     </div>

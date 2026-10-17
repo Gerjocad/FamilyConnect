@@ -5,9 +5,9 @@ import { Icon } from '../components/Icon';
 import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
-import { formatRelativeDay, toDateKey } from '../dates';
+import { RECURRENCE_LABELS, formatRelativeDay, formatShortDay, parseLocal, toDateKey } from '../dates';
 import { useFamily } from '../session';
-import type { Task } from '../types';
+import type { Recurrence, Task } from '../types';
 import { useResource } from '../useResource';
 
 function TaskForm({ task, onSave, onDelete, onClose }: {
@@ -20,12 +20,13 @@ function TaskForm({ task, onSave, onDelete, onClose }: {
   const [assignee, setAssignee] = useState<number[]>(task?.assignee_id ? [task.assignee_id] : []);
   const [dueDate, setDueDate] = useState(task?.due_date ?? '');
   const [notes, setNotes] = useState(task?.notes ?? '');
+  const [recurrence, setRecurrence] = useState<Recurrence>(task?.recurrence ?? 'none');
   const { busy, error, run } = useAsync();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await onSave({ title, assignee_id: assignee[0] ?? null, due_date: dueDate || null, notes });
+      await onSave({ title, assignee_id: assignee[0] ?? null, due_date: dueDate || null, notes, recurrence });
       onClose();
     });
   };
@@ -41,10 +42,23 @@ function TaskForm({ task, onSave, onDelete, onClose }: {
           <span>Zuständig</span>
           <MemberPicker value={assignee} onChange={setAssignee} single />
         </div>
-        <label>
-          Fällig am
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </label>
+        <div className="row">
+          <label>
+            Fällig am
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </label>
+          <label>
+            Wiederholen
+            <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>
+              {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{value === 'none' ? 'Nicht wiederholen' : label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {recurrence !== 'none' && (
+          <small className="hint">Beim Abhaken springt die Aufgabe automatisch zum nächsten Termin.</small>
+        )}
         <label>
           Notizen
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
@@ -81,13 +95,30 @@ export function TaskRow({ task, onToggle, onOpen }: { task: Task; onToggle(): vo
       <input type="checkbox" checked={task.done} onChange={onToggle} aria-label={`${task.title} erledigt`} />
       <button type="button" className="task-main" onClick={onOpen}>
         <span className="check-text">{task.title}</span>
-        {task.due_date && (
-          <small className={overdue ? 'overdue' : 'muted'}>{formatRelativeDay(task.due_date)}</small>
+        {(task.due_date || task.recurrence !== 'none') && (
+          <small className={overdue ? 'overdue' : 'muted'}>
+            {task.recurrence !== 'none' && <Icon name="repeat" size={12} />}{' '}
+            {task.due_date ? formatRelativeDay(task.due_date) : RECURRENCE_LABELS[task.recurrence]}
+          </small>
         )}
       </button>
       {assignee && <Avatar member={assignee} size={26} />}
     </li>
   );
+}
+
+/** Abhaken mit Hinweis, wenn eine wiederkehrende Aufgabe zum nächsten Termin springt */
+export function useTaskToggle(tasks: ReturnType<typeof useResource<Task>>) {
+  const [message, setMessage] = useState<string | null>(null);
+  const toggle = async (task: Task) => {
+    const updated = await tasks.update(task.id, { done: !task.done });
+    if (!task.done && task.recurrence !== 'none' && updated.due_date) {
+      setMessage(`„${task.title}“ erledigt – nächstes Mal ${formatShortDay(parseLocal(updated.due_date))}`);
+      window.setTimeout(() => setMessage(null), 4000);
+    }
+  };
+  const toast = message && <div className="toast" role="status">{message}</div>;
+  return { toggle, toast };
 }
 
 type Filter = 'open' | 'mine' | 'done';
@@ -99,6 +130,7 @@ export function TasksPage() {
   const [title, setTitle] = useState('');
   const [editing, setEditing] = useState<Task | 'new' | null>(null);
   const { error, run } = useAsync();
+  const { toggle, toast } = useTaskToggle(tasks);
 
   const shown = tasks.items.filter((t) =>
     filter === 'done' ? t.done : !t.done && (filter === 'open' || t.assignee_id === user.id)
@@ -143,12 +175,13 @@ export function TasksPage() {
         ) : (
           <ul className="check-list">
             {shown.map((t) => (
-              <TaskRow key={t.id} task={t} onToggle={() => void tasks.update(t.id, { done: !t.done })} onOpen={() => setEditing(t)} />
+              <TaskRow key={t.id} task={t} onToggle={() => void toggle(t)} onOpen={() => setEditing(t)} />
             ))}
           </ul>
         )}
       </section>
 
+      {toast}
       {editing && (
         <TaskForm
           task={editing === 'new' ? undefined : editing}

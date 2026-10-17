@@ -347,3 +347,18 @@ textarea { resize: vertical; }
 .invite-actions { display: flex; gap: 8px; }
 .members li { display: flex; align-items: center; gap: 10px; }
 .page.narrow > .card > .button.danger { align-self: flex-start; }
+
+/* --- Auswahl bei Serien-Terminen ----------------------------------------- */
+
+.scope-choice { display: flex; flex-direction: column; gap: 10px; }
+.scope-choice .button { justify-content: flex-start; padding: 14px 16px; }
+.scope-choice .link-button { align-self: center; margin-top: 4px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 20;
+  bottom: calc(88px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px);
+  background: var(--text); color: var(--bg); padding: 12px 18px; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); font-weight: 500; animation: toast-in 0.2s ease-out;
+}
+@media (min-width: 900px) { .toast { bottom: 32px; left: calc(50% + 120px); } }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }

@@ -1,3 +1,5 @@
+import { nextDueDate } from './dates.js';
+
 // Beschreibt die Familien-Ressourcen (Kalender, Listen, …) deklarativ.
 // Daraus erzeugt crud.js die REST-Endpunkte inkl. Validierung.
 
@@ -9,6 +11,11 @@ const dateTime = (opts = {}) => ({ type: 'datetime', ...opts });
 const member = () => ({ type: 'member' });
 const members = () => ({ type: 'members' });
 const listRef = (opts = {}) => ({ type: 'list', ...opts });
+const dates = () => ({ type: 'dates' });
+
+const RECURRENCES = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
+// Minuten vor Beginn; bei ganztägigen Terminen relativ zu 9:00 Uhr
+export const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 1440, 2880];
 
 export const RESOURCES = [
   {
@@ -22,11 +29,17 @@ export const RESOURCES = [
       start: dateTime({ required: true }),
       end: dateTime({ required: true }),
       all_day: bool(),
-      recurrence: oneOf(['none', 'daily', 'weekly', 'monthly', 'yearly'], { default: 'none' }),
+      recurrence: oneOf(RECURRENCES, { default: 'none' }),
       member_ids: members(),
+      // Einzelne ausgelassene Termine einer Serie (z. B. weil sie verschoben wurden)
+      exdates: dates(),
+      // Letzter Tag der Serie ("dieser und alle folgenden Termine löschen")
+      until: date(),
+      reminder_minutes: oneOf(REMINDER_OPTIONS, { default: null }),
     },
     check(row) {
       if (row.end < row.start) return 'Das Ende darf nicht vor dem Beginn liegen';
+      if (row.until && row.until < row.start.slice(0, 10)) return 'Die Serie darf nicht vor ihrem Beginn enden';
     },
   },
   {
@@ -61,6 +74,15 @@ export const RESOURCES = [
       assignee_id: member(),
       due_date: date(),
       done: bool(),
+      recurrence: oneOf(RECURRENCES, { default: 'none' }),
+    },
+    // Wiederkehrende Aufgaben werden beim Abhaken nicht erledigt, sondern rücken zum nächsten Termin vor
+    transform(row, existing) {
+      const justDone = row.done === 1 && (!existing || existing.done === 0);
+      if (justDone && row.recurrence !== 'none') {
+        row.done = 0;
+        row.due_date = nextDueDate(row.due_date, row.recurrence);
+      }
     },
   },
   {

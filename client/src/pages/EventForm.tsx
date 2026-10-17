@@ -2,25 +2,38 @@ import { useState, type FormEvent } from 'react';
 import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
-import { RECURRENCE_LABELS, toDateTimeKey } from '../dates';
+import { RECURRENCE_LABELS, REMINDER_LABELS, toDateTimeKey, type Occurrence } from '../dates';
+import type { Scope } from '../eventSeries';
 import type { CalendarEvent, Recurrence } from '../types';
 
 interface Props {
   event?: CalendarEvent;
+  /** das angeklickte Vorkommen, falls der Termin zu einer Serie gehört */
+  occurrence?: Occurrence;
   defaultDay: Date;
-  onSave(data: Partial<CalendarEvent>): Promise<unknown>;
-  onDelete?(): Promise<unknown>;
+  onSave(data: Partial<CalendarEvent>, scope: Scope): Promise<unknown>;
+  onDelete?(scope: Scope): Promise<unknown>;
   onClose(): void;
 }
 
 function defaults(day: Date) {
   const now = new Date();
   const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Math.min(now.getHours() + 1, 23), 0);
-  return { start: toDateTimeKey(start), end: toDateTimeKey(new Date(start.getTime() + 3_600_000)) };
+  return { start: toDateTimeKey(start), end: toDateTimeKey(new Date(start.getTime() + 3_600_000)), all_day: false };
 }
 
-export function EventForm({ event, defaultDay, onSave, onDelete, onClose }: Props) {
-  const initial = event ?? { ...defaults(defaultDay), all_day: false };
+type Pending = { kind: 'save'; data: Partial<CalendarEvent> } | { kind: 'delete' };
+
+export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onClose }: Props) {
+  const isSeries = Boolean(event && event.recurrence !== 'none' && occurrence);
+  // Bei Serien das angeklickte Vorkommen zeigen, nicht den ersten Termin der Serie
+  const initial = event
+    ? {
+        all_day: event.all_day,
+        start: occurrence ? toDateTimeKey(occurrence.start) : event.start,
+        end: occurrence ? toDateTimeKey(occurrence.end) : event.end,
+      }
+    : defaults(defaultDay);
   const [title, setTitle] = useState(event?.title ?? '');
   const [allDay, setAllDay] = useState(initial.all_day);
   const [startDate, setStartDate] = useState(initial.start.slice(0, 10));
@@ -28,33 +41,62 @@ export function EventForm({ event, defaultDay, onSave, onDelete, onClose }: Prop
   const [endDate, setEndDate] = useState(initial.end.slice(0, 10));
   const [endTime, setEndTime] = useState(initial.end.slice(11));
   const [recurrence, setRecurrence] = useState<Recurrence>(event?.recurrence ?? 'none');
+  const [reminder, setReminder] = useState<number | null>(event ? event.reminder_minutes : null);
   const [memberIds, setMemberIds] = useState<number[]>(event?.member_ids ?? []);
   const [location, setLocation] = useState(event?.location ?? '');
   const [description, setDescription] = useState(event?.description ?? '');
+  const [pending, setPending] = useState<Pending | null>(null);
   const { busy, error, run } = useAsync();
+
+  const formData = (): Partial<CalendarEvent> => ({
+    title,
+    all_day: allDay,
+    start: `${startDate}T${allDay ? '00:00' : startTime}`,
+    end: `${endDate}T${allDay ? '23:59' : endTime}`,
+    recurrence,
+    reminder_minutes: reminder,
+    member_ids: memberIds,
+    location,
+    description,
+  });
+
+  const finish = (action: Pending, scope: Scope) =>
+    void run(async () => {
+      if (action.kind === 'save') await onSave(action.data, scope);
+      else await onDelete!(scope);
+      onClose();
+    });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void run(async () => {
-      await onSave({
-        title,
-        all_day: allDay,
-        start: `${startDate}T${allDay ? '00:00' : startTime}`,
-        end: `${endDate}T${allDay ? '23:59' : endTime}`,
-        recurrence,
-        member_ids: memberIds,
-        location,
-        description,
-      });
-      onClose();
-    });
+    const data = formData();
+    if (isSeries) setPending({ kind: 'save', data });
+    else finish({ kind: 'save', data }, 'all');
   };
 
-  // Beim Verschieben des Beginns das Ende mitziehen
   const changeStartDate = (value: string) => {
     if (endDate < value || endDate === startDate) setEndDate(value);
     setStartDate(value);
   };
+
+  if (pending) {
+    const deleting = pending.kind === 'delete';
+    return (
+      <Modal title={deleting ? 'Wiederkehrenden Termin löschen' : 'Wiederkehrenden Termin ändern'} onClose={onClose}>
+        <div className="scope-choice">
+          <button className="button" disabled={busy} onClick={() => finish(pending, 'one')}>Nur dieser Termin</button>
+          {deleting && (
+            <button className="button" disabled={busy} onClick={() => finish(pending, 'following')}>Dieser und alle folgenden</button>
+          )}
+          <button className={`button ${deleting ? 'danger' : ''}`} disabled={busy} onClick={() => finish(pending, 'all')}>
+            Alle Termine der Serie
+          </button>
+          {error && <p className="error">{error}</p>}
+          <button className="link-button" onClick={() => setPending(null)}>Zurück</button>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title={event ? 'Termin bearbeiten' : 'Neuer Termin'} onClose={onClose}>
@@ -91,14 +133,32 @@ export function EventForm({ event, defaultDay, onSave, onDelete, onClose }: Prop
             </label>
           )}
         </div>
-        <label>
-          Wiederholung
-          <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>
-            {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </label>
+        <div className="row">
+          <label>
+            Wiederholung
+            <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>
+              {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Erinnerung
+            <select
+              value={reminder ?? ''}
+              onChange={(e) => setReminder(e.target.value === '' ? null : Number(e.target.value))}
+            >
+              {REMINDER_LABELS.map(([value, label]) => (
+                <option key={label} value={value ?? ''}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {reminder !== null && (
+          <small className="hint">
+            Erinnert alle Beteiligten auf dem Handy{allDay ? ' (bei ganztägigen Terminen ausgehend von 9:00 Uhr)' : ''}.
+          </small>
+        )}
         <div className="field">
           <span>Wer ist dabei?</span>
           <MemberPicker value={memberIds} onChange={setMemberIds} />
@@ -119,11 +179,8 @@ export function EventForm({ event, defaultDay, onSave, onDelete, onClose }: Prop
               className="button danger"
               disabled={busy}
               onClick={() => {
-                if (confirm(event?.recurrence !== 'none' ? 'Alle Wiederholungen dieses Termins löschen?' : 'Termin löschen?'))
-                  void run(async () => {
-                    await onDelete();
-                    onClose();
-                  });
+                if (isSeries) setPending({ kind: 'delete' });
+                else if (confirm('Termin löschen?')) finish({ kind: 'delete' }, 'all');
               }}
             >
               Löschen

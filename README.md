@@ -5,9 +5,11 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 ## Funktionen
 
 - **Übersicht**: Termine der nächsten 7 Tage, die eigenen offenen Aufgaben, das Essen von heute und die neuesten Beiträge
-- **Kalender**: Monatsansicht mit Farbe pro Person, ganztägige und wiederkehrende Termine (täglich, wöchentlich, monatlich, jährlich), Filter nach Person
+- **Kalender**: Monatsansicht mit Farbe pro Person, ganztägige und wiederkehrende Termine (täglich, wöchentlich, monatlich, jährlich), Filter nach Person; einzelne Termine einer Serie lassen sich getrennt ändern oder löschen
+- **Erinnerungen** (Android-App): vor Terminen und am Fälligkeitstag eigener Aufgaben
+- **Push-Benachrichtigungen** (Android-App, optional): neue Beiträge, Termine, Aufgaben und Listeneinträge, siehe [deploy/FIREBASE.md](deploy/FIREBASE.md)
 - **Listen**: beliebig viele Einkaufs- und To-do-Listen mit Mengenangaben zum gemeinsamen Abhaken
-- **Aufgaben**: mit Zuständigkeit und Fälligkeitsdatum, überfällige Aufgaben werden markiert
+- **Aufgaben**: mit Zuständigkeit und Fälligkeitsdatum, überfällige Aufgaben werden markiert; wiederkehrende Aufgaben springen beim Abhaken zum nächsten Termin
 - **Pinnwand**: Nachrichten an die ganze Familie
 - **Essensplan**: Wochenplan für Frühstück, Mittag- und Abendessen; die Zutaten lassen sich per Klick auf eine Einkaufsliste übernehmen
 - **Kontakte**: wichtige Nummern (Ärzte, Schule, Babysitter …) nach Kategorien, mit Anruf- und Mail-Links
@@ -94,6 +96,5 @@ Die Ressourcen sind in `server/src/resources.js` deklarativ beschrieben. Für ei
 
 - Standortteilen und Ankunftsbenachrichtigungen (braucht eine native App)
 - Foto-Alben und Datei-Ablage
-- Push-Benachrichtigungen und Erinnerungen
 - Kalender-Synchronisierung mit Google, Outlook und iCloud (iCal)
 - Budget- und Ausgabenübersicht

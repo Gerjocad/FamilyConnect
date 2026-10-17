@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiError, setToken, getToken } from './api';
 import { connectLive, onLiveChange } from './live';
+import { clearReminders, unregisterPush } from './notifications';
 import type { Family, Member, User } from './types';
 
 const FAMILY_KEY = 'familyconnect.family';
@@ -119,6 +120,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     async signOut() {
       // Nicht auf den Server warten – er ist evtl. gerade nicht erreichbar
+      unregisterPush();
+      clearReminders();
       void api('/auth/logout', { method: 'POST' }).catch(() => {});
       setToken(null);
       connectLive(null);

@@ -116,9 +116,35 @@ CREATE TABLE IF NOT EXISTS contacts (
 );
 `;
 
+// Spalten, die nach der ersten Version dazugekommen sind. Bestehende Datenbanken werden beim Start ergänzt.
+const ADDED_COLUMNS = [
+  ['events', 'exdates', "TEXT NOT NULL DEFAULT '[]'"],
+  ['events', 'until', 'TEXT'],
+  ['events', 'reminder_minutes', 'INTEGER'],
+  ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
+];
+
+const ADDED_TABLES = `
+CREATE TABLE IF NOT EXISTS devices (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform TEXT NOT NULL DEFAULT 'android',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+`;
+
+function migrate(db) {
+  for (const [table, column, definition] of ADDED_COLUMNS) {
+    const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
+    if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+  db.exec(ADDED_TABLES);
+}
+
 export function openDatabase(file) {
   if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
   db.exec(SCHEMA);
+  migrate(db);
   return db;
 }

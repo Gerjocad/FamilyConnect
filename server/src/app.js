@@ -16,7 +16,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir } = {}) {
+export function createApp(db, { staticDir, push } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -114,6 +114,26 @@ export function createApp(db, { staticDir } = {}) {
     res.json({ ...req.user, name, color, families: familiesOf(req.user.id) });
   });
 
+  // --- Geräte für Push-Benachrichtigungen ----------------------------------
+
+  app.post('/api/devices', auth, (req, res) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    const platform = req.body?.platform === 'ios' ? 'ios' : 'android';
+    if (!token || token.length > 4096) return res.status(400).json({ error: 'Ungültiges Geräte-Token' });
+    // Ein Gerät gehört immer dem zuletzt angemeldeten Nutzer
+    db.prepare(
+      `INSERT INTO devices (token, user_id, platform) VALUES (?, ?, ?)
+       ON CONFLICT(token) DO UPDATE SET user_id = excluded.user_id, platform = excluded.platform`
+    ).run(token, req.user.id, platform);
+    res.status(204).end();
+  });
+
+  app.post('/api/devices/unregister', auth, (req, res) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    db.prepare('DELETE FROM devices WHERE token = ? AND user_id = ?').run(token, req.user.id);
+    res.status(204).end();
+  });
+
   // --- Familien ------------------------------------------------------------
 
   app.post('/api/families', auth, (req, res) => {
@@ -193,7 +213,7 @@ export function createApp(db, { staticDir } = {}) {
 
   for (const resource of RESOURCES) {
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,
-      crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name)));
+      crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name), (change) => push?.handleChange(change)));
   }
 
   app.use('/api', (req, res) => res.status(404).json({ error: 'Unbekannter Endpunkt' }));

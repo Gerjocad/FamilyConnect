@@ -6,6 +6,7 @@
 # Optional über Umgebungsvariablen:
 #   DOMAIN=familie.duckdns.org   eigene Domain statt <ip>.sslip.io
 #   BRANCH=…                     welcher Git-Branch installiert wird
+#   TIMEZONE=Europe/Berlin       Zeitzone für Fälligkeitsdaten von Aufgaben
 #
 # Das Skript kann gefahrlos mehrfach ausgeführt werden – so wird auch aktualisiert.
 set -euo pipefail
@@ -79,6 +80,8 @@ npm run build --silent
 id "$APP_USER" >/dev/null 2>&1 || useradd --system --home "$DATA_DIR" --shell /usr/sbin/nologin "$APP_USER"
 install -d -o "$APP_USER" -g "$APP_USER" -m 750 "$DATA_DIR"
 install -d -m 750 "$BACKUP_DIR"
+install -d -o root -g "$APP_USER" -m 750 /etc/familyconnect
+[ -f /etc/familyconnect/firebase.json ] && chown root:"$APP_USER" /etc/familyconnect/firebase.json && chmod 640 /etc/familyconnect/firebase.json
 
 cat > /etc/systemd/system/familyconnect.service <<UNIT
 [Unit]
@@ -92,6 +95,9 @@ Environment=NODE_ENV=production
 Environment=PORT=$PORT
 Environment=HOST=127.0.0.1
 Environment=DATABASE_FILE=$DATA_DIR/familyconnect.db
+Environment=TZ=${TIMEZONE:-Europe/Berlin}
+# Für Push-Benachrichtigungen (optional, siehe deploy/FIREBASE.md)
+Environment=FIREBASE_SERVICE_ACCOUNT=/etc/familyconnect/firebase.json
 ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning server/src/index.js
 Restart=always
 RestartSec=3

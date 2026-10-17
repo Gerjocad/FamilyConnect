@@ -44,6 +44,12 @@ export interface CalendarEvent extends Base {
   all_day: boolean;
   recurrence: Recurrence;
   member_ids: number[];
+  /** ausgelassene Termine einer Serie (JJJJ-MM-TT) */
+  exdates: string[];
+  /** letzter Tag der Serie */
+  until: string | null;
+  /** Minuten vorher; bei ganztägigen Terminen relativ zu 9:00 Uhr */
+  reminder_minutes: number | null;
 }
 
 export interface List extends Base {
@@ -64,6 +70,7 @@ export interface Task extends Base {
   assignee_id: number | null;
   due_date: string | null;
   done: boolean;
+  recurrence: Recurrence;
 }
 
 export interface Post extends Base {

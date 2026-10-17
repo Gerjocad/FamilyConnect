@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { Icon, type IconName } from './Icon';
+import { NotificationBridge } from './NotificationBridge';
 
 const NAV: { to: string; label: string; icon: IconName; mobile: boolean }[] = [
   { to: '/', label: 'Übersicht', icon: 'home', mobile: true },
@@ -64,6 +65,7 @@ export function Layout() {
       <main className="content">
         <Outlet />
       </main>
+      <NotificationBridge />
 
       <nav className="bottombar">
         {NAV.filter((n) => n.mobile).map((item) => (

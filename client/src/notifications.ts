@@ -1,0 +1,172 @@
+// Erinnerungen (lokal geplant) und Push-Benachrichtigungen (über Firebase) für die Android-App.
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { api, isNativeApp } from './api';
+import {
+  addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay,
+} from './dates';
+import type { CalendarEvent, Task } from './types';
+
+/** Push braucht android/app/google-services.json (erkennt vite.config.ts); ohne sie würde die App beim Registrieren abstürzen */
+export const PUSH_ENABLED = import.meta.env.VITE_PUSH_ENABLED === 'true';
+const PUSH_TOKEN_KEY = 'familyconnect.pushToken';
+const REMINDER_CHANNEL = 'reminders';
+const MAX_SCHEDULED = 60; // Android begrenzt die Anzahl geplanter Alarme pro App
+
+type Navigate = (path: string) => void;
+
+// Stabile ID je Erinnerung, damit Neuplanen keine Duplikate erzeugt
+function notificationId(key: string): number {
+  let hash = 0;
+  for (const ch of key) hash = (Math.imul(hash, 31) + ch.charCodeAt(0)) | 0;
+  return Math.abs(hash) % 2_000_000_000 || 1;
+}
+
+let permission: Promise<boolean> | null = null;
+function ensurePermission(): Promise<boolean> {
+  permission ??= (async () => {
+    let status = await LocalNotifications.checkPermissions();
+    if (status.display === 'prompt' || status.display === 'prompt-with-rationale') {
+      status = await LocalNotifications.requestPermissions();
+    }
+    if (status.display !== 'granted') return false;
+    await LocalNotifications.createChannel({
+      id: REMINDER_CHANNEL, name: 'Erinnerungen', description: 'Termine und fällige Aufgaben', importance: 4,
+    });
+    return true;
+  })().catch(() => false);
+  return permission;
+}
+
+/** "Heute"/"Morgen" aus Sicht des Moments, in dem die Erinnerung erscheint */
+function dayLabel(day: Date, shownAt: Date): string {
+  const diff = Math.round((startOfDay(day).getTime() - startOfDay(shownAt).getTime()) / 86_400_000);
+  if (diff === 0) return 'Heute';
+  if (diff === 1) return 'Morgen';
+  return formatShortDay(day);
+}
+
+interface Reminder { key: string; at: Date; title: string; body: string; path: string }
+
+export function buildReminders(events: CalendarEvent[], tasks: Task[], userId: number, now = new Date()): Reminder[] {
+  const reminders: Reminder[] = [];
+  const horizon = addDays(startOfDay(now), 31);
+
+  // Termine: alle Beteiligten, bzw. alle, wenn niemand ausgewählt ist
+  const mine = events.filter((e) => e.reminder_minutes != null && (e.member_ids.length === 0 || e.member_ids.includes(userId)));
+  for (const occ of occurrencesInRange(mine, now, horizon)) {
+    const at = reminderTime(occ);
+    if (!at || at <= now) continue;
+    const day = dayLabel(occ.start, at);
+    const when = occ.event.all_day ? day : `${day}, ${formatTime(occ.start)} Uhr`;
+    reminders.push({
+      key: `event:${occ.event.id}:${occ.start.toISOString()}`,
+      at,
+      title: occ.event.title,
+      body: [when, occ.event.location].filter(Boolean).join(' · '),
+      path: '/kalender',
+    });
+  }
+
+  // Eigene Aufgaben: am Fälligkeitstag um 9:00 Uhr
+  for (const task of tasks) {
+    if (task.done || task.assignee_id !== userId || !task.due_date) continue;
+    const at = parseLocal(`${task.due_date}T09:00`);
+    if (at <= now || at > horizon) continue;
+    reminders.push({ key: `task:${task.id}:${task.due_date}`, at, title: 'Heute fällig', body: task.title, path: '/aufgaben' });
+  }
+
+  return reminders.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED);
+}
+
+let syncing: Promise<void> = Promise.resolve();
+
+/** Plant alle anstehenden Erinnerungen neu (nach jeder Änderung an Terminen oder Aufgaben) */
+export function syncReminders(events: CalendarEvent[], tasks: Task[], userId: number) {
+  if (!isNativeApp) return;
+  syncing = syncing.then(async () => {
+    if (!(await ensurePermission())) return;
+    const { notifications: pending } = await LocalNotifications.getPending();
+    if (pending.length) await LocalNotifications.cancel({ notifications: pending.map((n) => ({ id: n.id })) });
+    const reminders = buildReminders(events, tasks, userId);
+    if (!reminders.length) return;
+    await LocalNotifications.schedule({
+      notifications: reminders.map((r) => ({
+        id: notificationId(r.key),
+        title: r.title,
+        body: r.body,
+        channelId: REMINDER_CHANNEL,
+        smallIcon: 'ic_stat_notify',
+        iconColor: '#e8590c',
+        schedule: { at: r.at, allowWhileIdle: true },
+        extra: { path: r.path },
+      })),
+    });
+  }).catch((err) => console.error('Erinnerungen konnten nicht geplant werden', err));
+}
+
+export function clearReminders() {
+  if (!isNativeApp) return;
+  void LocalNotifications.getPending()
+    .then(({ notifications }) => {
+      if (notifications.length) return LocalNotifications.cancel({ notifications });
+    })
+    .catch(() => {});
+}
+
+let listenersAdded = false;
+
+/** Tipp auf eine Benachrichtigung öffnet die passende Seite */
+export function listenForTaps(navigate: Navigate) {
+  if (!isNativeApp || listenersAdded) return;
+  listenersAdded = true;
+  void LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+    const path = action.notification.extra?.path;
+    if (typeof path === 'string') navigate(path);
+  });
+  if (!PUSH_ENABLED) return;
+  void PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+    const path = action.notification.data?.path;
+    if (typeof path === 'string') navigate(path);
+  });
+  void PushNotifications.addListener('registration', ({ value }) => {
+    try {
+      localStorage.setItem(PUSH_TOKEN_KEY, value);
+    } catch {
+      // egal
+    }
+    void api('/devices', { method: 'POST', body: { token: value, platform: 'android' } }).catch(() => {});
+  });
+  void PushNotifications.addListener('registrationError', (err) => console.error('Push-Registrierung fehlgeschlagen', err));
+}
+
+/** Meldet dieses Gerät für Push-Benachrichtigungen an */
+export async function registerPush() {
+  if (!isNativeApp || !PUSH_ENABLED) return;
+  try {
+    let status = await PushNotifications.checkPermissions();
+    if (status.receive === 'prompt' || status.receive === 'prompt-with-rationale') {
+      status = await PushNotifications.requestPermissions();
+    }
+    if (status.receive !== 'granted') return;
+    await PushNotifications.createChannel({
+      id: 'familyconnect', name: 'Familie', description: 'Neue Beiträge, Termine und Einträge', importance: 4,
+    });
+    await PushNotifications.register();
+  } catch (err) {
+    console.error('Push nicht verfügbar', err);
+  }
+}
+
+/** Beim Abmelden: dieses Gerät soll keine Nachrichten mehr für das Konto bekommen */
+export function unregisterPush() {
+  if (!isNativeApp || !PUSH_ENABLED) return;
+  let token: string | null = null;
+  try {
+    token = localStorage.getItem(PUSH_TOKEN_KEY);
+  } catch {
+    // egal
+  }
+  // api() liest das Anmelde-Token sofort – muss also vor dem Abmelden aufgerufen werden
+  if (token) void api('/devices/unregister', { method: 'POST', body: { token } }).catch(() => {});
+}

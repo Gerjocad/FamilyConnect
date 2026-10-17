@@ -17,6 +17,7 @@ function emptyValue(spec) {
     case 'bool': return 0;
     case 'enum': return spec.default ?? null;
     case 'members': return '[]';
+    case 'dates': return '[]';
     default: return null;
   }
 }
@@ -56,6 +57,11 @@ function coerce(name, spec, value, ctx) {
         throw new ValidationError(`"${name}" enthält Personen, die nicht zur Familie gehören`);
       return JSON.stringify([...new Set(value)]);
     }
+    case 'dates': {
+      if (!Array.isArray(value) || value.length > 1000 || !value.every((d) => typeof d === 'string' && isValidDate(d)))
+        throw new ValidationError(`Feld "${name}" muss eine Liste von Daten sein`);
+      return JSON.stringify([...new Set(value)].sort());
+    }
     case 'list':
       if (!ctx.isList(value)) throw new ValidationError(`Liste "${value}" existiert nicht`);
       return value;
@@ -69,13 +75,17 @@ export function serialize(resource, row) {
   const out = { ...row };
   for (const [name, spec] of Object.entries(resource.fields)) {
     if (spec.type === 'bool') out[name] = Boolean(out[name]);
-    if (spec.type === 'members') out[name] = JSON.parse(out[name]);
+    if (spec.type === 'members' || spec.type === 'dates') out[name] = JSON.parse(out[name]);
   }
   delete out.family_id;
   return out;
 }
 
-export function crudRouter(db, resource, publish) {
+/**
+ * @param publish   Live-Update an alle Clients der Familie
+ * @param onChange  optional, z. B. für Push-Benachrichtigungen: ({ action, path, row, before, user, familyId })
+ */
+export function crudRouter(db, resource, publish, onChange) {
   const router = Router({ mergeParams: true });
   const { table, fields } = resource;
   const names = Object.keys(fields);
@@ -119,6 +129,7 @@ export function crudRouter(db, resource, publish) {
     }
     const problem = resource.check?.(row);
     if (problem) throw new ValidationError(problem);
+    resource.transform?.(row, existing);
     return row;
   };
 
@@ -145,7 +156,9 @@ export function crudRouter(db, resource, publish) {
       .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`)
       .run(req.familyId, req.user.id, ...names.map((n) => row[n]));
     notify(req.familyId);
-    res.status(201).json(serialize(resource, findOne(req.familyId, result.lastInsertRowid)));
+    const created = serialize(resource, findOne(req.familyId, result.lastInsertRowid));
+    onChange?.({ action: 'create', path: resource.path, row: created, before: null, user: req.user, familyId: req.familyId });
+    res.status(201).json(created);
   }));
 
   router.patch('/:id', handle((req, res) => {
@@ -156,7 +169,9 @@ export function crudRouter(db, resource, publish) {
     db.prepare(`UPDATE ${table} SET ${names.map((n) => `${n} = ?`).join(', ')} WHERE id = ?`)
       .run(...names.map((n) => row[n]), existing.id);
     notify(req.familyId);
-    res.json(serialize(resource, findOne(req.familyId, existing.id)));
+    const updated = serialize(resource, findOne(req.familyId, existing.id));
+    onChange?.({ action: 'update', path: resource.path, row: updated, before: serialize(resource, existing), user: req.user, familyId: req.familyId });
+    res.json(updated);
   }));
 
   router.delete('/:id', (req, res) => {
