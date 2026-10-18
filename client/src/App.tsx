@@ -12,6 +12,7 @@ import { ListsPage } from './pages/ListsPage';
 import { NewsPage } from './pages/NewsPage';
 import { MealsPage } from './pages/MealsPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { RecipesPage } from './pages/RecipesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TasksPage } from './pages/TasksPage';
 import { useSession } from './session';
@@ -49,6 +50,8 @@ export function App() {
           <Route path="aufgaben" element={<TasksPage />} />
           <Route path="pinnwand" element={<BoardPage />} />
           <Route path="essen" element={<MealsPage />} />
+          <Route path="rezepte" element={<RecipesPage />} />
+          <Route path="rezepte/:recipeId" element={<RecipesPage />} />
           <Route path="kontakte" element={<ContactsPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="feedback" element={<FeedbackPage />} />

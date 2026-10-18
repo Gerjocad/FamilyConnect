@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11',
+    date: '2026-10-18',
+    title: 'Rezepte',
+    changes: [
+      'Neuer Bereich „Rezepte“ (Kochmützen-Symbol oben): Rezepte mit Bild, Zutaten und Zubereitung speichern',
+      'Link einfügen, z. B. von Chefkoch, Lecker oder Kitchen Stories – Titel, Zutaten, Schritte und Bild werden automatisch übernommen',
+      'Mit KI-Schlüssel auf dem Server: auch Seiten ohne Rezept-Daten und eingefügter Text werden ausgelesen',
+      'Zutat antippen setzt sie auf die Einkaufsliste – oder alle fehlenden auf einmal; was schon draufsteht, ist abgehakt',
+      'Portionen umrechnen: Mengen passen sich an, auch auf der Einkaufsliste',
+      'Beim Kochen Arbeitsschritte antippen, um sie abzuhaken',
+    ],
+  },
+  {
     version: '1.10',
     date: '2026-10-18',
     title: 'Updates ohne Neustart',

@@ -9,6 +9,7 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 - **Erinnerungen** (Android-App): vor Terminen und am Fälligkeitstag eigener Aufgaben
 - **Push-Benachrichtigungen** (Android-App, optional): neue Beiträge, Termine, Aufgaben und Listeneinträge, siehe [deploy/FIREBASE.md](deploy/FIREBASE.md)
 - **Listen**: beliebig viele Einkaufs- und To-do-Listen mit Mengenangaben zum gemeinsamen Abhaken
+- **Rezepte**: per Link von Chefkoch & Co. übernehmen, Portionen umrechnen, Zutaten mit einem Tipp auf die Einkaufsliste setzen; optional mit KI für Seiten ohne Rezept-Daten und eingefügten Text, siehe [deploy/KI.md](deploy/KI.md)
 - **Aufgaben**: mit Zuständigkeit und Fälligkeitsdatum, überfällige Aufgaben werden markiert; wiederkehrende Aufgaben springen beim Abhaken zum nächsten Termin
 - **Gewohnheiten**: z. B. „Duschen alle 2 Tage“ pro Person, mit Serien, Wochenpunkten und Erinnerung; abhaken in der App oder per **NFC-Aufkleber** (`familyconnect://h/<code>`, z. B. mit der App „NFC Tools“ beschreiben). Admins können für Kinder abhaken
 - **Pinnwand**: Nachrichten an die ganze Familie

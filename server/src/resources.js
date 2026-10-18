@@ -110,6 +110,27 @@ export const RESOURCES = [
     conflictMessage: 'Für diese Mahlzeit ist bereits etwas geplant',
   },
   {
+    path: 'recipes',
+    table: 'recipes',
+    order: 'title COLLATE NOCASE ASC',
+    fields: {
+      title: text({ required: true, max: 200 }),
+      category: text({ max: 100 }),
+      servings: int(1, 100),
+      duration: text({ max: 50 }),
+      ingredients: text({ max: 10000 }),
+      instructions: text({ max: 20000 }),
+      notes: text({ max: 2000 }),
+      source_url: text({ max: 1000 }),
+      image_url: text({ max: 1000 }),
+    },
+    check(row) {
+      for (const field of ['source_url', 'image_url']) {
+        if (row[field] && !/^https?:\/\/\S+$/i.test(row[field])) return 'Links müssen mit http:// oder https:// beginnen';
+      }
+    },
+  },
+  {
     path: 'habits',
     table: 'habits',
     order: 'title COLLATE NOCASE ASC',

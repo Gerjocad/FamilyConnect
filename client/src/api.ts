@@ -69,13 +69,13 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
+export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown; timeoutMs?: number } = {}): Promise<T> {
   const token = getToken();
   let res: Response;
   try {
     res = await fetch(`${getServerUrl()}/api${path}`, {
       // Ohne Zeitlimit hängt die App, wenn der Server nicht antwortet
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),
       method: options.method ?? 'GET',
       headers: {
         ...(options.body !== undefined && { 'Content-Type': 'application/json' }),

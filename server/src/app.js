@@ -9,6 +9,7 @@ import { crudRouter } from './crud.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
+import { recipesRouter } from './recipes.js';
 import { RESOURCES } from './resources.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,7 +19,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -38,9 +39,10 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir } = {}) {
     next();
   });
 
-  // Feedback mit Screenshots hat ein eigenes, größeres Limit
+  // Feedback mit Screenshots und der Rezept-Import haben ein eigenes, größeres Limit
   const smallJson = express.json({ limit: '100kb' });
-  app.use((req, res, next) => (/^\/api\/families\/\d+\/feedback$/.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
+  const largeBody = /^\/api\/families\/\d+\/(feedback|recipes\/import)$/;
+  app.use((req, res, next) => (largeBody.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
 
@@ -223,6 +225,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir } = {}) {
   });
 
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
+  if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
 
   for (const resource of RESOURCES) {

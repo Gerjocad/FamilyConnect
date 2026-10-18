@@ -86,6 +86,20 @@ export interface Meal extends Base {
   notes: string;
 }
 
+export interface Recipe extends Base {
+  title: string;
+  category: string;
+  servings: number | null;
+  duration: string;
+  /** eine Zutat pro Zeile, Zeilen mit „:“ am Ende sind Zwischenüberschriften */
+  ingredients: string;
+  /** ein Arbeitsschritt pro Zeile */
+  instructions: string;
+  notes: string;
+  source_url: string;
+  image_url: string;
+}
+
 export interface Contact extends Base {
   name: string;
   category: string;
@@ -115,4 +129,4 @@ export interface Checkin {
   created_at: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits';
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes';
