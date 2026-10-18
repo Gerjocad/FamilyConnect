@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13',
+    date: '2026-10-18',
+    title: 'Rezepte suchen und einplanen',
+    changes: [
+      'Essensplan: neuer Reiter „Suchen“ – Gericht eingeben und passende Rezepte mit Bild aus EatSmarter, Küchengötter und Emmi kocht einfach auswählen (in der App auch Chefkoch)',
+      'Ein gewähltes Rezept aus dem Netz wird automatisch in deinen Rezepten gespeichert',
+      'Rezeptseite: Knopf „In den Essensplan“ mit Tag und Mahlzeit; ein belegter Platz wird ersetzt',
+    ],
+  },
+  {
     version: '1.12',
     date: '2026-10-18',
     title: 'Rezepte im Essensplan',

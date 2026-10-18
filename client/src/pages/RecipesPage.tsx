@@ -1,35 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Link, useNavigate, useParams } from 'react-router';
-import { api, ApiError, isNativeApp } from '../api';
+import { api } from '../api';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { ingredientKey, parseIngredients, quantityOf, type Ingredient } from '../ingredients';
+import { EMPTY_RECIPE, importRecipe, importRecipeFromText, type RecipeDraft } from '../recipeWeb';
 import { useFamily } from '../session';
-import type { List, ListItem, Recipe } from '../types';
+import { formatShortDay, parseLocal, toDateKey } from '../dates';
+import type { List, ListItem, Meal, MealSlot, Recipe } from '../types';
+import { SLOTS } from './MealsPage';
 import { useResource } from '../useResource';
 
-type Draft = Omit<Recipe, 'id' | 'created_by' | 'created_at'>;
-
-const EMPTY: Draft = {
-  title: '', category: '', servings: null, duration: '', ingredients: '', instructions: '', notes: '', source_url: '', image_url: '',
-};
+type Draft = RecipeDraft;
+const EMPTY = EMPTY_RECIPE;
 const CATEGORY_SUGGESTIONS = ['Hauptgericht', 'Suppe', 'Salat', 'Beilage', 'Frühstück', 'Dessert', 'Kuchen', 'Brot', 'Snack', 'Getränk'];
 
 // --- Import -------------------------------------------------------------------
-
-/** Manche Seiten (z. B. Chefkoch) sperren Server-Zugriffe – dann lädt das Handy die Seite selbst */
-async function loadOnPhone(url: string): Promise<string | null> {
-  if (!isNativeApp || !Capacitor.isPluginAvailable('CapacitorHttp')) return null;
-  try {
-    const res = await CapacitorHttp.get({ url, responseType: 'text', connectTimeout: 15_000, readTimeout: 15_000 });
-    return res.status >= 200 && res.status < 300 && typeof res.data === 'string' ? res.data : null;
-  } catch {
-    return null;
-  }
-}
 
 function ImportDialog({ onDraft, onClose }: { onDraft(draft: Draft): void; onClose(): void }) {
   const { family } = useFamily();
@@ -44,26 +32,10 @@ function ImportDialog({ onDraft, onClose }: { onDraft(draft: Draft): void; onClo
     api<{ ai: boolean }>(path).then((r) => setAi(r.ai), () => {});
   }, [path]);
 
-  const importLink = async () => {
-    const link = url.trim();
-    try {
-      return await api<Draft>(path, { method: 'POST', body: { url: link }, timeoutMs: 90_000 });
-    } catch (err) {
-      // Seite hat den Server abgewiesen → übers Handy versuchen
-      if (!(err instanceof ApiError) || err.status !== 502) throw err;
-      const html = await loadOnPhone(link);
-      if (!html) throw err;
-      return api<Draft>(path, { method: 'POST', body: { url: link, html }, timeoutMs: 90_000 });
-    }
-  };
-
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      const draft = mode === 'link'
-        ? await importLink()
-        : await api<Draft>(path, { method: 'POST', body: { text }, timeoutMs: 90_000 });
-      onDraft({ ...EMPTY, ...draft });
+      onDraft(mode === 'link' ? await importRecipe(family.id, url) : await importRecipeFromText(family.id, text));
     });
   };
 
@@ -217,9 +189,58 @@ function useShoppingList() {
   return { shopping, target, choose, onList, add };
 }
 
+// --- In den Essensplan ----------------------------------------------------------
+
+function PlanMealDialog({ recipe, onDone, onClose }: { recipe: Recipe; onDone(message: string): void; onClose(): void }) {
+  const meals = useResource<Meal>('meals');
+  const [date, setDate] = useState(() => toDateKey(new Date()));
+  const [slot, setSlot] = useState<MealSlot>('dinner');
+  const { busy, error, run } = useAsync();
+  const existing = meals.items.find((m) => m.date === date && m.slot === slot);
+  const slotLabel = SLOTS.find((s) => s.slot === slot)!.label;
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const data = { date, slot, title: recipe.title, recipe_id: recipe.id };
+      // Ist der Platz schon belegt, wird das Gericht ersetzt
+      if (existing) await meals.update(existing.id, { ...data, notes: '' });
+      else await meals.create(data);
+      onDone(`${slotLabel} am ${formatShortDay(parseLocal(date))}: ${recipe.title}`);
+    });
+  };
+
+  return (
+    <Modal title="In den Essensplan" onClose={onClose}>
+      <form className="form" onSubmit={submit}>
+        <div className="row">
+          <label>Tag<input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></label>
+          <label>
+            Mahlzeit
+            <select value={slot} onChange={(e) => setSlot(e.target.value as MealSlot)}>
+              {SLOTS.map((s) => <option key={s.slot} value={s.slot}>{s.label}</option>)}
+            </select>
+          </label>
+        </div>
+        {existing && existing.recipe_id !== recipe.id && (
+          <p className="hint">Dort steht schon „{existing.title}“ – das wird ersetzt.</p>
+        )}
+        {existing?.recipe_id === recipe.id && <p className="hint">Das Rezept steht dort schon.</p>}
+        {error && <p className="error">{error}</p>}
+        <div className="form-actions">
+          <span className="spacer" />
+          <button type="button" className="button" onClick={onClose}>Abbrechen</button>
+          <button className="button primary" disabled={busy || existing?.recipe_id === recipe.id}>Eintragen</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 // --- Rezept ansehen -----------------------------------------------------------------
 
 function RecipeDetail({ recipe, onEdit }: { recipe: Recipe; onEdit(): void }) {
+  const [planning, setPlanning] = useState(false);
   const [servings, setServings] = useState(recipe.servings);
   const [doneSteps, setDoneSteps] = useState<Set<number>>(new Set());
   const [message, setMessage] = useState<string | null>(null);
@@ -270,6 +291,9 @@ function RecipeDetail({ recipe, onEdit }: { recipe: Recipe; onEdit(): void }) {
         )}
       </div>
       {recipe.notes && <p className="recipe-notes">{recipe.notes}</p>}
+      <button className="button recipe-plan" onClick={() => setPlanning(true)}>
+        <Icon name="meal" size={18} /> In den Essensplan
+      </button>
 
       <section className="card">
         <div className="section-header">
@@ -358,6 +382,16 @@ function RecipeDetail({ recipe, onEdit }: { recipe: Recipe; onEdit(): void }) {
       )}
 
       {message && <div className="toast" role="status">{message}</div>}
+      {planning && (
+        <PlanMealDialog
+          recipe={recipe}
+          onClose={() => setPlanning(false)}
+          onDone={(text) => {
+            setPlanning(false);
+            toast(text);
+          }}
+        />
+      )}
     </article>
   );
 }

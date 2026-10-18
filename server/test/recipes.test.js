@@ -23,6 +23,12 @@ const PAGES = {
   '/blog': '<html><head><meta property="og:title" content="Mein Lieblingsessen"><meta property="og:image" content="https://img.example/blog.jpg"></head><body><nav>Menü</nav><article><h1>Linsensuppe</h1><p>Man nehme 250 g Linsen, 1 Zwiebel und 1 l Brühe. Alles 30 Minuten köcheln lassen und mit Essig abschmecken.</p></article></body></html>',
 };
 
+// Nachgebaute Suchseiten zweier Portale
+const SEARCH_PAGES = {
+  '/suche-a': () => `<a href="/blog">Blog ohne Rezeptdaten</a><a href="/chefkoch">Kuchen</a><a href="/graph">Pasta</a><a href="/graph#kommentare">Pasta</a><a href="/impressum">Impressum</a>`,
+  '/suche-b': () => `<script type="application/ld+json">{"@type":"ItemList","itemListElement":[{"url":"${siteUrl}/fehlt"},{"url":"${siteUrl}/graph"}]}</script>`,
+};
+
 let site;
 let siteUrl;
 let server;
@@ -31,6 +37,8 @@ const aiCalls = [];
 
 before(async () => {
   site = createServer((req, res) => {
+    const search = SEARCH_PAGES[req.url.split('?')[0]];
+    if (search) return res.writeHead(200, { 'Content-Type': 'text/html' }).end(search());
     if (req.url === '/weiter') return res.writeHead(302, { Location: '/chefkoch' }).end();
     const page = PAGES[req.url];
     res.writeHead(page ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8' }).end(page ?? 'nicht da');
@@ -45,10 +53,16 @@ before(async () => {
       const answer = { found: true, title: 'Linsensuppe', category: 'Suppe', servings: '4', duration: '40 Min.', ingredients: ['250 g Linsen', '1 Zwiebel'], instructions: ['Köcheln lassen', 'Abschmecken'], notes: '' };
       return new Response(JSON.stringify({ content: [{ type: 'text', text: `Hier: ${JSON.stringify(answer)}` }] }), { status: 200 });
     }
+    // Wie in echt: Chefkoch sperrt den Server
+    if (new URL(url).hostname.endsWith('chefkoch.de')) return new Response('', { status: 403 });
     return fetch(url, options);
   };
   const app = createApp(openDatabase(':memory:'), {
-    recipeImporter: new RecipeImporter({ fetchImpl, allowPrivate: true, apiKey: 'test-key' }),
+    recipeImporter: new RecipeImporter({ fetchImpl, allowPrivate: true, apiKey: 'test-key', sources: [
+      { name: 'a', url: (q) => `${siteUrl}/suche-a?q=${encodeURIComponent(q)}`, link: /^http:\/\/127\.0\.0\.1:\d+\/(?!impressum)[a-z]+$/ },
+      { name: 'b', url: (q) => `${siteUrl}/suche-b?q=${encodeURIComponent(q)}`, link: /^http:\/\/127\.0\.0\.1:\d+\/[a-z]+$/ },
+      { name: 'kaputt', url: () => 'http://127.0.0.1:1/nix', link: /./ },
+    ] }),
   });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   base = `http://127.0.0.1:${server.address().port}/api`;
@@ -164,6 +178,32 @@ describe('Rezepte', () => {
     assert.equal(status, 200);
     assert.equal(data.title, 'Omas Käsekuchen');
     assert.equal(data.source_url, 'https://www.chefkoch.de/rezepte/1/kuchen.html');
+  });
+
+  test('Rezepte in Portalen suchen', async () => {
+    const { token, fid } = await family();
+    const post = (body) => api(`/families/${fid}/recipes/search`, { token, method: 'POST', body });
+    // Ohne Treffer im Link: alle Rezeptseiten in Reihenfolge, abwechselnd aus den Portalen, ohne Doppelte, ohne Seiten ohne Rezept
+    const { status, data } = await post({ query: 'Lasagne' });
+    assert.equal(status, 200);
+    assert.deepEqual(data.map((r) => r.title), ['Omas Käsekuchen', 'Pasta']);
+    assert.equal(data[0].image_url, 'https://img.example/kuchen.jpg');
+    assert.equal(data[0].duration, '1 Std. 30 Min.');
+    assert.equal(data[0].checked, true);
+    // Passendes Wort im Link → nur noch diese Treffer
+    assert.deepEqual((await post({ query: 'Graph' })).data.map((r) => r.title), ['Pasta']);
+
+    // Chefkoch-Suchseite vom Handy: Treffer ungeprüft, Titel aus der Adresse
+    const chefkochHtml = '<a href="/rezepte/111/Omas-Kaesekuchen.html">x</a><a href="/rezepte/222/Linsensuppe.html?portionen=4">y</a><a href="/rs/s0/kuchen/Rezepte.html">z</a>';
+    const withChefkoch = await post({ query: 'Kuchen', chefkochHtml });
+    // Chefkoch nach dem ersten eigenen Treffer; Linsensuppe passt nicht zu „Kuchen“
+    assert.deepEqual(withChefkoch.data.map((r) => [r.title, r.source, r.checked]), [
+      ['Omas Käsekuchen', '127.0.0.1', true],
+      ['Omas Kaesekuchen', 'chefkoch.de', false],
+      ['Pasta', '127.0.0.1', true],
+    ]);
+    assert.equal(withChefkoch.data[1].url, 'https://www.chefkoch.de/rezepte/111/Omas-Kaesekuchen.html');
+    assert.equal((await post({ query: ' ' })).status, 400);
   });
 
   test('Fehlerfälle', async () => {

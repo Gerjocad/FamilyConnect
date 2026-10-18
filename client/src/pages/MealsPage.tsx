@@ -7,10 +7,11 @@ import { useAsync } from '../components/useAsync';
 import { addDays, formatShortDay, sameDay, startOfWeek, toDateKey } from '../dates';
 import { useFamily } from '../session';
 import { parseIngredients, quantityOf } from '../ingredients';
+import { importRecipe, searchRecipes, type RecipeDraft, type WebRecipe } from '../recipeWeb';
 import type { List, Meal, MealSlot, Recipe } from '../types';
 import { useResource } from '../useResource';
 
-const SLOTS: { slot: MealSlot; label: string }[] = [
+export const SLOTS: { slot: MealSlot; label: string }[] = [
   { slot: 'breakfast', label: 'Frühstück' },
   { slot: 'lunch', label: 'Mittag' },
   { slot: 'dinner', label: 'Abend' },
@@ -43,6 +44,93 @@ function RecipePicker({ recipes, onPick }: { recipes: Recipe[]; onPick(recipe: R
   );
 }
 
+function RecipeSearch({ recipes, onPick, onImported }: {
+  recipes: Recipe[];
+  onPick(recipe: Recipe): void;
+  /** Treffer aus dem Netz wurde übernommen und als Rezept gespeichert */
+  onImported(draft: RecipeDraft): Promise<void>;
+}) {
+  const { family } = useFamily();
+  const [query, setQuery] = useState('');
+  const [searched, setSearched] = useState('');
+  const [results, setResults] = useState<WebRecipe[] | null>(null);
+  const [importing, setImporting] = useState<string | null>(null);
+  const { busy, error, run } = useAsync();
+  const q = searched.toLowerCase();
+  const own = q ? recipes.filter((r) => r.title.toLowerCase().includes(q) || r.ingredients.toLowerCase().includes(q)) : [];
+
+  const search = () => {
+    const text = query.trim();
+    if (!text) return;
+    setSearched(text);
+    setResults(null);
+    void run(async () => setResults(await searchRecipes(family.id, text)));
+  };
+
+  const take = (hit: WebRecipe) => {
+    setImporting(hit.url);
+    void run(async () => {
+      try {
+        await onImported(await importRecipe(family.id, hit.url));
+      } finally {
+        setImporting(null);
+      }
+    });
+  };
+
+  return (
+    <div className="recipe-picker">
+      <div className="quick-add">
+        <input
+          type="search"
+          enterKeyHint="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          // Enter sucht, statt den Essensplan-Eintrag zu speichern
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              search();
+            }
+          }}
+          placeholder="Gericht, z. B. Lasagne"
+          aria-label="Gericht suchen"
+          autoFocus
+        />
+        <button type="button" className="button primary" onClick={search} disabled={busy} aria-label="Suchen"><Icon name="search" size={18} /></button>
+      </div>
+      {busy && !importing && <p className="muted">Suche in Rezeptportalen … das dauert ein paar Sekunden.</p>}
+      {importing && <p className="muted">Rezept wird übernommen …</p>}
+      {error && <p className="error">{error}</p>}
+      <div className="recipe-picker-list">
+        {own.length > 0 && <small className="picker-group">Eigene Rezepte</small>}
+        {own.map((r) => (
+          <button type="button" key={r.id} className="recipe-option" onClick={() => onPick(r)}>
+            <span className="recipe-thumb small">
+              {r.image_url ? <img src={r.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="recipe" size={18} />}
+            </span>
+            <span className="recipe-card-text"><strong>{r.title}</strong><small className="muted">gespeichert</small></span>
+          </button>
+        ))}
+        {results && results.length > 0 && <small className="picker-group">Aus dem Netz – wird beim Auswählen in deinen Rezepten gespeichert</small>}
+        {results?.map((hit) => (
+          <button type="button" key={hit.url} className="recipe-option" onClick={() => take(hit)} disabled={busy}>
+            <span className="recipe-thumb small">
+              {hit.image_url ? <img src={hit.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="recipe" size={18} />}
+            </span>
+            <span className="recipe-card-text">
+              <strong>{hit.title}</strong>
+              <small className="muted">{[hit.source, hit.duration].filter(Boolean).join(' · ')}</small>
+            </span>
+            {importing === hit.url && <span className="spinner" aria-label="Lädt" />}
+          </button>
+        ))}
+        {results && results.length === 0 && own.length === 0 && <p className="muted">Nichts gefunden – versuch es mit einem anderen Begriff.</p>}
+      </div>
+    </div>
+  );
+}
+
 function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   meal?: Meal;
   date: string;
@@ -58,14 +146,16 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   const [notes, setNotes] = useState(meal?.notes ?? '');
   const [recipeId, setRecipeId] = useState<number | null>(meal?.recipe_id ?? null);
   // Neuer Eintrag: erst aus den Rezepten wählen, sofern es welche gibt
-  const [mode, setMode] = useState<'recipe' | 'free'>(meal ? 'free' : 'recipe');
+  const [mode, setMode] = useState<'recipe' | 'search' | 'free'>(meal ? 'free' : 'recipe');
   const [targetList, setTargetList] = useState<number | ''>('');
   const [added, setAdded] = useState<string | null>(null);
   const { busy, error, run } = useAsync();
   const recipe = recipes.items.find((r) => r.id === recipeId);
   const shoppingLists = lists.items.filter((l) => l.kind === 'shopping');
   const listId = targetList || shoppingLists[0]?.id;
-  const picking = mode === 'recipe' && !recipe && !recipes.loading && recipes.items.length > 0;
+  // Ohne gespeicherte Rezepte startet ein neuer Eintrag direkt mit der Suche
+  const view = mode === 'recipe' && !recipes.loading && recipes.items.length === 0 ? 'search' : mode;
+  const picking = !recipe && view !== 'free';
 
   // Mit Rezept kommen die Zutaten (mit Menge) aus dem Rezept, sonst aus dem Notizfeld
   const ingredients = recipe
@@ -98,19 +188,30 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   return (
     <Modal title={`${label} · ${formatShortDay(new Date(`${date}T00:00`))}`} onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        {recipes.items.length > 0 && (
-          <div className="segmented" role="tablist">
-            <button type="button" role="tab" aria-selected={mode === 'recipe'} className={mode === 'recipe' ? 'active' : ''} onClick={() => setMode('recipe')}>
-              Aus Rezepten
+        <div className="segmented" role="tablist">
+          {recipes.items.length > 0 && (
+            <button type="button" role="tab" aria-selected={view === 'recipe'} className={view === 'recipe' ? 'active' : ''} onClick={() => { setMode('recipe'); setRecipeId(null); }}>
+              Rezepte
             </button>
-            <button type="button" role="tab" aria-selected={mode === 'free'} className={mode === 'free' ? 'active' : ''} onClick={() => { setMode('free'); setRecipeId(null); }}>
-              Selbst eintragen
-            </button>
-          </div>
-        )}
+          )}
+          <button type="button" role="tab" aria-selected={view === 'search'} className={view === 'search' ? 'active' : ''} onClick={() => { setMode('search'); setRecipeId(null); }}>
+            Suchen
+          </button>
+          <button type="button" role="tab" aria-selected={view === 'free'} className={view === 'free' ? 'active' : ''} onClick={() => { setMode('free'); setRecipeId(null); }}>
+            Selbst
+          </button>
+        </div>
 
         {picking ? (
-          <RecipePicker recipes={recipes.items} onPick={pick} />
+          view === 'search' ? (
+            <RecipeSearch
+              recipes={recipes.items}
+              onPick={pick}
+              onImported={async (draft) => pick(await recipes.create(draft))}
+            />
+          ) : (
+            <RecipePicker recipes={recipes.items} onPick={pick} />
+          )
         ) : recipe ? (
           <div className="meal-recipe">
             <span className="recipe-thumb small">
@@ -121,7 +222,7 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
               <Link className="link-button" to={`/rezepte/${recipe.id}`}>Rezept öffnen</Link>
             </span>
             <span className="spacer" />
-            <button type="button" className="link-button" onClick={() => { setRecipeId(null); setMode('recipe'); }}>Ändern</button>
+            <button type="button" className="link-button" onClick={() => { setRecipeId(null); setMode((m) => (m === 'free' ? 'recipe' : m)); }}>Ändern</button>
           </div>
         ) : (
           <>

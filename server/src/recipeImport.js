@@ -11,6 +11,61 @@ const MAX_AI_TEXT = 30_000;
 const FETCH_TIMEOUT_MS = 12_000;
 const AI_TIMEOUT_MS = 60_000;
 const MAX_REDIRECTS = 5;
+const SEARCH_CHECK_TIMEOUT_MS = 8_000;
+const PER_SOURCE = 4;
+const MAX_SEARCH_RESULTS = 10;
+
+/**
+ * Rezeptportale, deren Suche ohne JavaScript funktioniert. `link` erkennt Links auf einzelne Rezepte.
+ * Suchmaschinen (Bing, DuckDuckGo) liefern Servern absichtlich unbrauchbare Treffer und fallen daher weg.
+ */
+export const SEARCH_SOURCES = [
+  { name: 'eatsmarter.de', url: (q) => `https://eatsmarter.de/suche/rezepte?ft=${encodeURIComponent(q)}`, link: /^https:\/\/eatsmarter\.de\/rezepte\/(?!kochen\/)[a-z0-9-]+$/ },
+  { name: 'kuechengoetter.de', url: (q) => `https://www.kuechengoetter.de/suche?q=${encodeURIComponent(q)}`, link: /^https:\/\/www\.kuechengoetter\.de\/rezepte\/[a-z0-9-]+-\d+$/ },
+  { name: 'emmikochteinfach.de', url: (q) => `https://emmikochteinfach.de/?s=${encodeURIComponent(q)}`, link: /^https:\/\/emmikochteinfach\.de\/(?!page\/|anmeldung|kategorie|tag\/|ueber)[a-z0-9-]+\/$/ },
+];
+
+/** Chefkoch sperrt Server; das Handy lädt die Suchseite und schickt sie mit */
+export const CHEFKOCH = { name: 'chefkoch.de', url: (q) => `https://www.chefkoch.de/rs/s0/${encodeURIComponent(q)}/Rezepte.html`, link: /^https:\/\/www\.chefkoch\.de\/rezepte\/\d+\/[^/?#]+\.html$/ };
+
+/** Alle Links einer Seite, die zum Muster passen – in Reihenfolge, ohne Doppelte */
+export function recipeLinks(html, base, pattern) {
+  const links = [];
+  for (const [, raw] of html.matchAll(/(?:href="|"url":\s*")([^"]+)"/g)) {
+    let url;
+    try {
+      url = new URL(decodeEntities(raw).replace(/\\\//g, '/'), base);
+    } catch {
+      continue;
+    }
+    url.hash = '';
+    url.search = '';
+    if (pattern.test(url.href) && !links.includes(url.href)) links.push(url.href);
+  }
+  return links;
+}
+
+/** „Käsespätzle mit Röstzwiebeln“ → [„kaesespaetzle“, „roestzwiebeln“] – passend zu Adressen */
+const slugWords = (text) => text.toLowerCase()
+  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .split(/[^a-z0-9]+/).filter((w) => w.length > 2);
+
+/**
+ * Treffer, deren Adresse das gesuchte Gericht enthält, zuerst. Passt mindestens einer,
+ * fallen die übrigen weg – das sind meist „Beliebt“-Kästen am Seitenrand.
+ */
+function rankLinks(links, query) {
+  const words = slugWords(query);
+  const score = (url) => words.filter((w) => url.toLowerCase().includes(w)).length;
+  const scored = links.map((url, i) => ({ url, i, s: score(url) }));
+  const matching = scored.some((x) => x.s > 0) ? scored.filter((x) => x.s > 0) : scored;
+  return matching.sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.url);
+}
+
+/** Chefkoch-Adresse → lesbarer Titel: …/Omas-Kaesekuchen.html → „Omas Kaesekuchen“ */
+const titleFromUrl = (url) => decodeURIComponent(url.split('/').pop().replace(/\.html$/, '')).replace(/-/g, ' ');
+
+
 const DEFAULT_MODEL = 'claude-haiku-5-5';
 
 export class RecipeImportError extends Error {
@@ -201,7 +256,10 @@ export class RecipeImporter {
    * @param apiKey      Anthropic-API-Schlüssel (optional)
    * @param apiKeyFile  Datei mit dem Schlüssel; wird bei jedem Import gelesen, ein Neustart ist also nicht nötig
    */
-  constructor({ fetchImpl = fetch, allowPrivate = false, apiKey, apiKeyFile, model } = {}) {
+  #sources;
+
+  constructor({ fetchImpl = fetch, allowPrivate = false, apiKey, apiKeyFile, model, sources = SEARCH_SOURCES } = {}) {
+    this.#sources = sources;
     this.#fetch = fetchImpl;
     this.#allowPrivate = allowPrivate;
     this.#apiKey = apiKey;
@@ -233,7 +291,7 @@ export class RecipeImporter {
     if (addresses.some((a) => isPrivateAddress(a.address))) throw new RecipeImportError(400, 'Diese Adresse ist nicht erlaubt');
   }
 
-  async #download(input) {
+  async #download(input, timeoutMs = FETCH_TIMEOUT_MS) {
     let url = input;
     for (let i = 0; i <= MAX_REDIRECTS; i++) {
       await this.#checkHost(url);
@@ -241,7 +299,7 @@ export class RecipeImporter {
       try {
         res = await this.#fetch(url, {
           redirect: 'manual',
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+          signal: AbortSignal.timeout(timeoutMs),
           headers: {
             // Manche Seiten liefern ohne Browser-Kennung nichts aus
             'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36',
@@ -261,6 +319,59 @@ export class RecipeImporter {
       return { html: await readLimited(res), url: url.href };
     }
     throw new RecipeImportError(502, 'Zu viele Weiterleitungen');
+  }
+
+  /**
+   * Rezepte zu einem Gericht in mehreren Portalen suchen. Jeder Treffer wird geöffnet und nur behalten,
+   * wenn er wirklich ein Rezept enthält – so gibt es Titel, Bild und Dauer gleich dazu.
+   * @param chefkochHtml  optional: vom Handy geladene Chefkoch-Suchseite
+   */
+  async search(input, chefkochHtml) {
+    const query = String(input ?? '').trim().slice(0, 100);
+    if (query.length < 2) throw new RecipeImportError(400, 'Bitte ein Gericht eingeben');
+
+    const perSource = await Promise.all(this.#sources.map(async (source) => {
+      try {
+        const url = new URL(source.url(query));
+        const page = await this.#download(url, SEARCH_CHECK_TIMEOUT_MS);
+        return rankLinks(recipeLinks(page.html, page.url, source.link), query).slice(0, PER_SOURCE);
+      } catch {
+        return [];
+      }
+    }));
+    // Abwechselnd aus den Portalen, damit nicht alles von einer Seite kommt
+    const candidates = [];
+    for (let i = 0; i < PER_SOURCE; i++) for (const links of perSource) if (links[i] && !candidates.includes(links[i])) candidates.push(links[i]);
+
+    const checked = await Promise.all(candidates.map(async (link) => {
+      try {
+        const page = await this.#download(new URL(link), SEARCH_CHECK_TIMEOUT_MS);
+        const recipe = extractJsonLd(page.html);
+        if (!recipe) return null;
+        const draft = fromJsonLd(recipe, page.url);
+        if (!draft.title || !draft.ingredients) return null;
+        return { url: page.url, title: draft.title, image_url: draft.image_url, duration: draft.duration, source: new URL(page.url).hostname.replace(/^www\./, ''), checked: true };
+      } catch {
+        return null;
+      }
+    }));
+
+    // Chefkoch-Treffer kann der Server nicht öffnen – sie werden beim Übernehmen vom Handy geladen
+    const chefkoch = typeof chefkochHtml === 'string' && chefkochHtml
+      ? rankLinks(recipeLinks(chefkochHtml, CHEFKOCH.url(query), CHEFKOCH.link), query).slice(0, PER_SOURCE)
+        .map((url) => ({ url, title: titleFromUrl(url), image_url: '', duration: '', source: CHEFKOCH.name, checked: false }))
+      : [];
+
+    // Treffer, die das Gericht als eigenes Wort im Titel haben („Lasagne Bolognese“), vor Abwandlungen („Kürbislasagne“)
+    const queryWords = query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const titleScore = (title) => {
+      const words = title.toLowerCase().split(/[^\p{L}\p{N}]+/u);
+      return queryWords.filter((w) => words.includes(w)).length;
+    };
+    const found = checked.filter(Boolean).map((r, i) => ({ r, i, s: titleScore(r.title) }))
+      .sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.r);
+    // Chefkoch nach dem ersten Treffer einreihen
+    return [...found.slice(0, 1), ...chefkoch, ...found.slice(1)].slice(0, MAX_SEARCH_RESULTS);
   }
 
   /** Liefert einen Rezept-Entwurf (wird nicht gespeichert) */

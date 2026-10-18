@@ -41,7 +41,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   // Feedback mit Screenshots und der Rezept-Import haben ein eigenes, größeres Limit
   const smallJson = express.json({ limit: '100kb' });
-  const largeBody = /^\/api\/families\/\d+\/(feedback|recipes\/import)$/;
+  const largeBody = /^\/api\/families\/\d+\/(feedback|recipes\/(import|search))$/;
   app.use((req, res, next) => (largeBody.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));

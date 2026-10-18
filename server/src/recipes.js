@@ -21,5 +21,15 @@ export function recipesRouter({ auth, member, importer }) {
     }
   });
 
+  router.post('/api/families/:familyId/recipes/search', express.json({ limit: '5mb' }), auth, member, async (req, res) => {
+    try {
+      res.json(await importer.search(req.body?.query, req.body?.chefkochHtml));
+    } catch (err) {
+      if (err instanceof RecipeImportError) return res.status(err.status).json({ error: err.message });
+      console.error('Rezeptsuche fehlgeschlagen:', err);
+      res.status(500).json({ error: 'Die Suche ist fehlgeschlagen' });
+    }
+  });
+
   return router;
 }
