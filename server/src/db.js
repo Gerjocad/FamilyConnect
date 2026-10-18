@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS families (
 CREATE TABLE IF NOT EXISTS memberships (
   family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL DEFAULT 'member',
+  role TEXT NOT NULL DEFAULT 'child',
   joined_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (family_id, user_id)
 );
@@ -197,6 +197,8 @@ function migrate(db) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
   }
+  // Früher gab es nur Admin und „Mitglied“ – bisherige Mitglieder werden Eltern
+  db.exec("UPDATE memberships SET role = 'parent' WHERE role = 'member'");
 }
 
 export function openDatabase(file) {

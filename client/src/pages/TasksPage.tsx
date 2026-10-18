@@ -6,6 +6,7 @@ import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { RECURRENCE_LABELS, formatRelativeDay, formatShortDay, parseLocal, toDateKey } from '../dates';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Recurrence, Task } from '../types';
 import { useResource } from '../useResource';
@@ -17,7 +18,10 @@ function TaskForm({ task, onSave, onDelete, onClose }: {
   onClose(): void;
 }) {
   const [title, setTitle] = useState(task?.title ?? '');
-  const [assignee, setAssignee] = useState<number[]>(task?.assignee_id ? [task.assignee_id] : []);
+  const { user } = useFamily();
+  const { isChild } = usePermissions();
+  // Kinder legen Aufgaben nur für sich an
+  const [assignee, setAssignee] = useState<number[]>(task?.assignee_id ? [task.assignee_id] : isChild ? [user.id] : []);
   const [dueDate, setDueDate] = useState(task?.due_date ?? '');
   const [notes, setNotes] = useState(task?.notes ?? '');
   const [recurrence, setRecurrence] = useState<Recurrence>(task?.recurrence ?? 'none');
@@ -38,10 +42,12 @@ function TaskForm({ task, onSave, onDelete, onClose }: {
           Aufgabe
           <input value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
         </label>
-        <div className="field">
-          <span>Zuständig</span>
-          <MemberPicker value={assignee} onChange={setAssignee} single />
-        </div>
+        {!isChild && (
+          <div className="field">
+            <span>Zuständig</span>
+            <MemberPicker value={assignee} onChange={setAssignee} single />
+          </div>
+        )}
         <div className="row">
           <label>
             Fällig am
@@ -88,12 +94,14 @@ function TaskForm({ task, onSave, onDelete, onClose }: {
 
 export function TaskRow({ task, onToggle, onOpen }: { task: Task; onToggle(): void; onOpen?(): void }) {
   const { member } = useFamily();
+  const { canEdit, canToggleTask } = usePermissions();
+  const editable = canEdit(task);
   const assignee = member(task.assignee_id);
   const overdue = !task.done && task.due_date !== null && task.due_date < toDateKey(new Date());
   return (
     <li className={`check-row ${task.done ? 'done' : ''}`}>
-      <input type="checkbox" checked={task.done} onChange={onToggle} aria-label={`${task.title} erledigt`} />
-      <button type="button" className="task-main" onClick={onOpen}>
+      <input type="checkbox" checked={task.done} onChange={onToggle} disabled={!canToggleTask(task)} aria-label={`${task.title} erledigt`} />
+      <button type="button" className="task-main" onClick={editable ? onOpen : undefined} disabled={!editable && !!onOpen}>
         <span className="check-text">{task.title}</span>
         {(task.due_date || task.recurrence !== 'none') && (
           <small className={overdue ? 'overdue' : 'muted'}>
@@ -125,6 +133,7 @@ type Filter = 'open' | 'mine' | 'done';
 
 export function TasksPage() {
   const { user } = useFamily();
+  const { isChild } = usePermissions();
   const tasks = useResource<Task>('tasks');
   const [filter, setFilter] = useState<Filter>('open');
   const [title, setTitle] = useState('');
@@ -146,7 +155,7 @@ export function TasksPage() {
     setTitle('');
     void run(async () => {
       try {
-        await tasks.create({ title: text, assignee_id: assignee[0] ?? (filter === 'mine' ? user.id : null) });
+        await tasks.create({ title: text, assignee_id: isChild ? user.id : assignee[0] ?? (filter === 'mine' ? user.id : null) });
       } catch (err) {
         setTitle((current) => current || text);
         throw err;
@@ -178,10 +187,12 @@ export function TasksPage() {
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Neue Aufgabe …" aria-label="Neue Aufgabe" />
               <button className="button primary" aria-label="Hinzufügen"><Icon name="plus" /></button>
             </div>
-            <div className="assign-row">
-              <span className="muted">Wer erledigt es?</span>
-              <MemberPicker value={assignee} onChange={setAssignee} single />
-            </div>
+            {!isChild && (
+              <div className="assign-row">
+                <span className="muted">Wer erledigt es?</span>
+                <MemberPicker value={assignee} onChange={setAssignee} single />
+              </div>
+            )}
           </form>
         )}
         {error && <p className="error">{error}</p>}

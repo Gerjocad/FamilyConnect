@@ -4,6 +4,7 @@ import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
+import { usePermissions } from '../permissions';
 import type { List, ListItem } from '../types';
 import { useResource } from '../useResource';
 
@@ -70,6 +71,7 @@ function ListDetail({ list, items, onEdit }: {
   const [text, setText] = useState('');
   const [quantity, setQuantity] = useState('');
   const { error, run } = useAsync();
+  const { canEdit } = usePermissions();
   const own = items.items.filter((i) => i.list_id === list.id);
   const open = own.filter((i) => !i.done);
   const done = own.filter((i) => i.done);
@@ -111,7 +113,7 @@ function ListDetail({ list, items, onEdit }: {
         <Link to="/listen" className="icon-button only-mobile" aria-label="Zurück"><Icon name="left" /></Link>
         <h2>{list.name}</h2>
         <span className="spacer" />
-        <button className="icon-button" onClick={onEdit} aria-label="Liste bearbeiten"><Icon name="edit" size={18} /></button>
+        {canEdit(list) && <button className="icon-button" onClick={onEdit} aria-label="Liste bearbeiten"><Icon name="edit" size={18} /></button>}
       </header>
       <form onSubmit={add} className="quick-add">
         <input

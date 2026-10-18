@@ -9,6 +9,7 @@ import { crudRouter } from './crud.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
+import { ROLES } from './permissions.js';
 import { recipesRouter } from './recipes.js';
 import { RESOURCES } from './resources.js';
 
@@ -164,7 +165,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     const code = cleanText(req.body?.code, 20).toUpperCase().replace(/[^A-Z0-9]/g, '');
     const family = db.prepare('SELECT id FROM families WHERE invite_code = ?').get(code);
     if (!family) return res.status(404).json({ error: 'Dieser Einladungscode ist ungültig' });
-    joinFamily(family.id, req.user.id, 'member');
+    // Neue Mitglieder starten als Kind; der Admin macht Erwachsene zu Eltern
+    joinFamily(family.id, req.user.id, 'child');
     res.json(familyDetails(family.id));
   });
 
@@ -188,9 +190,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     res.json(familyDetails(req.familyId));
   });
 
-  app.post('/api/families/:familyId/leave', auth, member, (req, res) => {
-    const { familyId } = req;
-    const userId = req.user.id;
+  /** Mitglied austragen; die Familie behält immer einen Admin und verschwindet mit dem letzten Mitglied */
+  const removeMember = (familyId, userId) => {
     db.exec('BEGIN');
     try {
       db.prepare('DELETE FROM memberships WHERE family_id = ? AND user_id = ?').run(familyId, userId);
@@ -199,8 +200,9 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
       if (remaining.length === 0) {
         db.prepare('DELETE FROM families WHERE id = ?').run(familyId);
       } else if (!remaining.some((m) => m.role === 'admin')) {
-        // Die Familie soll nie ohne Admin dastehen
-        db.prepare('UPDATE memberships SET role = ? WHERE family_id = ? AND user_id = ?').run('admin', familyId, remaining[0].user_id);
+        // Bevorzugt ein Elternteil zum Admin machen
+        const next = remaining.find((m) => m.role === 'parent') ?? remaining[0];
+        db.prepare('UPDATE memberships SET role = ? WHERE family_id = ? AND user_id = ?').run('admin', familyId, next.user_id);
       }
       db.exec('COMMIT');
     } catch (err) {
@@ -209,7 +211,40 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     }
     hub.publish(familyId, 'family');
     hub.publish(familyId, 'tasks');
+  };
+
+  app.post('/api/families/:familyId/leave', auth, member, (req, res) => {
+    removeMember(req.familyId, req.user.id);
     res.status(204).end();
+  });
+
+  const membershipOf = (familyId, userId) =>
+    db.prepare('SELECT role FROM memberships WHERE family_id = ? AND user_id = ?').get(familyId, userId);
+
+  // Rolle ändern (Admin, Eltern, Kind) – nur Admins
+  app.patch('/api/families/:familyId/members/:userId', auth, member, (req, res) => {
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Rollen vergeben' });
+    const userId = Number(req.params.userId);
+    const target = membershipOf(req.familyId, userId);
+    if (!target) return res.status(404).json({ error: 'Kein Mitglied dieser Familie' });
+    const role = req.body?.role;
+    if (!ROLES.includes(role)) return res.status(400).json({ error: 'Ungültige Rolle' });
+    const admins = db.prepare("SELECT COUNT(*) AS n FROM memberships WHERE family_id = ? AND role = 'admin'").get(req.familyId).n;
+    if (target.role === 'admin' && role !== 'admin' && admins === 1)
+      return res.status(400).json({ error: 'Die Familie braucht mindestens einen Admin' });
+    db.prepare('UPDATE memberships SET role = ? WHERE family_id = ? AND user_id = ?').run(role, req.familyId, userId);
+    hub.publish(req.familyId, 'family');
+    res.json(familyDetails(req.familyId));
+  });
+
+  // Mitglied aus der Familie entfernen – nur Admins, sich selbst über „Familie verlassen“
+  app.delete('/api/families/:familyId/members/:userId', auth, member, (req, res) => {
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Mitglieder entfernen' });
+    const userId = Number(req.params.userId);
+    if (userId === req.user.id) return res.status(400).json({ error: 'Zum Austreten bitte „Familie verlassen“ nutzen' });
+    if (!membershipOf(req.familyId, userId)) return res.status(404).json({ error: 'Kein Mitglied dieser Familie' });
+    removeMember(req.familyId, userId);
+    res.json(familyDetails(req.familyId));
   });
 
   app.get('/api/families/:familyId/stream', auth, member, (req, res) => {

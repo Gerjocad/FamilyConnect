@@ -7,7 +7,8 @@ import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
-import type { Family } from '../types';
+import { ROLE_LABELS } from '../permissions';
+import type { Family, Role } from '../types';
 
 const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599', '#e67700', '#5c940d', '#495057'];
 
@@ -127,13 +128,47 @@ export function SettingsPage() {
         </div>
 
         <h3>Mitglieder ({family.members.length})</h3>
+        {isAdmin && (
+          <p className="hint">
+            Neue Mitglieder starten als Kind. Eltern dürfen alles bearbeiten, Admins zusätzlich Rollen vergeben,
+            Mitglieder entfernen und die Familie verwalten. Kinder dürfen alles sehen, aber nur ihre eigenen Termine und
+            Aufgaben ändern und keine Gewohnheiten anlegen.
+          </p>
+        )}
         <ul className="plain-list members">
           {family.members.map((m) => (
             <li key={m.id}>
               <Avatar member={m} size={32} />
-              <span>{m.name}{m.id === user.id && ' (du)'}</span>
+              <span className="member-name">{m.name}{m.id === user.id && ' (du)'}</span>
               <span className="spacer" />
-              {m.role === 'admin' && <span className="badge">Admin</span>}
+              {isAdmin ? (
+                <>
+                  <select
+                    className="role-select"
+                    value={m.role}
+                    aria-label={`Rolle von ${m.name}`}
+                    disabled={fam.busy}
+                    onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}/members/${m.id}`, { method: 'PATCH', body: { role: e.target.value } })))}
+                  >
+                    {(Object.keys(ROLE_LABELS) as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                  </select>
+                  {m.id !== user.id ? (
+                    <button
+                      className="icon-button subtle"
+                      aria-label={`${m.name} entfernen`}
+                      disabled={fam.busy}
+                      onClick={() => confirm(`${m.name} aus „${family.name}“ entfernen?`) &&
+                        void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}/members/${m.id}`, { method: 'DELETE' })))}
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  ) : (
+                    <span className="icon-button-placeholder" />
+                  )}
+                </>
+              ) : (
+                <span className={`badge role-${m.role}`}>{ROLE_LABELS[m.role]}</span>
+              )}
             </li>
           ))}
         </ul>

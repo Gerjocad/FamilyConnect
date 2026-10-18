@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isManager } from './permissions.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -150,11 +151,19 @@ export function crudRouter(db, resource, publish, onChange) {
   };
 
   const ensureOwner = (req, res, row) => {
-    if (resource.ownerOnly && row.created_by !== req.user.id && req.role !== 'admin') {
+    if (resource.ownerOnly && row.created_by !== req.user.id && !isManager(req.role)) {
       res.status(403).json({ error: 'Nur der Ersteller darf das ändern' });
       return false;
     }
     return true;
+  };
+
+  /** Was Kinder dürfen, regelt `childRule` der Ressource; liefert true, wenn erlaubt */
+  const childAllowed = (req, res, action, existing, row) => {
+    if (req.role !== 'child' || !resource.childRule) return true;
+    const problem = resource.childRule({ action, userId: req.user.id, body: req.body ?? {}, existing, row });
+    if (problem) res.status(403).json({ error: problem });
+    return !problem;
   };
 
   router.get('/', (req, res) => {
@@ -167,6 +176,7 @@ export function crudRouter(db, resource, publish, onChange) {
 
   router.post('/', handle((req, res) => {
     const row = validate(req.body, null, req.familyId);
+    if (!childAllowed(req, res, 'create', null, row)) return;
     const cols = ['family_id', 'created_by', ...names];
     const result = db
       .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`)
@@ -182,6 +192,7 @@ export function crudRouter(db, resource, publish, onChange) {
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });
     if (!ensureOwner(req, res, existing)) return;
     const row = validate(req.body, existing, req.familyId);
+    if (!childAllowed(req, res, 'update', existing, row)) return;
     db.prepare(`UPDATE ${table} SET ${names.map((n) => `${n} = ?`).join(', ')} WHERE id = ?`)
       .run(...names.map((n) => row[n]), existing.id);
     notify(req.familyId);
@@ -194,6 +205,7 @@ export function crudRouter(db, resource, publish, onChange) {
     const existing = findOne(req.familyId, req.params.id);
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });
     if (!ensureOwner(req, res, existing)) return;
+    if (!childAllowed(req, res, 'delete', existing, null)) return;
     db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(existing.id);
     notify(req.familyId);
     res.status(204).end();

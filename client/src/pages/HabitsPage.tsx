@@ -8,6 +8,7 @@ import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { addDays, startOfDay, toDateKey, WEEKDAYS_SHORT } from '../dates';
 import { habitParticipants, habitStatus, intervalLabel, nfcUrl, statusLabel } from '../habitStatus';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Checkin, Habit, Member } from '../types';
 import { useCheckins } from '../useCheckins';
@@ -180,20 +181,22 @@ export function HabitsPage() {
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
   const [editing, setEditing] = useState<Habit | 'new' | null>(null);
-  const isAdmin = family.members.find((m) => m.id === user.id)?.role === 'admin';
+  const { isManager } = usePermissions();
   const today = toDateKey(new Date());
 
   return (
     <div className="page narrow">
       <header className="page-header">
         <h1>Gewohnheiten</h1>
-        <button className="button primary" onClick={() => setEditing('new')}><Icon name="plus" /> Gewohnheit</button>
+        {isManager && <button className="button primary" onClick={() => setEditing('new')}><Icon name="plus" /> Gewohnheit</button>}
       </header>
 
       {!habits.loading && habits.items.length === 0 ? (
         <div className="card">
           <EmptyState icon="habit" title="Noch keine Gewohnheiten">
-            Zum Beispiel „Duschen alle 2 Tage“ oder „Zähne putzen täglich“ – abhaken per Knopfdruck oder NFC-Aufkleber.
+            {isManager
+              ? 'Zum Beispiel „Duschen alle 2 Tage“ oder „Zähne putzen täglich“ – abhaken per Knopfdruck oder NFC-Aufkleber.'
+              : 'Gewohnheiten legen deine Eltern an.'}
           </EmptyState>
         </div>
       ) : (
@@ -209,7 +212,7 @@ export function HabitsPage() {
                 </small>
               </span>
               <span className="spacer" />
-              <button className="icon-button" onClick={() => setEditing(habit)} aria-label="Bearbeiten"><Icon name="edit" size={18} /></button>
+              {isManager && <button className="icon-button" onClick={() => setEditing(habit)} aria-label="Bearbeiten"><Icon name="edit" size={18} /></button>}
             </header>
             {habitParticipants(habit, family.members).map((m) => (
               <HabitRow
@@ -217,7 +220,7 @@ export function HabitsPage() {
                 habit={habit}
                 member={m}
                 checkins={checkins.items}
-                canToggle={m.id === user.id || isAdmin}
+                canToggle={m.id === user.id || isManager}
                 onToggle={(done) => void checkins.toggle(habit.id, m.id, today, done)}
               />
             ))}

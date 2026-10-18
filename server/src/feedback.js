@@ -4,6 +4,7 @@ import express, { Router } from 'express';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { isManager } from './permissions.js';
 
 const KINDS = ['bug', 'idea'];
 const STATUSES = ['open', 'done'];
@@ -60,11 +61,11 @@ export function feedbackRouter(db, { auth, member, publish, uploadDir }) {
     res.status(201).json(serialize(db.prepare('SELECT * FROM feedback WHERE id = ?').get(lastInsertRowid)));
   });
 
-  // Status ändern (erledigt/offen): Admins und die Person, die es gemeldet hat
+  // Status ändern (erledigt/offen): Eltern, Admins und die Person, die es gemeldet hat
   router.patch('/api/families/:familyId/feedback/:id', auth, member, (req, res) => {
     const row = find(req);
     if (!row) return res.status(404).json({ error: 'Nicht gefunden' });
-    if (row.created_by !== req.user.id && req.role !== 'admin') return res.status(403).json({ error: 'Keine Berechtigung' });
+    if (row.created_by !== req.user.id && !isManager(req.role)) return res.status(403).json({ error: 'Keine Berechtigung' });
     const status = req.body?.status;
     if (!STATUSES.includes(status)) return res.status(400).json({ error: 'Ungültiger Status' });
     db.prepare('UPDATE feedback SET status = ? WHERE id = ?').run(status, row.id);
@@ -75,7 +76,7 @@ export function feedbackRouter(db, { auth, member, publish, uploadDir }) {
   router.delete('/api/families/:familyId/feedback/:id', auth, member, (req, res) => {
     const row = find(req);
     if (!row) return res.status(404).json({ error: 'Nicht gefunden' });
-    if (row.created_by !== req.user.id && req.role !== 'admin') return res.status(403).json({ error: 'Keine Berechtigung' });
+    if (row.created_by !== req.user.id && !isManager(req.role)) return res.status(403).json({ error: 'Keine Berechtigung' });
     db.prepare('DELETE FROM feedback WHERE id = ?').run(row.id);
     removeImages(JSON.parse(row.images));
     publish(req.familyId, 'feedback');

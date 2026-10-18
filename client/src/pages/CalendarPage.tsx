@@ -9,6 +9,7 @@ import {
 import { useFamily } from '../session';
 import type { CalendarEvent } from '../types';
 import { useResource } from '../useResource';
+import { usePermissions } from '../permissions';
 import { EventForm } from './EventForm';
 import { deleteEvent, saveEvent } from '../eventSeries';
 
@@ -48,6 +49,7 @@ export function CalendarPage() {
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
+  const { canEdit } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
   const visible = useMemo(
@@ -152,6 +154,7 @@ export function CalendarPage() {
           occurrence={editing === 'new' ? undefined : editing.occurrence}
           defaultDay={selected}
           onClose={() => setEditing(null)}
+          readOnly={editing !== 'new' && !canEdit(editing.event)}
           onSave={(data, scope) =>
             editing === 'new' ? saveEvent(events, data) : saveEvent(events, data, editing.event, editing.occurrence, scope)}
           onDelete={editing === 'new' ? undefined : (scope) => deleteEvent(events, editing.event, editing.occurrence, scope)}

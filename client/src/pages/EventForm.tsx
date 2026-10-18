@@ -14,6 +14,8 @@ interface Props {
   onSave(data: Partial<CalendarEvent>, scope: Scope): Promise<unknown>;
   onDelete?(scope: Scope): Promise<unknown>;
   onClose(): void;
+  /** nur ansehen (Kinder bei Terminen anderer) */
+  readOnly?: boolean;
 }
 
 function defaults(day: Date) {
@@ -24,7 +26,7 @@ function defaults(day: Date) {
 
 type Pending = { kind: 'save'; data: Partial<CalendarEvent> } | { kind: 'delete' };
 
-export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onClose }: Props) {
+export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onClose, readOnly = false }: Props) {
   const isSeries = Boolean(event && event.recurrence !== 'none' && occurrence);
   // Bei Serien das angeklickte Vorkommen zeigen, nicht den ersten Termin der Serie
   const initial = event
@@ -99,8 +101,9 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
   }
 
   return (
-    <Modal title={event ? 'Termin bearbeiten' : 'Neuer Termin'} onClose={onClose}>
+    <Modal title={readOnly ? 'Termin' : event ? 'Termin bearbeiten' : 'Neuer Termin'} onClose={onClose}>
       <form onSubmit={submit} className="form">
+        <fieldset className="plain-fieldset" disabled={readOnly}>
         <label>
           Titel
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Fußballtraining" required autoFocus />
@@ -171,9 +174,11 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
           Notizen
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
         </label>
+        </fieldset>
+        {readOnly && <p className="hint">Diesen Termin können nur die Person, die ihn eingetragen hat, und die Eltern ändern.</p>}
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
-          {onDelete && (
+          {onDelete && !readOnly && (
             <button
               type="button"
               className="button danger"
@@ -187,8 +192,8 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
             </button>
           )}
           <span className="spacer" />
-          <button type="button" className="button" onClick={onClose}>Abbrechen</button>
-          <button className="button primary" disabled={busy}>Speichern</button>
+          <button type="button" className="button" onClick={onClose}>{readOnly ? 'Schließen' : 'Abbrechen'}</button>
+          {!readOnly && <button className="button primary" disabled={busy}>Speichern</button>}
         </div>
       </form>
     </Modal>

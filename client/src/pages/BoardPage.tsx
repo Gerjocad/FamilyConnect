@@ -4,6 +4,7 @@ import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { formatTimestamp } from '../dates';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Post } from '../types';
 import { useResource } from '../useResource';
@@ -32,11 +33,11 @@ export function PostCard({ post, onDelete }: { post: Post; onDelete?(): void }) 
 }
 
 export function BoardPage() {
-  const { user, family } = useFamily();
+  const { user } = useFamily();
   const posts = useResource<Post>('posts');
   const [text, setText] = useState('');
   const { busy, error, run } = useAsync();
-  const isAdmin = family.members.find((m) => m.id === user.id)?.role === 'admin';
+  const { isManager } = usePermissions();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -78,7 +79,7 @@ export function BoardPage() {
             <PostCard
               key={p.id}
               post={p}
-              onDelete={p.created_by === user.id || isAdmin ? () => confirm('Beitrag löschen?') && void posts.remove(p.id) : undefined}
+              onDelete={p.created_by === user.id || isManager ? () => confirm('Beitrag löschen?') && void posts.remove(p.id) : undefined}
             />
           ))
         )}

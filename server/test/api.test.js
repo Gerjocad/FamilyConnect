@@ -94,7 +94,7 @@ describe('Familien', () => {
   test('Beitritt per Einladungscode', async () => {
     const { family } = await familyWithTwoMembers();
     assert.equal(family.members.length, 2);
-    assert.deepEqual(family.members.map((m) => m.role), ['admin', 'member']);
+    assert.deepEqual(family.members.map((m) => m.role), ['admin', 'child']);
     assert.notEqual(family.members[0].color, family.members[1].color);
   });
 

@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15',
+    date: '2026-10-19',
+    title: 'Rollen: Admin, Eltern, Kinder',
+    changes: [
+      'Drei Rollen: Admins dürfen alles und verwalten die Familie, Eltern dürfen alle Inhalte bearbeiten, Kinder dürfen alles sehen',
+      'Kinder legen Aufgaben nur für sich an und haken fremde Aufgaben nur ab, wenn sie ihnen oder allen gehören',
+      'Kinder ändern nur eigene Termine und Listen; Termine anderer öffnen sich nur zum Ansehen; Gewohnheiten legen Eltern an',
+      'Essensplan, Rezepte, Kontakte, Einkaufslisten und Pinnwand stehen allen offen',
+      'Familie & Profil: Admins vergeben Rollen und entfernen Mitglieder; neue Mitglieder starten als Kind, bisherige Mitglieder sind jetzt Eltern',
+    ],
+  },
+  {
     version: '1.14',
     date: '2026-10-19',
     title: 'Essensplan neu gestaltet',

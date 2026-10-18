@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { isValidDate } from './crud.js';
 import { todayKey } from './dates.js';
+import { isManager } from './permissions.js';
 
 const SOURCES = ['app', 'nfc', 'button'];
 
@@ -36,12 +37,12 @@ export function habitsRouter(db, { auth, member, publish }) {
     res.status(201).json({ checkin: serializeCheckin(row), already: false, habit: { id: habit.id, title: habit.title, emoji: habit.emoji, family_id: habit.family_id } });
   }
 
-  // Für wen darf abgehakt werden? Für sich selbst – Admins (Eltern) auch für andere
+  // Für wen darf abgehakt werden? Für sich selbst – Eltern und Admins auch für andere
   function targetUser(req, res) {
     const requested = req.body?.user_id;
     if (requested === undefined || requested === req.user.id) return req.user.id;
-    if (req.role !== 'admin') {
-      res.status(403).json({ error: 'Nur Admins dürfen für andere abhaken' });
+    if (!isManager(req.role)) {
+      res.status(403).json({ error: 'Nur Eltern dürfen für andere abhaken' });
       return null;
     }
     return requested;
@@ -88,6 +89,7 @@ export function habitsRouter(db, { auth, member, publish }) {
   router.post('/api/families/:familyId/habits/:habitId/nfc-token', auth, member, (req, res) => {
     const habit = findHabit(req);
     if (!habit) return res.status(404).json({ error: 'Nicht gefunden' });
+    if (!isManager(req.role)) return res.status(403).json({ error: 'Nur Eltern dürfen den NFC-Code erneuern' });
     db.prepare('UPDATE habits SET nfc_token = lower(hex(randomblob(16))) WHERE id = ?').run(habit.id);
     publish(habit.family_id, 'habits');
     res.json({ nfc_token: db.prepare('SELECT nfc_token FROM habits WHERE id = ?').get(habit.id).nfc_token });

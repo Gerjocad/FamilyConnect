@@ -53,8 +53,8 @@ describe('Gewohnheiten', () => {
   });
 
   test('abhaken, doppelt abhaken, rückgängig', async () => {
-    const { kind, fid } = await family();
-    const { data: habit } = await api(`/families/${fid}/habits`, { token: kind, method: 'POST', body: { title: 'Zähne', interval_days: 1 } });
+    const { mama, kind, fid } = await family();
+    const { data: habit } = await api(`/families/${fid}/habits`, { token: mama, method: 'POST', body: { title: 'Zähne', interval_days: 1 } });
     const path = `/families/${fid}/habits/${habit.id}/checkins`;
     const first = await api(path, { token: kind, method: 'POST', body: { date: '2026-10-18' } });
     assert.equal(first.status, 201);

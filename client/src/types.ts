@@ -1,7 +1,9 @@
+export type Role = 'admin' | 'parent' | 'child';
+
 export interface FamilySummary {
   id: number;
   name: string;
-  role: 'admin' | 'member';
+  role: Role;
 }
 
 export interface User {
@@ -16,7 +18,7 @@ export interface Member {
   id: number;
   name: string;
   color: string;
-  role: 'admin' | 'member';
+  role: Role;
   joined_at: string;
 }
 

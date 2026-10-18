@@ -18,6 +18,10 @@ const time = () => ({ type: 'time' });
 
 const RECURRENCES = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
 // Minuten vor Beginn; bei ganztägigen Terminen relativ zu 9:00 Uhr
+// Regeln für Kinder (Rolle „child“): Rückgabe = Fehlermeldung, nichts = erlaubt
+const ownOnly = (message) => ({ action, userId, existing }) =>
+  action !== 'create' && existing.created_by !== userId ? message : undefined;
+
 export const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 1440, 2880];
 
 export const RESOURCES = [
@@ -40,6 +44,7 @@ export const RESOURCES = [
       until: date(),
       reminder_minutes: oneOf(REMINDER_OPTIONS, { default: null }),
     },
+    childRule: ownOnly('Kinder dürfen nur eigene Termine ändern'),
     check(row) {
       if (row.end < row.start) return 'Das Ende darf nicht vor dem Beginn liegen';
       if (row.until && row.until < row.start.slice(0, 10)) return 'Die Serie darf nicht vor ihrem Beginn enden';
@@ -53,6 +58,7 @@ export const RESOURCES = [
       name: text({ required: true, max: 100 }),
       kind: oneOf(['shopping', 'todo'], { default: 'shopping' }),
     },
+    childRule: ownOnly('Kinder dürfen nur eigene Listen umbenennen oder löschen'),
     // Beim Löschen einer Liste verschwinden auch die Einträge
     alsoChanges: ['items'],
   },
@@ -78,6 +84,18 @@ export const RESOURCES = [
       due_date: date(),
       done: bool(),
       recurrence: oneOf(RECURRENCES, { default: 'none' }),
+    },
+    // Kinder legen Aufgaben nur für sich an; fremde Aufgaben dürfen sie nur abhaken (eigene oder für alle)
+    childRule({ action, userId, body, existing, row }) {
+      const own = action === 'create' || existing.created_by === userId;
+      if (own && action !== 'delete') {
+        if (row.assignee_id !== userId) return 'Kinder können Aufgaben nur für sich selbst anlegen';
+        return;
+      }
+      if (action === 'delete') return own ? undefined : 'Kinder dürfen nur eigene Aufgaben löschen';
+      const onlyDone = Object.keys(body).every((key) => key === 'done');
+      if (!onlyDone || (existing.assignee_id !== null && existing.assignee_id !== userId))
+        return 'Kinder dürfen diese Aufgabe nur abhaken, wenn sie ihnen gehört';
     },
     // Wiederkehrende Aufgaben werden beim Abhaken nicht erledigt, sondern rücken zum nächsten Termin vor
     transform(row, existing) {
@@ -141,6 +159,7 @@ export const RESOURCES = [
     order: 'title COLLATE NOCASE ASC',
     // Abhaken läuft über eigene Routen (habits.js); beim Löschen verschwinden auch die Einträge
     alsoChanges: ['checkins'],
+    childRule: () => 'Gewohnheiten legen Eltern an',
     fields: {
       title: text({ required: true, max: 100 }),
       emoji: text({ max: 16 }),

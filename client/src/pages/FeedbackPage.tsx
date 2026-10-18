@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { formatTimestamp } from '../dates';
 import { onLiveChange } from '../live';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 
 interface Feedback {
@@ -56,7 +57,7 @@ export function FeedbackPage() {
   const [copied, setCopied] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const { busy, error, run, setError } = useAsync();
-  const isAdmin = family.members.find((m) => m.id === user.id)?.role === 'admin';
+  const { isManager } = usePermissions();
 
   const reload = useCallback(async () => {
     try {
@@ -188,7 +189,7 @@ export function FeedbackPage() {
         ) : (
           items.map((f) => {
             const author = member(f.created_by) ?? { name: 'Ehemaliges Mitglied', color: '#868e96' };
-            const canEdit = f.created_by === user.id || isAdmin;
+            const canEdit = f.created_by === user.id || isManager;
             return (
               <article key={f.id} className={`post feedback ${f.status === 'done' ? 'is-done' : ''}`}>
                 <Avatar member={author} size={36} />
