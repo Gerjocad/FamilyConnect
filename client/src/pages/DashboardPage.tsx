@@ -11,6 +11,7 @@ import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
 import { useComplaints } from './ComplaintsPage';
+import { useRequests } from './RequestsPage';
 import { OccurrenceRow } from './CalendarPage';
 import { TaskRow, useTaskToggle } from './TasksPage';
 
@@ -57,6 +58,7 @@ export function DashboardPage() {
   const checkins = useCheckins();
   const { isChild } = usePermissions();
   const complaints = useComplaints();
+  const requests = useRequests();
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open');
   // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
   const myHabits = habits.items
@@ -89,6 +91,16 @@ export function DashboardPage() {
       </header>
 
       <div className="dashboard">
+        {requests.needsMe.length > 0 && (
+          <NavCard to="/anfragen" className="span-2 request-alert">
+            <header className="section-header">
+              <h2><Icon name="request" size={18} /> {requests.needsMe.length === 1 ? 'Eine Anfrage wartet' : `${requests.needsMe.length} Anfragen warten`} auf dich</h2>
+              <span className="spacer" />
+              <More />
+            </header>
+            <p className="muted">{requests.needsMe[0].title}</p>
+          </NavCard>
+        )}
         {openComplaints.length > 0 && (
           <NavCard to="/beschwerden" className="span-2 complaint-alert">
             <header className="section-header">

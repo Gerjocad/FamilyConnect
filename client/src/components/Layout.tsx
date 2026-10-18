@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Logo } from './Logo';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useComplaints } from '../pages/ComplaintsPage';
+import { useRequests } from '../pages/RequestsPage';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { CLOSE_DRAWER_EVENT } from './drawer';
@@ -19,6 +20,7 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/essen', label: 'Essensplan', icon: 'meal' },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },
+  { to: '/anfragen', label: 'Anfragen', icon: 'request' },
   { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint' },
   { to: '/feedback', label: 'Feedback', icon: 'feedback' },
   { to: '/einstellungen', label: 'Familie & Profil', icon: 'settings' },
@@ -67,6 +69,8 @@ export function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const complaints = useComplaints();
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open').length;
+  const requests = useRequests();
+  const badges: Record<string, number> = { '/beschwerden': openComplaints, '/anfragen': requests.needsMe.length };
   useDrawerSwipe(drawerOpen, setDrawerOpen);
 
   // Nach dem Antippen eines Menüpunkts schließen
@@ -110,7 +114,7 @@ export function Layout() {
             <NavLink key={item.to} to={item.to} end={item.to === '/'} className="nav-link">
               <Icon name={item.icon} />
               {item.label}
-              {item.to === '/beschwerden' && openComplaints > 0 && <span className="badge nav-badge">{openComplaints}</span>}
+              {badges[item.to] > 0 && <span className="badge nav-badge">{badges[item.to]}</span>}
             </NavLink>
           ))}
         </nav>
@@ -123,7 +127,7 @@ export function Layout() {
       <header className="topbar">
         <button className="icon-button menu-button" onClick={() => setDrawerOpen(true)} aria-label="Menü öffnen" aria-expanded={drawerOpen}>
           <Icon name="menu" />
-          {openComplaints > 0 && <span className="menu-dot" aria-hidden="true" />}
+          {(openComplaints > 0 || requests.needsMe.length > 0) && <span className="menu-dot" aria-hidden="true" />}
         </button>
         <Logo size={28} />
         <strong>{family.name}</strong>

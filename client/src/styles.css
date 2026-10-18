@@ -612,3 +612,47 @@ textarea { resize: vertical; }
 .complaint-alert p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Gewohnheit mit Aufkleber: Kinder sehen statt des Hakens das NFC-Symbol */
 .check-button.nfc-only, .check-button.nfc-only:disabled { opacity: 1; border-style: dashed; border-color: var(--muted); color: var(--muted); cursor: default; display: grid; place-items: center; }
+
+/* --- Anfragen --------------------------------------------------------------- */
+
+.category-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 6px; }
+.category-option {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; cursor: pointer;
+  border-radius: 12px; border: 2px solid var(--border); background: var(--surface); font-size: 0.8rem; font-weight: 600; text-align: center;
+}
+.category-option.active { border-color: var(--accent); background: var(--accent-soft); }
+.category-emoji { font-size: 1.5rem; line-height: 1; }
+
+.request { display: flex; flex-direction: column; gap: 10px; }
+.request-head { display: flex; align-items: flex-start; gap: 10px; }
+.request-emoji { font-size: 1.9rem; line-height: 1; width: 40px; text-align: center; flex-shrink: 0; }
+.request-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.request-title strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.request-people { display: flex; flex-shrink: 0; }
+.request-people .avatar + .avatar { margin-left: -8px; box-shadow: 0 0 0 2px var(--surface); }
+.request-info { display: flex; flex-direction: column; gap: 4px; padding-left: 50px; }
+.request-info p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
+.request-when { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.9rem; }
+.request-status { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.request-status-label { font-weight: 700; font-size: 0.9rem; }
+.request-status.pending .request-status-label { color: #e67700; }
+.request-status.approved { background: #d3f9d8; color: #1b4d26; }
+.request-status.declined { background: #ffe3e3; color: #7a1d1d; }
+.request-status.countered { background: #dbe4ff; color: #1c2f6e; }
+.request-status.withdrawn .request-status-label { color: var(--muted); }
+.request-answer { overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 4px; }
+.request.status-withdrawn, .request.status-declined { opacity: 0.85; }
+.request-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.answer-yes { border-color: var(--success); color: var(--success); }
+.answer-no { border-color: var(--danger); color: var(--danger); }
+.answer-counter { border-color: #4263eb; color: #4263eb; }
+.request-answer-form { padding: 10px; border-radius: 12px; border: 1px dashed var(--border); }
+.request-footer { display: flex; align-items: center; margin-top: -4px; }
+.request-alert { border-color: var(--accent); }
+.request-alert h2 svg { color: var(--accent); }
+.request-alert p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-color-scheme: dark) {
+  .request-status.approved { background: #16351d; color: #b2f2bb; }
+  .request-status.declined { background: #3d1717; color: #ffc9c9; }
+  .request-status.countered { background: #1b2550; color: #bac8ff; }
+}

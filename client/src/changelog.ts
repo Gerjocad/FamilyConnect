@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.20',
+    date: '2026-10-19',
+    title: 'Anfragen',
+    changes: [
+      'Neuer Bereich „Anfragen“ im Menü: „Darf ich mich mit Tim treffen?“, „Haben wir Samstag frei?“ – mit Thema, optional Tag und Uhrzeit, an eine bestimmte Person',
+      'Die Person bekommt eine Push-Nachricht und antwortet mit Ja (Notiz), Nein (Begründung) oder einem Gegenvorschlag mit anderem Tag oder anderer Uhrzeit',
+      'Gegenvorschläge kann man annehmen oder ablehnen, offene Anfragen zurückziehen',
+      'Genehmigte Anfragen mit Termin landen per Tipp im Kalender',
+      'Was auf dich wartet, zeigt die Übersicht und ein Zähler im Menü; Eltern sehen unter „Alle“ jede Anfrage',
+    ],
+  },
+  {
     version: '1.19',
     date: '2026-10-19',
     title: 'Gewohnheiten mit NFC-Aufkleber',

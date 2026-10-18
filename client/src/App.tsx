@@ -15,6 +15,7 @@ import { NewsPage } from './pages/NewsPage';
 import { MealsPage } from './pages/MealsPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { RecipesPage } from './pages/RecipesPage';
+import { RequestsPage } from './pages/RequestsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TasksPage } from './pages/TasksPage';
 import { useSession } from './session';
@@ -58,6 +59,7 @@ export function App() {
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route path="beschwerden" element={<ComplaintsPage />} />
+          <Route path="anfragen" element={<RequestsPage />} />
           <Route path="neuigkeiten" element={<NewsPage />} />
           <Route path="h/:token" element={<HabitCheckinPage />} />
           <Route path="einstellungen" element={<SettingsPage />} />

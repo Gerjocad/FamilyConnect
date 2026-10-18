@@ -10,6 +10,7 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 - **Push-Benachrichtigungen** (Android-App, optional): neue Beiträge, Termine, Aufgaben und Listeneinträge, siehe [deploy/FIREBASE.md](deploy/FIREBASE.md)
 - **Listen**: beliebig viele Einkaufs- und To-do-Listen mit Mengenangaben zum gemeinsamen Abhaken
 - **Rollen**: Admin (verwaltet die Familie), Eltern (bearbeiten alles), Kinder (sehen alles, ändern nur Eigenes; Essensplan, Rezepte, Kontakte, Listen und Pinnwand frei)
+- **Anfragen**: „Darf ich …?“ an eine Person, mit Ja/Nein/Gegenvorschlag, Push-Nachrichten und Übernahme in den Kalender
 - **Beschwerden**: Foto und kurzer Text an eine Person, mit Push-Nachricht, Antwort und „erledigt“; sichtbar für Absender, Empfänger und Eltern
 - **Rezepte**: per Link von Chefkoch & Co. übernehmen oder nach einem Gericht suchen, in den Essensplan eintragen, Portionen umrechnen, Zutaten mit einem Tipp auf die Einkaufsliste setzen; optional mit KI für Seiten ohne Rezept-Daten und eingefügten Text, siehe [deploy/KI.md](deploy/KI.md)
 - **Aufgaben**: mit Zuständigkeit und Fälligkeitsdatum, überfällige Aufgaben werden markiert; wiederkehrende Aufgaben springen beim Abhaken zum nächsten Termin

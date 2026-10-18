@@ -112,6 +112,12 @@ export class PushService {
     this.sendToUsers(userIds, message).catch((err) => console.error('Push fehlgeschlagen:', err.message));
   }
 
+  /** Freie Nachricht an einzelne Personen, z. B. für Anfragen */
+  notify(userIds, message) {
+    if (!this.enabled) return;
+    this.#send(userIds.filter(Boolean), message);
+  }
+
   notifyComplaint({ recipientId, from, text }) {
     if (!this.enabled) return;
     this.#send([recipientId], { title: `Beschwerde von ${from.split(' ')[0]}`, body: text, path: '/beschwerden' });

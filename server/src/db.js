@@ -201,6 +201,30 @@ CREATE TABLE IF NOT EXISTS complaints (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS requests (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  recipient_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  category TEXT NOT NULL DEFAULT 'general',
+  title TEXT NOT NULL,
+  details TEXT NOT NULL DEFAULT '',
+  date TEXT,
+  time_from TEXT,
+  time_to TEXT,
+  -- pending → approved | declined | countered → (approved | withdrawn); withdrawn auch direkt
+  status TEXT NOT NULL DEFAULT 'pending',
+  response_note TEXT NOT NULL DEFAULT '',
+  counter_date TEXT,
+  counter_time_from TEXT,
+  counter_time_to TEXT,
+  counter_accepted INTEGER NOT NULL DEFAULT 0,
+  event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+  responded_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

@@ -12,6 +12,7 @@ import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
 import { ROLES } from './permissions.js';
 import { recipesRouter } from './recipes.js';
+import { requestsRouter } from './requests.js';
 import { RESOURCES } from './resources.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -267,6 +268,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
+  app.use(requestsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   if (uploadDir) app.use(complaintsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir, push }));
 
   for (const resource of RESOURCES) {
