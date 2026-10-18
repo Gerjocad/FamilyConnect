@@ -56,6 +56,9 @@ const relFmt = new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto' });
 export const formatTime = (d: Date) => timeFmt.format(d);
 export const formatDay = (d: Date) => dayFmt.format(d);
 export const formatShortDay = (d: Date) => shortDayFmt.format(d);
+const dayMonthFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' });
+/** „19. Oktober“ */
+export const formatDayMonth = (d: Date) => dayMonthFmt.format(d);
 export const formatMonth = (d: Date) => monthFmt.format(d);
 export const formatDate = (d: Date) => dateFmt.format(d);
 

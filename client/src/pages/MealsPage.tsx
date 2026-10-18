@@ -4,7 +4,7 @@ import { api } from '../api';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
-import { addDays, formatShortDay, sameDay, startOfWeek, toDateKey } from '../dates';
+import { addDays, formatDayMonth, formatShortDay, sameDay, startOfWeek, toDateKey } from '../dates';
 import { useFamily } from '../session';
 import { parseIngredients, quantityOf } from '../ingredients';
 import { importRecipe, searchRecipes, type RecipeDraft, type WebRecipe } from '../recipeWeb';
@@ -283,12 +283,12 @@ export function MealsPage() {
     <div className="page">
       <header className="page-header">
         <h1>Essensplan</h1>
-        <div className="week-nav">
-          <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Vorherige Woche"><Icon name="left" /></button>
-          <span>{formatShortDay(days[0])} – {formatShortDay(days[6])}</span>
-          <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Nächste Woche"><Icon name="right" /></button>
-        </div>
       </header>
+      <div className="week-nav">
+        <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Vorherige Woche"><Icon name="left" /></button>
+        <span>{formatDayMonth(days[0])} – {formatDayMonth(days[6])}</span>
+        <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Nächste Woche"><Icon name="right" /></button>
+      </div>
 
       <div className="meal-week">
         {days.map((day) => {

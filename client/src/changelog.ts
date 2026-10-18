@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14',
+    date: '2026-10-19',
+    title: 'Essensplan aufgeräumt',
+    changes: [
+      'Wochenauswahl mittig und ohne Wochentage: „19. Oktober – 25. Oktober“',
+      'Beide Pfeile sehen gleich aus; Knöpfe bleiben nach dem Antippen nicht mehr grau hinterlegt',
+    ],
+  },
+  {
     version: '1.13',
     date: '2026-10-18',
     title: 'Rezepte suchen und einplanen',
