@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { AuthPage } from './pages/AuthPage';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { ComplaintsPage } from './pages/ComplaintsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FeedbackPage } from './pages/FeedbackPage';
@@ -56,6 +57,7 @@ export function App() {
           <Route path="kontakte" element={<ContactsPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
+          <Route path="beschwerden" element={<ComplaintsPage />} />
           <Route path="neuigkeiten" element={<NewsPage />} />
           <Route path="h/:token" element={<HabitCheckinPage />} />
           <Route path="einstellungen" element={<SettingsPage />} />

@@ -184,6 +184,21 @@ CREATE TABLE IF NOT EXISTS recipes (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS complaints (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  recipient_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  text TEXT NOT NULL,
+  -- Dateinamen der Fotos im Upload-Ordner
+  images TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'open',
+  reply TEXT NOT NULL DEFAULT '',
+  resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  resolved_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

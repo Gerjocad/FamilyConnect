@@ -6,6 +6,7 @@ import {
   requireMember, requireUser, verifyPassword,
 } from './auth.js';
 import { crudRouter } from './crud.js';
+import { complaintsRouter } from './complaints.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
@@ -44,7 +45,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   // Feedback mit Screenshots und der Rezept-Import haben ein eigenes, größeres Limit
   const smallJson = express.json({ limit: '100kb' });
-  const largeBody = /^\/api\/families\/\d+\/(feedback|recipes\/(import|search))$/;
+  const largeBody = /^\/api\/families\/\d+\/(feedback|complaints|recipes\/(import|search))$/;
   app.use((req, res, next) => (largeBody.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
@@ -266,6 +267,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
+  if (uploadDir) app.use(complaintsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir, push }));
 
   for (const resource of RESOURCES) {
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,

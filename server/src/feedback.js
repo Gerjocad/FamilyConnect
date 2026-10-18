@@ -1,17 +1,14 @@
 // Feedback: Fehler melden und Änderungswünsche sammeln, mit Screenshots.
 // Bilder liegen als Dateien im Upload-Ordner und sind nur für angemeldete Familienmitglieder abrufbar.
 import express, { Router } from 'express';
-import { randomBytes } from 'node:crypto';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { isManager } from './permissions.js';
+import { FILE_RE, removeImages as removeUploads, saveImages } from './uploads.js';
 
 const KINDS = ['bug', 'idea'];
 const STATUSES = ['open', 'done'];
 const MAX_IMAGES = 5;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-const FILE_RE = /^[0-9a-f]{32}\.(jpg|png|webp)$/;
 
 export function feedbackRouter(db, { auth, member, publish, uploadDir }) {
   const router = Router();
@@ -20,20 +17,7 @@ export function feedbackRouter(db, { auth, member, publish, uploadDir }) {
   const serialize = (row) => ({ ...row, family_id: undefined, images: JSON.parse(row.images) });
   const find = (req) => db.prepare('SELECT * FROM feedback WHERE family_id = ? AND id = ?').get(req.familyId, Number(req.params.id));
 
-  /** data:image/…;base64,… → Dateiname im Upload-Ordner */
-  function saveImage(dataUrl) {
-    const match = typeof dataUrl === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
-    if (!match) throw new Error('Nur JPEG-, PNG- oder WebP-Bilder sind erlaubt');
-    const bytes = Buffer.from(match[2], 'base64');
-    if (bytes.length > MAX_IMAGE_BYTES) throw new Error('Ein Bild ist zu groß (max. 5 MB)');
-    const name = `${randomBytes(16).toString('hex')}.${TYPES[match[1]]}`;
-    writeFileSync(join(uploadDir, name), bytes);
-    return name;
-  }
-
-  const removeImages = (names) => {
-    for (const name of names) if (FILE_RE.test(name)) rmSync(join(uploadDir, name), { force: true });
-  };
+  const removeImages = (names) => removeUploads(uploadDir, names);
 
   router.get('/api/families/:familyId/feedback', auth, member, (req, res) => {
     const rows = db.prepare('SELECT * FROM feedback WHERE family_id = ? ORDER BY status = \'done\', created_at DESC, id DESC').all(req.familyId);
@@ -48,11 +32,10 @@ export function feedbackRouter(db, { auth, member, publish, uploadDir }) {
     if (!text) return res.status(400).json({ error: 'Bitte beschreibe kurz, worum es geht' });
     if (images.length > MAX_IMAGES) return res.status(400).json({ error: `Höchstens ${MAX_IMAGES} Bilder` });
 
-    const saved = [];
+    let saved;
     try {
-      for (const image of images) saved.push(saveImage(image));
+      saved = saveImages(uploadDir, images);
     } catch (err) {
-      removeImages(saved);
       return res.status(400).json({ error: err.message });
     }
     const { lastInsertRowid } = db.prepare('INSERT INTO feedback (family_id, created_by, kind, text, images) VALUES (?, ?, ?, ?, ?)')

@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.17',
+    date: '2026-10-19',
+    title: 'Beschwerden',
+    changes: [
+      'Neue Seite „Beschwerden“ (Lautsprecher-Symbol oben): Foto und kurzer Text an eine bestimmte Person',
+      'Die Person bekommt eine Push-Nachricht und einen Hinweis auf der Übersicht, kann antworten und die Beschwerde erledigen',
+      'Sichtbar nur für Absender, Empfänger und Eltern – Eltern sehen unter „Alle“ jede Beschwerde',
+      'Feedback ist auf dem Handy jetzt unter Familie & Profil zu finden',
+    ],
+  },
+  {
     version: '1.16',
     date: '2026-10-19',
     title: 'App-Farben',

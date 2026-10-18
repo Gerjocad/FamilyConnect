@@ -17,6 +17,7 @@ const NAV: { to: string; label: string; icon: IconName; mobile: boolean }[] = [
   { to: '/essen', label: 'Essensplan', icon: 'meal', mobile: false },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe', mobile: false },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts', mobile: false },
+  { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint', mobile: false },
   { to: '/feedback', label: 'Feedback', icon: 'feedback', mobile: false },
   { to: '/einstellungen', label: 'Familie & Profil', icon: 'settings', mobile: false },
 ];
@@ -77,7 +78,7 @@ export function Layout() {
         <NavLink to="/essen" className="icon-button" aria-label="Essensplan"><Icon name="meal" /></NavLink>
         <NavLink to="/rezepte" className="icon-button" aria-label="Rezepte"><Icon name="recipe" /></NavLink>
         <NavLink to="/kontakte" className="icon-button" aria-label="Kontakte"><Icon name="contacts" /></NavLink>
-        <NavLink to="/feedback" className="icon-button" aria-label="Feedback"><Icon name="feedback" /></NavLink>
+        <NavLink to="/beschwerden" className="icon-button" aria-label="Beschwerden"><Icon name="complaint" /></NavLink>
         <NavLink to="/einstellungen" aria-label="Familie & Profil"><Avatar member={user} size={30} /></NavLink>
       </header>
 

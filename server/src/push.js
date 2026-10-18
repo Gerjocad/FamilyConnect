@@ -112,6 +112,16 @@ export class PushService {
     this.sendToUsers(userIds, message).catch((err) => console.error('Push fehlgeschlagen:', err.message));
   }
 
+  notifyComplaint({ recipientId, from, text }) {
+    if (!this.enabled) return;
+    this.#send([recipientId], { title: `Beschwerde von ${from.split(' ')[0]}`, body: text, path: '/beschwerden' });
+  }
+
+  notifyComplaintResolved({ creatorId, by, reply }) {
+    if (!this.enabled || !creatorId) return;
+    this.#send([creatorId], { title: `${by.split(' ')[0]} hat deine Beschwerde erledigt`, body: reply || 'Erledigt ✔', path: '/beschwerden' });
+  }
+
   /** Wird von den CRUD-Routen nach jeder Änderung aufgerufen */
   handleChange({ action, path, row, before, user, familyId }) {
     if (!this.enabled) return;

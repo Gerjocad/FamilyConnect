@@ -238,6 +238,15 @@ export function SettingsPage() {
         </>
       )}
 
+      <Link to="/feedback" className="card news-link">
+        <Icon name="feedback" size={22} />
+        <span>
+          <strong>Feedback</strong>
+          <small className="muted">Fehler melden oder Wünsche für die App</small>
+        </span>
+        <Icon name="right" size={18} />
+      </Link>
+
       <Link to="/neuigkeiten" className="card news-link">
         <Icon name="sparkle" size={22} />
         <span>

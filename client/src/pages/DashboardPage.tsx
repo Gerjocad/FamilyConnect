@@ -9,6 +9,7 @@ import type { CalendarEvent, Habit, Meal, Post, Task } from '../types';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
+import { useComplaints } from './ComplaintsPage';
 import { OccurrenceRow } from './CalendarPage';
 import { TaskRow, useTaskToggle } from './TasksPage';
 
@@ -53,6 +54,8 @@ export function DashboardPage() {
   const { toggle, toast } = useTaskToggle(tasks);
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
+  const complaints = useComplaints();
+  const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open');
   // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
   const myHabits = habits.items
     .filter((h) => h.member_ids.length === 0 || h.member_ids.includes(user.id))
@@ -84,6 +87,16 @@ export function DashboardPage() {
       </header>
 
       <div className="dashboard">
+        {openComplaints.length > 0 && (
+          <NavCard to="/beschwerden" className="span-2 complaint-alert">
+            <header className="section-header">
+              <h2><Icon name="complaint" size={18} /> {openComplaints.length === 1 ? 'Eine Beschwerde' : `${openComplaints.length} Beschwerden`} an dich</h2>
+              <span className="spacer" />
+              <More />
+            </header>
+            <p className="muted">{openComplaints[0].text}</p>
+          </NavCard>
+        )}
         <NavCard to="/kalender" className="span-2">
           <header className="section-header">
             <h2><Icon name="calendar" size={18} /> Die nächsten 7 Tage</h2>
