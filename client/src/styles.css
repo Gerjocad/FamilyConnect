@@ -327,19 +327,31 @@ textarea { resize: vertical; }
 .week-nav { display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 600; margin-bottom: 12px; }
 .week-nav span { min-width: 0; text-align: center; }
 .week-nav .icon-button { background: var(--surface-2); border-radius: 50%; }
-.meal-week { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-@media (min-width: 1100px) { .meal-week { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
-.meal-day { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.meal-day.today { border-color: var(--accent); }
-.meal-day.today h3 { color: var(--accent); }
-.meal-slot {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; min-height: 56px;
-  padding: 8px 10px; border-radius: 10px; border: 1.5px dashed var(--border); background: transparent; cursor: pointer;
+/* Eine Karte pro Tag, untereinander: links das Datum, rechts Frühstück / Mittag / Abend */
+.meal-list { display: flex; flex-direction: column; gap: 10px; }
+.meal-day { display: flex; align-items: stretch; gap: 14px; padding: 12px 14px; }
+.meal-day.past { opacity: 0.55; }
+.meal-day.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.meal-date {
+  width: 52px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 12px; background: var(--surface-2); padding: 6px 0; align-self: flex-start;
 }
-.meal-slot small { color: var(--muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.meal-slot span { color: var(--muted); overflow-wrap: break-word; hyphens: auto; max-width: 100%; }
-.meal-slot.filled { border-style: solid; background: var(--surface-2); }
-.meal-slot.filled span { color: var(--text); font-weight: 600; }
+.meal-weekday { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.meal-daynum { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.meal-day.today .meal-date { background: var(--accent); color: #fff; }
+.meal-day.today .meal-weekday { color: #fff; }
+.meal-slots { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.meal-slot {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 2px;
+  background: none; border: 0; border-bottom: 1px solid var(--border); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.meal-slot:last-child { border-bottom: 0; }
+.meal-slot-label { width: 88px; flex-shrink: 0; color: var(--muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.meal-slot-title { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.meal-slot-empty { flex: 1; display: inline-flex; align-items: center; gap: 4px; color: var(--muted); opacity: 0.7; font-size: 0.9rem; }
+.meal-slot-thumb { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.meal-slot-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; flex-shrink: 0; }
+@media (hover: hover) { .meal-slot:hover .meal-slot-empty { opacity: 1; color: var(--accent); } }
 
 /* --- Kontakte ------------------------------------------------------------- */
 

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api';
 import { Icon } from '../components/Icon';
@@ -270,19 +270,34 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   );
 }
 
+const weekdayFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
+
 export function MealsPage() {
   const meals = useResource<Meal>('meals');
+  const recipes = useResource<Recipe>('recipes');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [editing, setEditing] = useState<{ date: string; slot: MealSlot; meal?: Meal } | null>(null);
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
+  const todayKey = toDateKey(today);
+  const isCurrentWeek = sameDay(weekStart, startOfWeek(today));
+  const todayRef = useRef<HTMLElement>(null);
+
+  // Beim Öffnen zum heutigen Tag scrollen (sonst steht z. B. am Sonntag alles Wichtige ganz unten)
+  useEffect(() => {
+    if (isCurrentWeek && !meals.loading) todayRef.current?.scrollIntoView({ block: 'center' });
+  }, [meals.loading]);
 
   const find = (date: string, slot: MealSlot) => meals.items.find((m) => m.date === date && m.slot === slot);
+  const recipeOf = (meal?: Meal) => (meal?.recipe_id ? recipes.items.find((r) => r.id === meal.recipe_id) : undefined);
 
   return (
-    <div className="page">
+    <div className="page narrow">
       <header className="page-header">
         <h1>Essensplan</h1>
+        {!isCurrentWeek && (
+          <button className="button" onClick={() => setWeekStart(startOfWeek(today))}>Diese Woche</button>
+        )}
       </header>
       <div className="week-nav">
         <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Vorherige Woche"><Icon name="left" /></button>
@@ -290,21 +305,39 @@ export function MealsPage() {
         <button className="icon-button" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Nächste Woche"><Icon name="right" /></button>
       </div>
 
-      <div className="meal-week">
+      <div className="meal-list">
         {days.map((day) => {
           const key = toDateKey(day);
+          const isToday = key === todayKey;
           return (
-            <section key={key} className={`card meal-day ${sameDay(day, today) ? 'today' : ''}`}>
-              <h3>{formatShortDay(day)}</h3>
-              {SLOTS.map(({ slot, label }) => {
-                const meal = find(key, slot);
-                return (
-                  <button key={slot} className={`meal-slot ${meal ? 'filled' : ''}`} onClick={() => setEditing({ date: key, slot, meal })}>
-                    <small>{label}</small>
-                    <span>{meal?.title ?? '+'}</span>
-                  </button>
-                );
-              })}
+            <section key={key} ref={isToday ? todayRef : undefined} className={`card meal-day ${isToday ? 'today' : ''} ${key < todayKey ? 'past' : ''}`}>
+              <div className="meal-date" aria-label={formatShortDay(day)}>
+                <span className="meal-weekday">{isToday ? 'Heute' : weekdayFmt.format(day).replace('.', '')}</span>
+                <span className="meal-daynum">{day.getDate()}</span>
+              </div>
+              <div className="meal-slots">
+                {SLOTS.map(({ slot, label }) => {
+                  const meal = find(key, slot);
+                  const recipe = recipeOf(meal);
+                  return (
+                    <button
+                      key={slot}
+                      className={`meal-slot ${meal ? 'filled' : ''}`}
+                      onClick={() => setEditing({ date: key, slot, meal })}
+                      aria-label={`${label}: ${meal?.title ?? 'eintragen'}`}
+                    >
+                      <span className="meal-slot-label">{label}</span>
+                      {meal ? (
+                        <span className="meal-slot-title">{meal.title}</span>
+                      ) : (
+                        <span className="meal-slot-empty"><Icon name="plus" size={14} /> Eintragen</span>
+                      )}
+                      {recipe?.image_url && <img className="meal-slot-thumb" src={recipe.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+                      {recipe && !recipe.image_url && <span className="meal-slot-icon"><Icon name="recipe" size={16} /></span>}
+                    </button>
+                  );
+                })}
+              </div>
             </section>
           );
         })}

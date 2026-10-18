@@ -14,8 +14,11 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.14',
     date: '2026-10-19',
-    title: 'Essensplan aufgeräumt',
+    title: 'Essensplan neu gestaltet',
     changes: [
+      'Neue, übersichtliche Wochenansicht: jeder Tag eine Karte untereinander, links das Datum, rechts Frühstück, Mittag und Abend',
+      'Heute ist farbig hervorgehoben, vergangene Tage sind blasser; beim Öffnen springt die Seite zum heutigen Tag',
+      'Gerichte aus Rezepten zeigen ein kleines Bild; „Diese Woche“ führt aus anderen Wochen zurück',
       'Wochenauswahl mittig und ohne Wochentage: „19. Oktober – 25. Oktober“',
       'Beide Pfeile sehen gleich aus; Knöpfe bleiben nach dem Antippen nicht mehr grau hinterlegt',
     ],
