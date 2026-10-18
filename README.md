@@ -50,6 +50,10 @@ Umgebungsvariablen: `PORT` (Standard 3001) und `DATABASE_FILE` (Standard `data/f
 HTTPS über Caddy, Firewall und tägliche Backups. Wie das kostenlos bei Oracle Cloud geht, steht Schritt für Schritt
 in [deploy/ORACLE.md](deploy/ORACLE.md).
 
+## Automatische Updates
+
+Der Server aktualisiert sich jede Nacht selbst, die Android-App lädt ihre Oberfläche vom Server, und neue APKs baut GitHub Actions und bietet sie in der App an. Einrichtung: [deploy/UPDATES.md](deploy/UPDATES.md).
+
 ## Android-App (APK)
 
 Die Android-App ist eine Hülle um dieselbe Oberfläche (Capacitor). Sie spricht mit dem FamilyConnect-Server,

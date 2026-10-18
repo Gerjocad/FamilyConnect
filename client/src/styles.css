@@ -396,3 +396,13 @@ textarea { resize: vertical; }
 .checkin-icon.neutral { background: var(--surface-2); color: var(--muted); }
 .checkin-icon.error-icon { background: #fde2ea; color: var(--danger); font-weight: 800; }
 @keyframes pop { from { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } }
+
+/* --- Update-Hinweis -------------------------------------------------------- */
+
+.update-banner {
+  display: flex; align-items: center; gap: 12px; max-width: 1200px; margin: 0 auto 16px;
+  padding: 12px 14px; border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-strong);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.update-banner > span { display: flex; flex-direction: column; flex: 1; min-width: 0; color: var(--text); }
+.update-banner small { color: var(--muted); }

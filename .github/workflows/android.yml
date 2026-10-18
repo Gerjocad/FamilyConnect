@@ -1,0 +1,93 @@
+# Baut die Android-App, signiert sie mit dem festen Schlüssel und veröffentlicht sie als GitHub-Release.
+# Der FamilyConnect-Server liest version.json aus dem neuesten Release und bietet das Update in der App an.
+#
+# Die Oberfläche lädt die App direkt vom Server – eine neue APK ist nur bei Änderungen am nativen Teil nötig
+# (Android-Projekt, Plugins, Capacitor-Konfiguration). Deshalb läuft dieser Workflow nur dann automatisch.
+#
+# Benötigte Secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64   Signierschlüssel (base64)
+#   ANDROID_KEYSTORE_PASSWORD Passwort des Schlüssels
+name: Android-App
+
+on:
+  push:
+    paths:
+      - 'client/android/**'
+      - 'client/capacitor.config.ts'
+      - 'client/package.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: Server-Tests
+        run: npm test
+
+      - name: Signierschlüssel bereitstellen
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Secret ANDROID_KEYSTORE_BASE64 fehlt – siehe deploy/UPDATES.md"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Versionsnummer festlegen
+        run: |
+          echo "APP_VERSION_CODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "APP_VERSION_NAME=2.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+
+      - name: App bauen
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          cd client
+          npx vite build
+          npx cap sync android
+          cd android
+          ./gradlew assembleRelease --no-daemon
+          # Ohne gültige Signatur entstünde nur app-release-unsigned.apk – dann soll dieser Schritt scheitern
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/FamilyConnect.apk"
+
+      - name: Signatur prüfen
+        run: |
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$RUNNER_TEMP/FamilyConnect.apk" | head -n 3
+
+      - name: Als Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP"
+          printf '{"versionCode": %s, "versionName": "%s"}\n' "$APP_VERSION_CODE" "$APP_VERSION_NAME" > version.json
+          gh release create "app-$APP_VERSION_CODE" FamilyConnect.apk version.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "FamilyConnect $APP_VERSION_NAME" \
+            --notes "Android-App, gebaut aus ${GITHUB_SHA::7}. Wird in der App automatisch als Update angeboten." \
+            --latest

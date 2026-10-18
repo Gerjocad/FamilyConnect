@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react';
-import { api } from '../api';
+import { useEffect, useState, type FormEvent } from 'react';
+import { api, isNativeApp } from '../api';
+import { availableUpdate, installUpdate, installedVersion, type AppVersion } from '../appUpdate';
 import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
@@ -19,6 +20,22 @@ export function SettingsPage() {
   const profile = useAsync();
   const fam = useAsync();
   const other = useAsync();
+  const [version, setVersion] = useState<AppVersion | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<string | null>(null);
+  useEffect(() => {
+    void installedVersion().then(setVersion).catch(() => {});
+  }, []);
+
+  const checkUpdate = async () => {
+    setUpdateInfo('Suche …');
+    const update = await availableUpdate();
+    if (update) {
+      setUpdateInfo(`Version ${update.versionName} wird heruntergeladen …`);
+      installUpdate(update);
+    } else {
+      setUpdateInfo('Du hast die neueste Version.');
+    }
+  };
 
   const saveProfile = (patch: { name?: string; color?: string }) =>
     void profile.run(async () => {
@@ -154,6 +171,17 @@ export function SettingsPage() {
         </form>
         {other.error && <p className="error">{other.error}</p>}
       </section>
+
+      {isNativeApp && (
+        <section className="card">
+          <h2>App</h2>
+          <div className="row align-end">
+            <p className="muted spacer">Version {version ? `${version.versionName} (${version.versionCode})` : '…'}</p>
+            <button className="button" onClick={() => void checkUpdate()}><Icon name="download" size={18} /> Nach Updates suchen</button>
+          </div>
+          {updateInfo && <p className="muted">{updateInfo}</p>}
+        </section>
+      )}
 
       <button className="button wide" onClick={() => void signOut()}><Icon name="logout" size={18} /> Abmelden</button>
     </div>

@@ -2,6 +2,7 @@ import { networkInterfaces } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
+import { AppRelease } from './appRelease.js';
 import { openDatabase } from './db.js';
 import { loadServiceAccount, PushService } from './push.js';
 
@@ -13,7 +14,10 @@ const dbFile = process.env.DATABASE_FILE ?? join(root, 'data', 'familyconnect.db
 
 const db = openDatabase(dbFile);
 const push = new PushService(db, loadServiceAccount(process.env.FIREBASE_SERVICE_ACCOUNT));
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push });
+// GitHub-Repository mit den App-Releases; APP_RELEASES_REPO=off schaltet die Update-Prüfung ab
+const releasesRepo = process.env.APP_RELEASES_REPO ?? 'Gerjocad/FamilyConnect';
+const appRelease = new AppRelease(releasesRepo === 'off' ? null : releasesRepo);
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease });
 
 app.listen(port, host, () => {
   console.log(`FamilyConnect läuft auf http://localhost:${port}`);

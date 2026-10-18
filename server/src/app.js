@@ -17,7 +17,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push } = {}) {
+export function createApp(db, { staticDir, push, appRelease } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -40,6 +40,13 @@ export function createApp(db, { staticDir, push } = {}) {
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
+
+  // Neueste Android-App für das Update in der App
+  app.get('/api/app/latest', async (req, res) => {
+    const latest = await appRelease?.latest();
+    if (!latest) return res.status(404).json({ error: 'Keine App-Version veröffentlicht' });
+    res.json(latest);
+  });
 
   const familiesOf = (userId) =>
     db.prepare(
@@ -224,8 +231,17 @@ export function createApp(db, { staticDir, push } = {}) {
   // --- Frontend ausliefern (nach "npm run build") ----------------------------
 
   if (staticDir && existsSync(staticDir)) {
-    app.use(express.static(staticDir));
-    app.get('/{*path}', (req, res) => res.sendFile(join(staticDir, 'index.html')));
+    // Dateien unter /assets haben einen Hash im Namen und ändern sich nie; alles andere
+    // (vor allem index.html) immer frisch laden, damit Updates sofort in der App ankommen
+    app.use(express.static(staticDir, {
+      setHeaders(res, path) {
+        res.set('Cache-Control', /[\\/]assets[\\/]/.test(path) ? 'public, max-age=31536000, immutable' : 'no-cache');
+      },
+    }));
+    app.get('/{*path}', (req, res) => {
+      res.set('Cache-Control', 'no-cache');
+      res.sendFile(join(staticDir, 'index.html'));
+    });
   }
 
   app.use((err, req, res, _next) => {

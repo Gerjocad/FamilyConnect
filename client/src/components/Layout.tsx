@@ -3,6 +3,7 @@ import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { Icon, type IconName } from './Icon';
 import { NotificationBridge } from './NotificationBridge';
+import { UpdateBanner } from './UpdateBanner';
 
 const NAV: { to: string; label: string; icon: IconName; mobile: boolean }[] = [
   { to: '/', label: 'Übersicht', icon: 'home', mobile: true },
@@ -65,6 +66,7 @@ export function Layout() {
       </header>
 
       <main className="content">
+        <UpdateBanner />
         <Outlet />
       </main>
       <NotificationBridge />

@@ -118,6 +118,31 @@ $DOMAIN {
 }
 CADDY
 
+# --- Nächtliches automatisches Update -----------------------------------------
+cat > /etc/systemd/system/familyconnect-update.service <<UNIT
+[Unit]
+Description=FamilyConnect aktualisieren
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash $APP_DIR/deploy/update.sh
+UNIT
+
+cat > /etc/systemd/system/familyconnect-update.timer <<UNIT
+[Unit]
+Description=FamilyConnect jede Nacht aktualisieren
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Europe/Berlin
+RandomizedDelaySec=20min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
 # --- Tägliches Backup (14 Tage aufbewahren) -----------------------------------
 cat > /etc/cron.daily/familyconnect-backup <<BACKUP
 #!/bin/sh
@@ -151,6 +176,7 @@ fi
 say "Starte Dienste"
 systemctl daemon-reload
 systemctl enable -q familyconnect caddy
+systemctl enable -q --now familyconnect-update.timer
 systemctl restart familyconnect
 systemctl reload caddy 2>/dev/null || systemctl restart caddy
 
@@ -168,7 +194,8 @@ cat <<DONE
   - Im Browser öffnen oder in der Android-App als Server-Adresse eintragen.
   - Das HTTPS-Zertifikat holt Caddy beim ersten Aufruf automatisch (kann 1–2 Minuten dauern).
     Klappt das nicht, sind in der Oracle-Konsole die Ports 80 und 443 noch nicht freigegeben.
-  - Aktualisieren: denselben Installationsbefehl erneut ausführen.
+  - Updates: jede Nacht um ca. 3:30 Uhr automatisch (Protokoll: journalctl -u familyconnect-update)
+    Sofort aktualisieren: sudo systemctl start familyconnect-update
   - Backups liegen täglich in $BACKUP_DIR
   - Protokoll ansehen: journalctl -u familyconnect -f
 
