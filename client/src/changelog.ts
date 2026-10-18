@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10',
+    date: '2026-10-18',
+    title: 'Updates ohne Neustart',
+    changes: [
+      'Kommt die App aus dem Hintergrund zurück und gibt es eine neue Version, lädt sie sich automatisch neu – Wegwischen ist nicht mehr nötig',
+    ],
+  },
+  {
     version: '1.9',
     date: '2026-10-18',
     title: 'Neuigkeiten',
