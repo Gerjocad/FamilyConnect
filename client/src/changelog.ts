@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.12',
+    date: '2026-10-18',
+    title: 'Rezepte im Essensplan',
+    changes: [
+      'Beim Plus im Essensplan lässt sich direkt ein gespeichertes Rezept auswählen – oder wie bisher selbst etwas eintragen',
+      'Aus dem Essensplan mit „Rezept öffnen“ direkt zum Rezept springen',
+      '„Zutaten übernehmen“ nimmt bei Rezepten die Zutaten samt Mengen auf die Einkaufsliste',
+    ],
+  },
+  {
     version: '1.11',
     date: '2026-10-18',
     title: 'Rezepte',

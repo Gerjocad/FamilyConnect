@@ -12,6 +12,7 @@ const member = () => ({ type: 'member' });
 const members = () => ({ type: 'members' });
 const listRef = (opts = {}) => ({ type: 'list', ...opts });
 const dates = () => ({ type: 'dates' });
+const recipeRef = () => ({ type: 'recipe' });
 const int = (min, max, opts = {}) => ({ type: 'int', min, max, ...opts });
 const time = () => ({ type: 'time' });
 
@@ -106,6 +107,8 @@ export const RESOURCES = [
       slot: oneOf(['breakfast', 'lunch', 'dinner'], { required: true }),
       title: text({ required: true, max: 200 }),
       notes: text({ max: 2000 }),
+      // Gericht aus den Rezepten (optional)
+      recipe_id: recipeRef(),
     },
     conflictMessage: 'Für diese Mahlzeit ist bereits etwas geplant',
   },
@@ -113,6 +116,8 @@ export const RESOURCES = [
     path: 'recipes',
     table: 'recipes',
     order: 'title COLLATE NOCASE ASC',
+    // Beim Löschen verlieren Essensplan-Einträge ihre Verknüpfung
+    alsoChanges: ['meals'],
     fields: {
       title: text({ required: true, max: 200 }),
       category: text({ max: 100 }),

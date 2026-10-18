@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { api } from '../api';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { addDays, formatShortDay, sameDay, startOfWeek, toDateKey } from '../dates';
 import { useFamily } from '../session';
-import type { List, Meal, MealSlot } from '../types';
+import { parseIngredients, quantityOf } from '../ingredients';
+import type { List, Meal, MealSlot, Recipe } from '../types';
 import { useResource } from '../useResource';
 
 const SLOTS: { slot: MealSlot; label: string }[] = [
@@ -13,6 +15,33 @@ const SLOTS: { slot: MealSlot; label: string }[] = [
   { slot: 'lunch', label: 'Mittag' },
   { slot: 'dinner', label: 'Abend' },
 ];
+
+function RecipePicker({ recipes, onPick }: { recipes: Recipe[]; onPick(recipe: Recipe): void }) {
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const shown = recipes.filter((r) => !q || r.title.toLowerCase().includes(q) || r.category.toLowerCase().includes(q));
+  return (
+    <div className="recipe-picker">
+      {recipes.length > 5 && (
+        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rezept suchen …" aria-label="Rezept suchen" autoFocus />
+      )}
+      <div className="recipe-picker-list">
+        {shown.map((r) => (
+          <button type="button" key={r.id} className="recipe-option" onClick={() => onPick(r)}>
+            <span className="recipe-thumb small">
+              {r.image_url ? <img src={r.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Icon name="recipe" size={18} />}
+            </span>
+            <span className="recipe-card-text">
+              <strong>{r.title}</strong>
+              {(r.category || r.duration) && <small className="muted">{[r.category, r.duration].filter(Boolean).join(' · ')}</small>}
+            </span>
+          </button>
+        ))}
+        {shown.length === 0 && <p className="muted">Kein Rezept gefunden.</p>}
+      </div>
+    </div>
+  );
+}
 
 function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   meal?: Meal;
@@ -24,27 +53,42 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
 }) {
   const { family } = useFamily();
   const lists = useResource<List>('lists');
+  const recipes = useResource<Recipe>('recipes');
   const [title, setTitle] = useState(meal?.title ?? '');
   const [notes, setNotes] = useState(meal?.notes ?? '');
+  const [recipeId, setRecipeId] = useState<number | null>(meal?.recipe_id ?? null);
+  // Neuer Eintrag: erst aus den Rezepten wählen, sofern es welche gibt
+  const [mode, setMode] = useState<'recipe' | 'free'>(meal ? 'free' : 'recipe');
   const [targetList, setTargetList] = useState<number | ''>('');
   const [added, setAdded] = useState<string | null>(null);
   const { busy, error, run } = useAsync();
+  const recipe = recipes.items.find((r) => r.id === recipeId);
   const shoppingLists = lists.items.filter((l) => l.kind === 'shopping');
-  const ingredients = notes.split('\n').map((l) => l.trim()).filter(Boolean);
   const listId = targetList || shoppingLists[0]?.id;
+  const picking = mode === 'recipe' && !recipe && !recipes.loading && recipes.items.length > 0;
+
+  // Mit Rezept kommen die Zutaten (mit Menge) aus dem Rezept, sonst aus dem Notizfeld
+  const ingredients = recipe
+    ? parseIngredients(recipe.ingredients).filter((i) => !i.heading).map((i) => ({ text: i.name, quantity: quantityOf(i) }))
+    : notes.split('\n').map((l) => l.trim()).filter(Boolean).map((text) => ({ text, quantity: '' }));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await onSave({ date, slot, title, notes });
+      await onSave({ date, slot, title, notes, recipe_id: recipe ? recipe.id : null });
       onClose();
     });
   };
 
+  const pick = (r: Recipe) => {
+    setRecipeId(r.id);
+    setTitle(r.title);
+  };
+
   const addToList = () =>
     void run(async () => {
-      for (const text of ingredients) {
-        await api(`/families/${family.id}/items`, { method: 'POST', body: { list_id: listId, text } });
+      for (const item of ingredients) {
+        await api(`/families/${family.id}/items`, { method: 'POST', body: { list_id: listId, text: item.text.slice(0, 200), quantity: item.quantity.slice(0, 50) } });
       }
       setAdded(`${ingredients.length} Zutat${ingredients.length === 1 ? '' : 'en'} hinzugefügt`);
     });
@@ -54,15 +98,45 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
   return (
     <Modal title={`${label} · ${formatShortDay(new Date(`${date}T00:00`))}`} onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        <label>
-          Gericht
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Spaghetti Bolognese" required autoFocus />
-        </label>
-        <label>
-          Zutaten (eine pro Zeile)
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={5} placeholder={'500 g Hackfleisch\nTomaten\nSpaghetti'} />
-        </label>
-        {ingredients.length > 0 && shoppingLists.length > 0 && (
+        {recipes.items.length > 0 && (
+          <div className="segmented" role="tablist">
+            <button type="button" role="tab" aria-selected={mode === 'recipe'} className={mode === 'recipe' ? 'active' : ''} onClick={() => setMode('recipe')}>
+              Aus Rezepten
+            </button>
+            <button type="button" role="tab" aria-selected={mode === 'free'} className={mode === 'free' ? 'active' : ''} onClick={() => { setMode('free'); setRecipeId(null); }}>
+              Selbst eintragen
+            </button>
+          </div>
+        )}
+
+        {picking ? (
+          <RecipePicker recipes={recipes.items} onPick={pick} />
+        ) : recipe ? (
+          <div className="meal-recipe">
+            <span className="recipe-thumb small">
+              {recipe.image_url ? <img src={recipe.image_url} alt="" referrerPolicy="no-referrer" /> : <Icon name="recipe" size={18} />}
+            </span>
+            <span className="recipe-card-text">
+              <strong>{recipe.title}</strong>
+              <Link className="link-button" to={`/rezepte/${recipe.id}`}>Rezept öffnen</Link>
+            </span>
+            <span className="spacer" />
+            <button type="button" className="link-button" onClick={() => { setRecipeId(null); setMode('recipe'); }}>Ändern</button>
+          </div>
+        ) : (
+          <>
+            <label>
+              Gericht
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="z. B. Spaghetti Bolognese" required autoFocus />
+            </label>
+            <label>
+              Zutaten (eine pro Zeile)
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={5} placeholder={'500 g Hackfleisch\nTomaten\nSpaghetti'} />
+            </label>
+          </>
+        )}
+
+        {!picking && ingredients.length > 0 && shoppingLists.length > 0 && (
           <div className="row align-end">
             <label>
               Einkaufsliste
@@ -88,7 +162,7 @@ function MealForm({ meal, date, slot, onSave, onDelete, onClose }: {
           )}
           <span className="spacer" />
           <button type="button" className="button" onClick={onClose}>Abbrechen</button>
-          <button className="button primary" disabled={busy}>Speichern</button>
+          {!picking && <button className="button primary" disabled={busy}>Speichern</button>}
         </div>
       </form>
     </Modal>

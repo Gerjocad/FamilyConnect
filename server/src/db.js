@@ -122,6 +122,7 @@ const ADDED_COLUMNS = [
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
+  ['meals', 'recipe_id', 'INTEGER REFERENCES recipes(id) ON DELETE SET NULL'],
 ];
 
 const ADDED_TABLES = `
@@ -190,11 +191,12 @@ CREATE TABLE IF NOT EXISTS devices (
 `;
 
 function migrate(db) {
+  // Zuerst die neuen Tabellen, weil neue Spalten auf sie verweisen können (meals.recipe_id)
+  db.exec(ADDED_TABLES);
   for (const [table, column, definition] of ADDED_COLUMNS) {
     const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
     if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
   }
-  db.exec(ADDED_TABLES);
 }
 
 export function openDatabase(file) {

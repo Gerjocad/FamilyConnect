@@ -73,6 +73,9 @@ function coerce(name, spec, value, ctx) {
     case 'list':
       if (!ctx.isList(value)) throw new ValidationError(`Liste "${value}" existiert nicht`);
       return value;
+    case 'recipe':
+      if (!ctx.isRecipe(value)) throw new ValidationError(`Rezept "${value}" existiert nicht`);
+      return value;
     default:
       throw new Error(`Unbekannter Feldtyp ${spec.type}`);
   }
@@ -107,6 +110,9 @@ export function crudRouter(db, resource, publish, onChange) {
     isList: (id) =>
       Number.isInteger(id) &&
       Boolean(db.prepare('SELECT 1 FROM lists WHERE family_id = ? AND id = ?').get(familyId, id)),
+    isRecipe: (id) =>
+      Number.isInteger(id) &&
+      Boolean(db.prepare('SELECT 1 FROM recipes WHERE family_id = ? AND id = ?').get(familyId, id)),
   });
 
   const findOne = (familyId, id) =>

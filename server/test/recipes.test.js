@@ -91,6 +91,26 @@ describe('Rezepte', () => {
     assert.deepEqual((await api(`/families/${fid}/recipes`, { token })).data, []);
   });
 
+  test('Essensplan verweist auf Rezepte', async () => {
+    const { token, fid } = await family();
+    const other = await family();
+    const { data: recipe } = await api(`/families/${fid}/recipes`, { token, method: 'POST', body: { title: 'Lasagne' } });
+    const { data: foreign } = await api(`/families/${other.fid}/recipes`, { token: other.token, method: 'POST', body: { title: 'Fremd' } });
+    const { status, data: meal } = await api(`/families/${fid}/meals`, {
+      token, method: 'POST', body: { date: '2026-10-20', slot: 'dinner', title: 'Lasagne', recipe_id: recipe.id },
+    });
+    assert.equal(status, 201);
+    assert.equal(meal.recipe_id, recipe.id);
+    assert.equal((await api(`/families/${fid}/meals`, {
+      token, method: 'POST', body: { date: '2026-10-21', slot: 'dinner', title: 'X', recipe_id: foreign.id },
+    })).status, 400);
+    // Rezept gelöscht → Eintrag bleibt, nur ohne Verknüpfung
+    await api(`/families/${fid}/recipes/${recipe.id}`, { token, method: 'DELETE' });
+    const { data: meals } = await api(`/families/${fid}/meals`, { token });
+    assert.equal(meals[0].title, 'Lasagne');
+    assert.equal(meals[0].recipe_id, null);
+  });
+
   test('Import aus schema.org-Daten (inkl. Weiterleitung)', async () => {
     const { token, fid } = await family();
     const { status, data } = await api(`/families/${fid}/recipes/import`, { token, method: 'POST', body: { url: `${siteUrl}/weiter` } });

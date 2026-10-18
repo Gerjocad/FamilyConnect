@@ -84,6 +84,7 @@ export interface Meal extends Base {
   slot: MealSlot;
   title: string;
   notes: string;
+  recipe_id: number | null;
 }
 
 export interface Recipe extends Base {

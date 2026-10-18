@@ -511,3 +511,16 @@ textarea { resize: vertical; }
 }
 .step.done { color: var(--muted); }
 .step.done .step-number { background: var(--success); color: #fff; }
+
+/* Rezept im Essensplan auswählen */
+.recipe-thumb.small { width: 44px; height: 44px; border-radius: 10px; }
+.recipe-picker { display: flex; flex-direction: column; gap: 8px; }
+.recipe-picker-list { display: flex; flex-direction: column; max-height: 50vh; overflow-y: auto; }
+.recipe-option {
+  display: flex; align-items: center; gap: 12px; padding: 8px 4px; text-align: left; cursor: pointer;
+  background: none; border: 0; border-bottom: 1px solid var(--border); color: inherit; font: inherit;
+}
+.recipe-option:last-child { border-bottom: 0; }
+.recipe-option:hover { background: var(--surface-2); }
+.meal-recipe { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; background: var(--surface-2); }
+.meal-recipe .link-button { padding: 0; align-self: flex-start; }
