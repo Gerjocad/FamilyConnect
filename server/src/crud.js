@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 class ValidationError extends Error {}
 
@@ -49,6 +50,13 @@ function coerce(name, spec, value, ctx) {
       if (typeof value !== 'string' || !DATETIME_RE.test(value) || !isValidDate(value.slice(0, 10)))
         throw new ValidationError(`Feld "${name}" muss Datum und Uhrzeit (JJJJ-MM-TTTHH:MM) sein`);
       return value;
+    case 'int':
+      if (!Number.isInteger(value) || value < spec.min || value > spec.max)
+        throw new ValidationError(`Feld "${name}" muss eine Zahl von ${spec.min} bis ${spec.max} sein`);
+      return value;
+    case 'time':
+      if (typeof value !== 'string' || !TIME_RE.test(value)) throw new ValidationError(`Feld "${name}" muss eine Uhrzeit (HH:MM) sein`);
+      return value;
     case 'member':
       if (!ctx.isMember(value)) throw new ValidationError(`"${name}" ist kein Familienmitglied`);
       return value;
@@ -69,6 +77,8 @@ function coerce(name, spec, value, ctx) {
       throw new Error(`Unbekannter Feldtyp ${spec.type}`);
   }
 }
+
+export { ValidationError, isValidDate };
 
 export function serialize(resource, row) {
   if (!row) return row;

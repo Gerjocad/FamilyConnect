@@ -6,6 +6,7 @@ import {
   requireMember, requireUser, verifyPassword,
 } from './auth.js';
 import { crudRouter } from './crud.js';
+import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
 import { RESOURCES } from './resources.js';
 
@@ -210,6 +211,8 @@ export function createApp(db, { staticDir, push } = {}) {
       unsubscribe();
     });
   });
+
+  app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
 
   for (const resource of RESOURCES) {
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,

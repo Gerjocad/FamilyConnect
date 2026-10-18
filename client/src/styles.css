@@ -362,3 +362,37 @@ textarea { resize: vertical; }
 }
 @media (min-width: 900px) { .toast { bottom: 32px; left: calc(50% + 120px); } }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+/* --- Gewohnheiten --------------------------------------------------------- */
+
+.habit-card { gap: 4px !important; }
+.habit-card .section-header { margin-bottom: 4px; }
+.habit-emoji { font-size: 1.8rem; line-height: 1; width: 40px; text-align: center; flex-shrink: 0; }
+.habit-emoji.small { font-size: 1.3rem; width: 28px; }
+.habit-title { display: flex; flex-direction: column; min-width: 0; }
+.habit-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-top: 1px solid var(--border); }
+.habit-who { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.streak { font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+.week-dots { display: flex; gap: 3px; }
+.week-dots .wd { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.week-dots .wd.on { background: var(--success); }
+@media (max-width: 420px) { .week-dots { display: none; } }
+.check-button {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+  border: 2px solid var(--border); background: var(--surface); color: var(--muted);
+  display: grid; place-items: center; transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.habit-row.due .check-button, .check-row .check-button:not(.done) { border-color: var(--accent); color: var(--accent); }
+.check-button.done { background: var(--success); border-color: var(--success); color: #fff; }
+.check-button:disabled { opacity: 0.35; cursor: default; }
+.emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji { font-size: 1.4rem; width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; }
+.emoji.active { border-color: var(--accent); background: var(--accent-soft); }
+.nfc-box { background: var(--surface-2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+.nfc-box strong { display: flex; align-items: center; gap: 6px; }
+.nfc-url { font-size: 0.85rem; background: var(--surface); padding: 8px 10px; border-radius: 8px; overflow-wrap: anywhere; user-select: all; }
+.checkin-card { align-items: center; text-align: center; gap: 12px !important; padding: 32px 20px; }
+.checkin-icon { font-size: 3.5rem; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); animation: pop 0.35s ease-out; }
+.checkin-icon.neutral { background: var(--surface-2); color: var(--muted); }
+.checkin-icon.error-icon { background: #fde2ea; color: var(--danger); font-weight: 800; }
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } }

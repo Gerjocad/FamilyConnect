@@ -3,7 +3,9 @@ import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { addDays, formatDay, occurrencesInRange, sameDay, startOfDay, toDateKey } from '../dates';
 import { useFamily } from '../session';
-import type { CalendarEvent, Meal, Post, Task } from '../types';
+import { habitStatus, statusLabel } from '../habitStatus';
+import type { CalendarEvent, Habit, Meal, Post, Task } from '../types';
+import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
 import { OccurrenceRow } from './CalendarPage';
@@ -25,6 +27,13 @@ export function DashboardPage() {
   const posts = useResource<Post>('posts');
   const meals = useResource<Meal>('meals');
   const { toggle, toast } = useTaskToggle(tasks);
+  const habits = useResource<Habit>('habits');
+  const checkins = useCheckins();
+  // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
+  const myHabits = habits.items
+    .filter((h) => h.member_ids.length === 0 || h.member_ids.includes(user.id))
+    .map((h) => ({ habit: h, status: habitStatus(h, user.id, checkins.items) }))
+    .filter(({ status }) => status.doneToday || status.dueIn <= 0);
 
   const today = startOfDay(new Date());
   const upcoming = occurrencesInRange(events.items, today, addDays(today, 7));
@@ -85,6 +94,34 @@ export function DashboardPage() {
             </ul>
           )}
         </section>
+
+        {myHabits.length > 0 && (
+          <section className="card">
+            <header className="section-header">
+              <h2><Icon name="habit" size={18} /> Gewohnheiten</h2>
+              <span className="spacer" />
+              <Link to="/gewohnheiten" className="link-button">Alle</Link>
+            </header>
+            <ul className="check-list">
+              {myHabits.map(({ habit, status }) => (
+                <li key={habit.id} className={`check-row ${status.doneToday ? 'done' : ''}`}>
+                  <span className="habit-emoji small">{habit.emoji || '✔️'}</span>
+                  <span className="task-main">
+                    <span className="check-text">{habit.title}</span>
+                    <small className={status.doneToday ? 'muted' : 'overdue'}>{statusLabel(status)}</small>
+                  </span>
+                  <button
+                    className={`check-button ${status.doneToday ? 'done' : ''}`}
+                    onClick={() => void checkins.toggle(habit.id, user.id, toDateKey(today), status.doneToday)}
+                    aria-label={`${habit.title} ${status.doneToday ? 'zurücknehmen' : 'erledigt'}`}
+                  >
+                    <Icon name="check" size={20} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="card">
           <header className="section-header">

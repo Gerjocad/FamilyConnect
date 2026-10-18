@@ -12,6 +12,8 @@ const member = () => ({ type: 'member' });
 const members = () => ({ type: 'members' });
 const listRef = (opts = {}) => ({ type: 'list', ...opts });
 const dates = () => ({ type: 'dates' });
+const int = (min, max, opts = {}) => ({ type: 'int', min, max, ...opts });
+const time = () => ({ type: 'time' });
 
 const RECURRENCES = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
 // Minuten vor Beginn; bei ganztägigen Terminen relativ zu 9:00 Uhr
@@ -106,6 +108,21 @@ export const RESOURCES = [
       notes: text({ max: 2000 }),
     },
     conflictMessage: 'Für diese Mahlzeit ist bereits etwas geplant',
+  },
+  {
+    path: 'habits',
+    table: 'habits',
+    order: 'title COLLATE NOCASE ASC',
+    // Abhaken läuft über eigene Routen (habits.js); beim Löschen verschwinden auch die Einträge
+    alsoChanges: ['checkins'],
+    fields: {
+      title: text({ required: true, max: 100 }),
+      emoji: text({ max: 16 }),
+      interval_days: int(1, 365, { required: true }),
+      // leer = alle Familienmitglieder
+      member_ids: members(),
+      reminder_time: time(),
+    },
   },
   {
     path: 'contacts',

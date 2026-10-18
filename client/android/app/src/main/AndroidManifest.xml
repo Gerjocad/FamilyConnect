@@ -23,6 +23,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- NFC-Aufkleber für Gewohnheiten: familyconnect://h/<code> -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="familyconnect" android:host="h" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="familyconnect" android:host="h" />
+            </intent-filter>
+
         </activity>
 
         <!-- Aussehen von Push-Benachrichtigungen -->
@@ -50,6 +63,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <!-- Erinnerungen pünktlich auslösen (Kalender-App) -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 </manifest>

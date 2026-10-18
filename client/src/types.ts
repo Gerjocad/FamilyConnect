@@ -95,4 +95,24 @@ export interface Contact extends Base {
   notes: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts';
+export interface Habit extends Base {
+  title: string;
+  emoji: string;
+  interval_days: number;
+  /** leer = alle Familienmitglieder */
+  member_ids: number[];
+  reminder_time: string | null;
+  nfc_token: string;
+}
+
+export interface Checkin {
+  id: number;
+  habit_id: number;
+  user_id: number;
+  date: string;
+  source: 'app' | 'nfc' | 'button';
+  created_by: number | null;
+  created_at: string;
+}
+
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits';

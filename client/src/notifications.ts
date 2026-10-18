@@ -3,9 +3,10 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { api, isNativeApp } from './api';
 import {
-  addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay,
+  addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay, toDateKey,
 } from './dates';
-import type { CalendarEvent, Task } from './types';
+import { habitStatus } from './habitStatus';
+import type { CalendarEvent, Checkin, Habit, Task } from './types';
 
 /** Push braucht android/app/google-services.json (erkennt vite.config.ts); ohne sie würde die App beim Registrieren abstürzen */
 export const PUSH_ENABLED = import.meta.env.VITE_PUSH_ENABLED === 'true';
@@ -48,7 +49,18 @@ function dayLabel(day: Date, shownAt: Date): string {
 
 interface Reminder { key: string; at: Date; title: string; body: string; path: string }
 
-export function buildReminders(events: CalendarEvent[], tasks: Task[], userId: number, now = new Date()): Reminder[] {
+export interface HabitData {
+  habits: Habit[];
+  checkins: Checkin[];
+}
+
+export function buildReminders(
+  events: CalendarEvent[],
+  tasks: Task[],
+  userId: number,
+  now = new Date(),
+  habitData: HabitData = { habits: [], checkins: [] }
+): Reminder[] {
   const reminders: Reminder[] = [];
   const horizon = addDays(startOfDay(now), 31);
 
@@ -76,19 +88,40 @@ export function buildReminders(events: CalendarEvent[], tasks: Task[], userId: n
     reminders.push({ key: `task:${task.id}:${task.due_date}`, at, title: 'Heute fällig', body: task.title, path: '/aufgaben' });
   }
 
+  // Gewohnheiten: am nächsten Fälligkeitstag zur eingestellten Uhrzeit (nicht, wenn heute schon erledigt)
+  const todayKey = toDateKey(now);
+  for (const habit of habitData.habits) {
+    if (!habit.reminder_time) continue;
+    if (habit.member_ids.length && !habit.member_ids.includes(userId)) continue;
+    const status = habitStatus(habit, userId, habitData.checkins, todayKey);
+    let day = status.dueIn <= 0 ? todayKey : status.nextDue;
+    if (status.doneToday) day = toDateKey(addDays(parseLocal(todayKey), habit.interval_days));
+    let at = parseLocal(`${day}T${habit.reminder_time}`);
+    // Uhrzeit heute schon vorbei und noch offen → morgen noch einmal erinnern
+    if (at <= now) at = parseLocal(`${toDateKey(addDays(parseLocal(day), 1))}T${habit.reminder_time}`);
+    if (at > horizon) continue;
+    reminders.push({
+      key: `habit:${habit.id}:${toDateKey(at)}`,
+      at,
+      title: `${habit.emoji ? `${habit.emoji} ` : ''}${habit.title}`,
+      body: status.dueIn < 0 ? 'Ist überfällig – jetzt erledigen?' : 'Heute ist es wieder so weit',
+      path: '/gewohnheiten',
+    });
+  }
+
   return reminders.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED);
 }
 
 let syncing: Promise<void> = Promise.resolve();
 
 /** Plant alle anstehenden Erinnerungen neu (nach jeder Änderung an Terminen oder Aufgaben) */
-export function syncReminders(events: CalendarEvent[], tasks: Task[], userId: number) {
+export function syncReminders(events: CalendarEvent[], tasks: Task[], userId: number, habitData?: HabitData) {
   if (!isNativeApp) return;
   syncing = syncing.then(async () => {
     if (!(await ensurePermission())) return;
     const { notifications: pending } = await LocalNotifications.getPending();
     if (pending.length) await LocalNotifications.cancel({ notifications: pending.map((n) => ({ id: n.id })) });
-    const reminders = buildReminders(events, tasks, userId);
+    const reminders = buildReminders(events, tasks, userId, new Date(), habitData);
     if (!reminders.length) return;
     await LocalNotifications.schedule({
       notifications: reminders.map((r) => ({

@@ -5,6 +5,8 @@ import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { HabitCheckinPage } from './pages/HabitCheckinPage';
+import { HabitsPage } from './pages/HabitsPage';
 import { ListsPage } from './pages/ListsPage';
 import { MealsPage } from './pages/MealsPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -46,6 +48,8 @@ export function App() {
           <Route path="pinnwand" element={<BoardPage />} />
           <Route path="essen" element={<MealsPage />} />
           <Route path="kontakte" element={<ContactsPage />} />
+          <Route path="gewohnheiten" element={<HabitsPage />} />
+          <Route path="h/:token" element={<HabitCheckinPage />} />
           <Route path="einstellungen" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -10,6 +10,7 @@ const NAV: { to: string; label: string; icon: IconName; mobile: boolean }[] = [
   { to: '/listen', label: 'Listen', icon: 'list', mobile: true },
   { to: '/aufgaben', label: 'Aufgaben', icon: 'task', mobile: true },
   { to: '/pinnwand', label: 'Pinnwand', icon: 'chat', mobile: true },
+  { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit', mobile: false },
   { to: '/essen', label: 'Essensplan', icon: 'meal', mobile: false },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts', mobile: false },
   { to: '/einstellungen', label: 'Familie & Profil', icon: 'settings', mobile: false },
@@ -57,6 +58,7 @@ export function Layout() {
         <img src="/icon.svg" alt="" width={28} height={28} />
         <strong>{family.name}</strong>
         <span className="spacer" />
+        <NavLink to="/gewohnheiten" className="icon-button" aria-label="Gewohnheiten"><Icon name="habit" /></NavLink>
         <NavLink to="/essen" className="icon-button" aria-label="Essensplan"><Icon name="meal" /></NavLink>
         <NavLink to="/kontakte" className="icon-button" aria-label="Kontakte"><Icon name="contacts" /></NavLink>
         <NavLink to="/einstellungen" aria-label="Familie & Profil"><Avatar member={user} size={30} /></NavLink>

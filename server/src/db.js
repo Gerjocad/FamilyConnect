@@ -125,6 +125,32 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+CREATE TABLE IF NOT EXISTS habits (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  emoji TEXT NOT NULL DEFAULT '',
+  interval_days INTEGER NOT NULL DEFAULT 1,
+  member_ids TEXT NOT NULL DEFAULT '[]',
+  reminder_time TEXT,
+  -- Geheimer Teil der NFC-Adresse (familyconnect://h/<token>)
+  nfc_token TEXT NOT NULL UNIQUE DEFAULT (lower(hex(randomblob(16)))),
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS habit_checkins (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'app',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (habit_id, user_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
