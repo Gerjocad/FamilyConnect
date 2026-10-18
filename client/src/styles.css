@@ -406,3 +406,8 @@ textarea { resize: vertical; }
 }
 .update-banner > span { display: flex; flex-direction: column; flex: 1; min-width: 0; color: var(--text); }
 .update-banner small { color: var(--muted); }
+
+.quick-add-block { margin-bottom: 8px; }
+.quick-add-block .quick-add { margin-bottom: 8px; }
+.assign-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; }
+.assign-row .chip { font-size: 0.85rem; padding-top: 3px; padding-bottom: 3px; }

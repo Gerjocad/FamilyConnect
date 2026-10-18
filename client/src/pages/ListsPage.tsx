@@ -76,11 +76,19 @@ function ListDetail({ list, items, onEdit }: {
 
   const add = (e: FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    const entry = { text, quantity };
+    if (!entry.text.trim()) return;
+    // Sofort leeren, damit man direkt den nächsten Eintrag tippen kann
+    setText('');
+    setQuantity('');
     void run(async () => {
-      await items.create({ list_id: list.id, text, quantity });
-      setText('');
-      setQuantity('');
+      try {
+        await items.create({ list_id: list.id, ...entry });
+      } catch (err) {
+        setText((current) => current || entry.text);
+        setQuantity((current) => current || entry.quantity);
+        throw err;
+      }
     });
   };
 

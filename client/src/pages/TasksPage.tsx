@@ -128,6 +128,8 @@ export function TasksPage() {
   const tasks = useResource<Task>('tasks');
   const [filter, setFilter] = useState<Filter>('open');
   const [title, setTitle] = useState('');
+  // Zuständige Person für die Schnelleingabe (in „Meine“ automatisch man selbst)
+  const [assignee, setAssignee] = useState<number[]>([]);
   const [editing, setEditing] = useState<Task | 'new' | null>(null);
   const { error, run } = useAsync();
   const { toggle, toast } = useTaskToggle(tasks);
@@ -138,10 +140,17 @@ export function TasksPage() {
 
   const quickAdd = (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    const text = title;
+    if (!text.trim()) return;
+    // Sofort leeren, damit man direkt die nächste Aufgabe tippen kann
+    setTitle('');
     void run(async () => {
-      await tasks.create({ title, assignee_id: filter === 'mine' ? user.id : null });
-      setTitle('');
+      try {
+        await tasks.create({ title: text, assignee_id: assignee[0] ?? (filter === 'mine' ? user.id : null) });
+      } catch (err) {
+        setTitle((current) => current || text);
+        throw err;
+      }
     });
   };
 
@@ -164,9 +173,15 @@ export function TasksPage() {
 
       <section className="card">
         {filter !== 'done' && (
-          <form onSubmit={quickAdd} className="quick-add">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Neue Aufgabe …" aria-label="Neue Aufgabe" />
-            <button className="button primary" aria-label="Hinzufügen"><Icon name="plus" /></button>
+          <form onSubmit={quickAdd} className="quick-add-block">
+            <div className="quick-add">
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Neue Aufgabe …" aria-label="Neue Aufgabe" />
+              <button className="button primary" aria-label="Hinzufügen"><Icon name="plus" /></button>
+            </div>
+            <div className="assign-row">
+              <span className="muted">Wer erledigt es?</span>
+              <MemberPicker value={assignee} onChange={setAssignee} single />
+            </div>
           </form>
         )}
         {error && <p className="error">{error}</p>}
