@@ -63,6 +63,10 @@ export function habitsRouter(db, { auth, member, publish }) {
     const userId = targetUser(req, res);
     if (userId === null) return;
     const source = SOURCES.includes(req.body?.source) ? req.body.source : 'app';
+    // Hängt ein Aufkleber an der Gewohnheit, haken Kinder nur dort ab – Eltern dürfen weiter per Klick
+    if (habit.nfc_linked && req.role === 'child' && source !== 'nfc') {
+      return res.status(403).json({ error: 'Diese Gewohnheit wird mit dem NFC-Aufkleber abgehakt' });
+    }
     checkIn(habit, req, res, { userId, date: req.body?.date ?? todayKey(), source });
   });
 
@@ -82,15 +86,21 @@ export function habitsRouter(db, { auth, member, publish }) {
     const habit = db.prepare('SELECT * FROM habits WHERE nfc_token = ?').get(String(req.params.token).toLowerCase());
     const isMember = habit && db.prepare('SELECT 1 FROM memberships WHERE family_id = ? AND user_id = ?').get(habit.family_id, req.user.id);
     if (!habit || !isMember) return res.status(404).json({ error: 'Dieser Aufkleber gehört zu keiner Gewohnheit deiner Familie' });
+    // Der Aufkleber funktioniert – ab jetzt ist die Gewohnheit mit ihm verknüpft
+    if (!habit.nfc_linked) {
+      db.prepare('UPDATE habits SET nfc_linked = 1 WHERE id = ?').run(habit.id);
+      publish(habit.family_id, 'habits');
+    }
     checkIn(habit, req, res, { userId: req.user.id, date: req.body?.date ?? todayKey(), source: 'nfc' });
   });
 
-  // Neuer Code, falls ein Aufkleber verloren geht
+  // Aufkleber lösen (oder verloren): neuer Code, der alte Aufkleber funktioniert nicht mehr
+  // und alle können wieder per Klick abhaken
   router.post('/api/families/:familyId/habits/:habitId/nfc-token', auth, member, (req, res) => {
     const habit = findHabit(req);
     if (!habit) return res.status(404).json({ error: 'Nicht gefunden' });
-    if (!isManager(req.role)) return res.status(403).json({ error: 'Nur Eltern dürfen den NFC-Code erneuern' });
-    db.prepare('UPDATE habits SET nfc_token = lower(hex(randomblob(16))) WHERE id = ?').run(habit.id);
+    if (!isManager(req.role)) return res.status(403).json({ error: 'Nur Eltern dürfen den Aufkleber lösen' });
+    db.prepare('UPDATE habits SET nfc_token = lower(hex(randomblob(16))), nfc_linked = 0 WHERE id = ?').run(habit.id);
     publish(habit.family_id, 'habits');
     res.json({ nfc_token: db.prepare('SELECT nfc_token FROM habits WHERE id = ?').get(habit.id).nfc_token });
   });

@@ -122,6 +122,8 @@ const ADDED_COLUMNS = [
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
+  // Gewohnheit hängt an einem NFC-Aufkleber: Kinder haken dann nur per Aufkleber ab
+  ['habits', 'nfc_linked', 'INTEGER NOT NULL DEFAULT 0'],
   // Farbschema der App (client/src/themes.ts)
   ['users', 'theme', "TEXT NOT NULL DEFAULT 'orange'"],
   ['meals', 'recipe_id', 'INTEGER REFERENCES recipes(id) ON DELETE SET NULL'],

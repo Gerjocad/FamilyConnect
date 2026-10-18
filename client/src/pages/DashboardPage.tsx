@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { addDays, formatDay, occurrencesInRange, sameDay, startOfDay, toDateKey } from '../dates';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
-import { habitStatus, statusLabel } from '../habitStatus';
+import { habitStatus, nfcOnlyFor, statusLabel } from '../habitStatus';
 import type { CalendarEvent, Habit, Meal, Post, Task } from '../types';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
@@ -54,6 +55,7 @@ export function DashboardPage() {
   const { toggle, toast } = useTaskToggle(tasks);
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
+  const { isChild } = usePermissions();
   const complaints = useComplaints();
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open');
   // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
@@ -147,13 +149,19 @@ export function DashboardPage() {
                     <span className="check-text">{habit.title}</span>
                     <small className={status.doneToday ? 'muted' : 'overdue'}>{statusLabel(status)}</small>
                   </span>
-                  <button
-                    className={`check-button ${status.doneToday ? 'done' : ''}`}
-                    onClick={() => void checkins.toggle(habit.id, user.id, toDateKey(today), status.doneToday)}
-                    aria-label={`${habit.title} ${status.doneToday ? 'zurücknehmen' : 'erledigt'}`}
-                  >
-                    <Icon name="check" size={20} />
-                  </button>
+                  {nfcOnlyFor(habit, isChild) ? (
+                    <span className={`check-button ${status.doneToday ? 'done' : 'nfc-only'}`} title="Mit dem NFC-Aufkleber abhaken" aria-label={`${habit.title}: mit dem NFC-Aufkleber abhaken`}>
+                      <Icon name={status.doneToday ? 'check' : 'nfc'} size={20} />
+                    </span>
+                  ) : (
+                    <button
+                      className={`check-button ${status.doneToday ? 'done' : ''}`}
+                      onClick={() => void checkins.toggle(habit.id, user.id, toDateKey(today), status.doneToday)}
+                      aria-label={`${habit.title} ${status.doneToday ? 'zurücknehmen' : 'erledigt'}`}
+                    >
+                      <Icon name="check" size={20} />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

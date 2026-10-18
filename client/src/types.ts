@@ -122,6 +122,8 @@ export interface Habit extends Base {
   member_ids: number[];
   reminder_time: string | null;
   nfc_token: string;
+  /** hängt an einem NFC-Aufkleber – Kinder haken dann nur per Aufkleber ab */
+  nfc_linked: boolean;
 }
 
 export interface Checkin {

@@ -81,6 +81,35 @@ describe('Gewohnheiten', () => {
     assert.equal((await api(path, { token: kind, method: 'POST', body: { date: '2026-10-19', user_id: mamaId } })).status, 403, 'Kind nicht für andere');
   });
 
+  test('mit Aufkleber haken Kinder nur per NFC ab, bis Eltern ihn lösen', async () => {
+    const { mama, kind, fid, kindId } = await family();
+    const { data: habit } = await api(`/families/${fid}/habits`, { token: mama, method: 'POST', body: { title: 'Zähne', interval_days: 1 } });
+    assert.equal(habit.nfc_linked, false);
+    const path = `/families/${fid}/habits/${habit.id}/checkins`;
+    // Ohne Aufkleber: Klick geht
+    assert.equal((await api(path, { token: kind, method: 'POST', body: { date: '2026-10-17' } })).status, 201);
+
+    // Erstes Abhaken per Aufkleber verknüpft die Gewohnheit
+    assert.equal((await api(`/habits/by-token/${habit.nfc_token}/checkin`, { token: kind, method: 'POST', body: { date: '2026-10-18' } })).status, 201);
+    const linked = (await api(`/families/${fid}/habits`, { token: kind })).data.find((h) => h.id === habit.id);
+    assert.equal(linked.nfc_linked, true);
+    const blocked = await api(path, { token: kind, method: 'POST', body: { date: '2026-10-19' } });
+    assert.equal(blocked.status, 403);
+    assert.match(blocked.data.error, /NFC-Aufkleber/);
+    assert.equal((await api(path, { token: mama, method: 'POST', body: { date: '2026-10-19', user_id: kindId } })).status, 201, 'Eltern dürfen weiter klicken');
+
+    // Kinder können den Aufkleber nicht lösen, Eltern schon – danach geht der Klick wieder
+    assert.equal((await api(`/families/${fid}/habits/${habit.id}/nfc-token`, { token: kind, method: 'POST' })).status, 403);
+    assert.equal((await api(`/families/${fid}/habits/${habit.id}/nfc-token`, { token: mama, method: 'POST' })).status, 200);
+    assert.equal((await api(`/families/${fid}/habits`, { token: kind })).data.find((h) => h.id === habit.id).nfc_linked, false);
+    assert.equal((await api(path, { token: kind, method: 'POST', body: { date: '2026-10-20' } })).status, 201);
+    assert.equal((await api(`/habits/by-token/${habit.nfc_token}/checkin`, { token: kind, method: 'POST', body: {} })).status, 404, 'alter Aufkleber ungültig');
+
+    // Eltern können „nur per Aufkleber“ auch von Hand einschalten
+    await api(`/families/${fid}/habits/${habit.id}`, { token: mama, method: 'PATCH', body: { nfc_linked: true } });
+    assert.equal((await api(path, { token: kind, method: 'POST', body: { date: '2026-10-21' } })).status, 403);
+  });
+
   test('NFC-Aufkleber hakt für die Person ab, deren Handy ihn liest', async () => {
     const { mama, kind, fid, kindId } = await family();
     const { data: habit } = await api(`/families/${fid}/habits`, { token: mama, method: 'POST', body: { title: 'Duschen', emoji: '🚿', interval_days: 2 } });

@@ -167,6 +167,8 @@ export const RESOURCES = [
       // leer = alle Familienmitglieder
       member_ids: members(),
       reminder_time: time(),
+      // wird beim ersten Abhaken per Aufkleber automatisch gesetzt (habits.js)
+      nfc_linked: bool(),
     },
   },
   {

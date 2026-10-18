@@ -610,3 +610,5 @@ textarea { resize: vertical; }
 .complaint-alert { border-color: var(--danger); }
 .complaint-alert h2 svg { color: var(--danger); }
 .complaint-alert p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Gewohnheit mit Aufkleber: Kinder sehen statt des Hakens das NFC-Symbol */
+.check-button.nfc-only, .check-button.nfc-only:disabled { opacity: 1; border-style: dashed; border-color: var(--muted); color: var(--muted); cursor: default; display: grid; place-items: center; }

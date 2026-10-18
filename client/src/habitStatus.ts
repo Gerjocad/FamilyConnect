@@ -52,3 +52,6 @@ export function statusLabel(s: HabitStatus): string {
 }
 
 export const nfcUrl = (habit: Pick<Habit, 'nfc_token'>) => `familyconnect://h/${habit.nfc_token}`;
+
+/** Kinder haken Gewohnheiten mit Aufkleber nur per NFC ab (gleiche Regel wie in server/src/habits.js) */
+export const nfcOnlyFor = (habit: Habit, isChild: boolean) => isChild && habit.nfc_linked;

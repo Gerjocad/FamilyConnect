@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.19',
+    date: '2026-10-19',
+    title: 'Gewohnheiten mit NFC-Aufkleber',
+    changes: [
+      'Hängt ein NFC-Aufkleber an einer Gewohnheit, haken Kinder sie nur noch per Aufkleber ab – statt des Hakens sehen sie das NFC-Symbol',
+      'Die Verknüpfung entsteht automatisch beim ersten Abhaken per Aufkleber und lässt sich im Bearbeiten-Fenster auch von Hand einschalten',
+      'Neu: „Aufkleber lösen“ – der alte Aufkleber funktioniert dann nicht mehr und alle können wieder per Klick abhaken',
+      'Eltern und Admins können weiterhin jederzeit per Klick abhaken',
+    ],
+  },
+  {
     version: '1.18',
     date: '2026-10-19',
     title: 'Menü zum Reinziehen',

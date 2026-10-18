@@ -7,7 +7,7 @@ import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { addDays, startOfDay, toDateKey, WEEKDAYS_SHORT } from '../dates';
-import { habitParticipants, habitStatus, intervalLabel, nfcUrl, statusLabel } from '../habitStatus';
+import { habitParticipants, habitStatus, intervalLabel, nfcOnlyFor, nfcUrl, statusLabel } from '../habitStatus';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Checkin, Habit, Member } from '../types';
@@ -30,13 +30,14 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
   const [memberIds, setMemberIds] = useState<number[]>(habit?.member_ids ?? []);
   const [reminder, setReminder] = useState(habit?.reminder_time ?? '');
   const [token, setToken] = useState(habit?.nfc_token);
+  const [nfcLinked, setNfcLinked] = useState(habit?.nfc_linked ?? false);
   const [copied, setCopied] = useState(false);
   const { busy, error, run } = useAsync();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await onSave({ title, emoji, interval_days: interval, member_ids: memberIds, reminder_time: reminder || null });
+      await onSave({ title, emoji, interval_days: interval, member_ids: memberIds, reminder_time: reminder || null, nfc_linked: nfcLinked });
       onClose();
     });
   };
@@ -95,6 +96,11 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
               (Schreiben → Datensatz hinzufügen → <b>Benutzerdefinierte URL / URI</b>). Wer sein Handy daranhält, hakt die Gewohnheit für sich ab.
             </p>
             <code className="nfc-url">{nfcUrl({ nfc_token: token })}</code>
+            <label className="checkbox">
+              <input type="checkbox" checked={nfcLinked} onChange={(e) => setNfcLinked(e.target.checked)} />
+              Kinder haken nur per Aufkleber ab
+            </label>
+            <small className="hint">Schaltet sich automatisch ein, sobald der Aufkleber zum ersten Mal benutzt wird. Eltern können weiter per Klick abhaken.</small>
             <div className="form-actions">
               <button type="button" className="button small" onClick={() => void copy(nfcUrl({ nfc_token: token }))}>
                 <Icon name="copy" size={16} /> {copied ? 'Kopiert!' : 'Kopieren'}
@@ -102,13 +108,14 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
               <button
                 type="button"
                 className="button small"
-                onClick={() => confirm('Neuen Code erzeugen? Bisherige Aufkleber funktionieren dann nicht mehr.') &&
+                onClick={() => confirm('Aufkleber von dieser Gewohnheit lösen?\n\nDer bisherige Aufkleber funktioniert dann nicht mehr und alle können wieder per Klick abhaken. Für einen neuen Aufkleber steht oben die neue Adresse.') &&
                   void run(async () => {
                     const res = await api<{ nfc_token: string }>(`/families/${family.id}/habits/${habit.id}/nfc-token`, { method: 'POST' });
                     setToken(res.nfc_token);
+                    setNfcLinked(false);
                   })}
               >
-                Neuer Code
+                <Icon name="close" size={16} /> Aufkleber lösen
               </button>
             </div>
           </div>
@@ -146,11 +153,13 @@ function WeekDots({ habit, userId, checkins }: { habit: Habit; userId: number; c
   );
 }
 
-export function HabitRow({ habit, member, checkins, canToggle, onToggle }: {
+export function HabitRow({ habit, member, checkins, canToggle, nfcOnly = false, onToggle }: {
   habit: Habit;
   member: Member;
   checkins: Checkin[];
   canToggle: boolean;
+  /** nur per NFC-Aufkleber abhakbar (Kinder bei verknüpften Gewohnheiten) */
+  nfcOnly?: boolean;
   onToggle(done: boolean): void;
 }) {
   const s = habitStatus(habit, member.id, checkins);
@@ -165,12 +174,13 @@ export function HabitRow({ habit, member, checkins, canToggle, onToggle }: {
       {s.streak > 1 && <span className="streak" title="Serie">🔥 {s.streak}</span>}
       <WeekDots habit={habit} userId={member.id} checkins={checkins} />
       <button
-        className={`check-button ${s.doneToday ? 'done' : ''}`}
-        disabled={!canToggle}
+        className={`check-button ${s.doneToday ? 'done' : ''} ${nfcOnly && !s.doneToday ? 'nfc-only' : ''}`}
+        disabled={!canToggle || nfcOnly}
         onClick={() => onToggle(s.doneToday)}
-        aria-label={s.doneToday ? `${habit.title} für ${member.name} zurücknehmen` : `${habit.title} für ${member.name} erledigt`}
+        title={nfcOnly ? 'Mit dem NFC-Aufkleber abhaken' : undefined}
+        aria-label={nfcOnly ? `${habit.title}: mit dem NFC-Aufkleber abhaken` : s.doneToday ? `${habit.title} für ${member.name} zurücknehmen` : `${habit.title} für ${member.name} erledigt`}
       >
-        <Icon name="check" size={20} />
+        <Icon name={nfcOnly && !s.doneToday ? 'nfc' : 'check'} size={20} />
       </button>
     </div>
   );
@@ -181,7 +191,7 @@ export function HabitsPage() {
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
   const [editing, setEditing] = useState<Habit | 'new' | null>(null);
-  const { isManager } = usePermissions();
+  const { isManager, isChild } = usePermissions();
   const today = toDateKey(new Date());
 
   return (
@@ -209,6 +219,7 @@ export function HabitsPage() {
                 <small className="muted">
                   {intervalLabel(habit.interval_days)}
                   {habit.reminder_time && ` · Erinnerung ${habit.reminder_time} Uhr`}
+                  {habit.nfc_linked && ' · mit NFC-Aufkleber'}
                 </small>
               </span>
               <span className="spacer" />
@@ -221,6 +232,7 @@ export function HabitsPage() {
                 member={m}
                 checkins={checkins.items}
                 canToggle={m.id === user.id || isManager}
+                nfcOnly={m.id === user.id && nfcOnlyFor(habit, isChild)}
                 onToggle={(done) => void checkins.toggle(habit.id, m.id, today, done)}
               />
             ))}
