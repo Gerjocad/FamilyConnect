@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Logo } from '../components/Logo';
 import { api, checkServer, DEFAULT_SERVER, getServerUrl, isNativeApp, normalizeServerUrl, setServerUrl } from '../api';
 import { useAsync } from '../components/useAsync';
 import { useSession } from '../session';
@@ -33,7 +34,7 @@ export function AuthPage() {
   return (
     <div className="auth">
       <div className="auth-card card">
-        <img src="/icon.svg" alt="" width={56} height={56} />
+        <Logo size={56} />
         <h1>FamilyConnect</h1>
         <p className="muted">Kalender, Listen, Aufgaben und Nachrichten – an einem Ort für die ganze Familie.</p>
 

@@ -152,7 +152,7 @@ textarea { resize: vertical; }
 /* --- App-Gerüst ----------------------------------------------------------- */
 
 .splash { display: grid; place-items: center; min-height: 100dvh; }
-.splash img { animation: pulse 1.2s ease-in-out infinite; }
+.splash .logo { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.4; transform: scale(0.94); } }
 
 .shell { min-height: 100dvh; }
@@ -166,7 +166,7 @@ textarea { resize: vertical; }
 .topbar a { display: inline-flex; color: inherit; }
 /* Langer Familienname wird gekürzt, damit alle Symbole Platz haben */
 .topbar strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 4px; }
-@media (max-width: 400px) { .topbar { gap: 2px; padding-left: 12px; padding-right: 12px; } .topbar > img { margin-right: 4px; } }
+@media (max-width: 400px) { .topbar { gap: 2px; padding-left: 12px; padding-right: 12px; } .topbar > .logo { margin-right: 4px; flex-shrink: 0; } }
 .topbar .icon-button.active { color: var(--accent); }
 .content { padding: 16px 16px calc(84px + env(safe-area-inset-bottom)); }
 .bottombar {
@@ -226,7 +226,7 @@ textarea { resize: vertical; }
 
 .auth { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
 .auth-card { width: min(420px, 100%); padding: 28px; display: flex; flex-direction: column; gap: 16px; text-align: center; align-items: stretch; }
-.auth-card img { align-self: center; }
+.auth-card .logo { align-self: center; }
 .auth-card .form { text-align: left; }
 .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .divider::before, .divider::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
@@ -552,3 +552,25 @@ textarea { resize: vertical; }
 .role-select { width: auto; padding: 6px 28px 6px 10px; font-size: 0.9rem; }
 .icon-button-placeholder { width: 36px; flex-shrink: 0; }
 .badge.role-child { background: var(--surface-2); color: var(--muted); }
+
+/* --- Farbschemata (Familie & Profil → App-Farbe), Standard „orange“ steht oben in :root --- */
+:root[data-theme="ocean"] { --bg: #f3f8ff; --surface-2: #e7f0fb; --border: #d6e4f3; --text: #18222e; --muted: #6b7c8f; --accent: #1c7ed6; --accent-strong: #1864ab; --accent-soft: #dbeafc; }
+:root[data-theme="forest"] { --bg: #f4faf3; --surface-2: #e8f3e6; --border: #d5e8d1; --text: #1b261a; --muted: #6f8270; --accent: #2f9e44; --accent-strong: #237032; --accent-soft: #d9f2dc; }
+:root[data-theme="berry"] { --bg: #fdf4f7; --surface-2: #f9e7ee; --border: #f0d4df; --text: #2a1820; --muted: #8a6f7b; --accent: #c2255c; --accent-strong: #a61e4d; --accent-soft: #fbdce8; }
+:root[data-theme="lavender"] { --bg: #f7f5ff; --surface-2: #eeeafc; --border: #e0daf5; --text: #201b2e; --muted: #7a7290; --accent: #7048e8; --accent-strong: #5f3dc4; --accent-soft: #e5dcff; }
+:root[data-theme="teal"] { --bg: #f2fafa; --surface-2: #e3f2f3; --border: #cfe6e8; --text: #142425; --muted: #678385; --accent: #0c8599; --accent-strong: #0b7285; --accent-soft: #d3f0f3; }
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="ocean"] { --bg: #0e141b; --surface: #16202a; --surface-2: #1d2a36; --border: #2a3a4a; --text: #e6eef6; --muted: #8fa1b3; --accent: #4dabf7; --accent-strong: #74c0fc; --accent-soft: #16304a; }
+  :root[data-theme="forest"] { --bg: #0f150f; --surface: #172017; --surface-2: #1e2a1e; --border: #2b3b2b; --text: #e7f1e6; --muted: #93a893; --accent: #51cf66; --accent-strong: #69db7c; --accent-soft: #183a1e; }
+  :root[data-theme="berry"] { --bg: #170e12; --surface: #22161b; --surface-2: #2c1d23; --border: #3c2831; --text: #f5e8ee; --muted: #b097a2; --accent: #f06595; --accent-strong: #f783ac; --accent-soft: #3d1a28; }
+  :root[data-theme="lavender"] { --bg: #120f1a; --surface: #1b1726; --surface-2: #241f33; --border: #332c46; --text: #ece8f7; --muted: #a29bb8; --accent: #9775fa; --accent-strong: #b197fc; --accent-soft: #2a2148; }
+  :root[data-theme="teal"] { --bg: #0d1516; --surface: #141f21; --surface-2: #1b292b; --border: #283a3d; --text: #e4f1f2; --muted: #8ea9ab; --accent: #3bc9db; --accent-strong: #66d9e8; --accent-soft: #12363b; }
+}
+
+.theme-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.theme-option {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; cursor: pointer;
+  border-radius: 12px; border: 2px solid var(--border); background: var(--surface); font-size: 0.85rem; font-weight: 600;
+}
+.theme-option.active { border-color: var(--accent); background: var(--accent-soft); }
+.theme-swatch { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }

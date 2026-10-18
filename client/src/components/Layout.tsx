@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Logo } from './Logo';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
@@ -37,7 +38,7 @@ export function Layout() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <img src="/icon.svg" alt="" width={32} height={32} />
+          <Logo size={32} />
           <span>FamilyConnect</span>
         </div>
         {user.families.length > 1 ? (
@@ -69,7 +70,7 @@ export function Layout() {
       </aside>
 
       <header className="topbar">
-        <img src="/icon.svg" alt="" width={28} height={28} />
+        <Logo size={28} />
         <strong>{family.name}</strong>
         <span className="spacer" />
         <NavLink to="/gewohnheiten" className="icon-button" aria-label="Gewohnheiten"><Icon name="habit" /></NavLink>

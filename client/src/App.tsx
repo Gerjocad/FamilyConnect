@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { Logo } from './components/Logo';
 import { Layout } from './components/Layout';
 import { AuthPage } from './pages/AuthPage';
 import { BoardPage } from './pages/BoardPage';
@@ -21,13 +22,13 @@ export function App() {
   const { status, user, family, retry, signOut } = useSession();
 
   if (status === 'loading' || (user && user.families.length > 0 && !family)) {
-    return <div className="splash"><img src="/icon.svg" alt="" width={56} height={56} /></div>;
+    return <div className="splash"><Logo size={56} /></div>;
   }
   if (status === 'offline') {
     return (
       <div className="auth">
         <div className="auth-card card">
-          <img src="/icon.svg" alt="" width={56} height={56} />
+          <Logo size={56} />
           <h1>Keine Verbindung</h1>
           <p className="muted">Der FamilyConnect-Server ist gerade nicht erreichbar. Prüfe deine Internetverbindung.</p>
           <button className="button primary" onClick={() => void retry()}>Erneut versuchen</button>

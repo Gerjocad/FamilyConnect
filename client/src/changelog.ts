@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16',
+    date: '2026-10-19',
+    title: 'App-Farben',
+    changes: [
+      'Sechs Farbschemata für die ganze App: Sonne, Ozean, Wald, Beere, Lavendel und Lagune – unter Familie & Profil, jeweils hell und dunkel',
+      'Die Farbe gilt pro Person und folgt dir auf alle Geräte; auch das App-Symbol oben passt sich an',
+      'Eltern und Kinder sehen unter Familie & Profil nur noch ihr Profil – Einladungscode, Mitglieder und weitere Gruppen verwaltet der Admin',
+    ],
+  },
+  {
     version: '1.15',
     date: '2026-10-19',
     title: 'Rollen: Admin, Eltern, Kinder',

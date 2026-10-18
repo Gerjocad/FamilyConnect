@@ -90,6 +90,16 @@ describe('Konto', () => {
   });
 });
 
+describe('Farbschema', () => {
+  test('wird pro Person gespeichert und geprüft', async () => {
+    const token = await register('Theo');
+    assert.equal((await api('/me', { token })).data.theme, 'orange');
+    assert.equal((await api('/me', { token, method: 'PATCH', body: { theme: 'ocean' } })).data.theme, 'ocean');
+    assert.equal((await api('/me', { token })).data.theme, 'ocean');
+    assert.equal((await api('/me', { token, method: 'PATCH', body: { theme: 'neon' } })).status, 400);
+  });
+});
+
 describe('Familien', () => {
   test('Beitritt per Einladungscode', async () => {
     const { family } = await familyWithTwoMembers();

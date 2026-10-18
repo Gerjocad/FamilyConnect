@@ -15,6 +15,8 @@ import { RESOURCES } from './resources.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+// Farbschemata der App – gleiche Namen wie in client/src/themes.ts
+const THEMES = ['orange', 'ocean', 'forest', 'berry', 'lavender', 'teal'];
 
 function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -121,11 +123,13 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.patch('/api/me', auth, (req, res) => {
     const name = req.body?.name === undefined ? req.user.name : cleanText(req.body.name, 100);
     const color = req.body?.color === undefined ? req.user.color : req.body.color;
+    const theme = req.body?.theme === undefined ? req.user.theme : req.body.theme;
     if (!name) return res.status(400).json({ error: 'Bitte gib deinen Namen an' });
     if (typeof color !== 'string' || !COLOR_RE.test(color)) return res.status(400).json({ error: 'Ungültige Farbe' });
-    db.prepare('UPDATE users SET name = ?, color = ? WHERE id = ?').run(name, color, req.user.id);
+    if (!THEMES.includes(theme)) return res.status(400).json({ error: 'Unbekanntes Farbschema' });
+    db.prepare('UPDATE users SET name = ?, color = ?, theme = ? WHERE id = ?').run(name, color, theme, req.user.id);
     for (const f of familiesOf(req.user.id)) hub.publish(f.id, 'family');
-    res.json({ ...req.user, name, color, families: familiesOf(req.user.id) });
+    res.json({ ...req.user, name, color, theme, families: familiesOf(req.user.id) });
   });
 
   // --- Geräte für Push-Benachrichtigungen ----------------------------------

@@ -7,6 +7,7 @@ import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
+import { applyTheme, THEMES } from '../themes';
 import { ROLE_LABELS } from '../permissions';
 import type { Family, Role } from '../types';
 
@@ -40,7 +41,7 @@ export function SettingsPage() {
     }
   };
 
-  const saveProfile = (patch: { name?: string; color?: string }) =>
+  const saveProfile = (patch: { name?: string; color?: string; theme?: string }) =>
     void profile.run(async () => {
       await api('/me', { method: 'PATCH', body: patch });
       await refreshUser();
@@ -88,11 +89,36 @@ export function SettingsPage() {
               ))}
             </div>
           </div>
+          <div className="field">
+            <span>App-Farbe</span>
+            <div className="theme-picker" role="group" aria-label="App-Farbe">
+              {THEMES.map((t) => (
+                <button
+                  type="button"
+                  key={t.id}
+                  className={`theme-option ${(user.theme ?? 'orange') === t.id ? 'active' : ''}`}
+                  aria-pressed={(user.theme ?? 'orange') === t.id}
+                  onClick={() => {
+                    // Sofort umfärben, gespeichert wird im Hintergrund
+                    applyTheme(t.id);
+                    saveProfile({ theme: t.id });
+                  }}
+                >
+                  <span className="theme-swatch" style={{ background: `linear-gradient(135deg, ${t.preview[0]} 50%, ${t.preview[1]} 50%)` }} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <small className="hint">Gilt nur für dich – auf allen deinen Geräten.</small>
+          </div>
           {profile.error && <p className="error">{profile.error}</p>}
         </form>
         <p className="muted">Angemeldet als {user.email}</p>
       </section>
 
+      {/* Familienverwaltung nur für Admins – Eltern und Kinder sehen nur ihr Profil */}
+      {isAdmin && (
+        <>
       <section className="card">
         <h2>{family.name}</h2>
         {isAdmin && (
@@ -208,6 +234,9 @@ export function SettingsPage() {
         </form>
         {other.error && <p className="error">{other.error}</p>}
       </section>
+
+        </>
+      )}
 
       <Link to="/neuigkeiten" className="card news-link">
         <Icon name="sparkle" size={22} />

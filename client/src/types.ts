@@ -11,6 +11,8 @@ export interface User {
   name: string;
   email: string;
   color: string;
+  /** Farbschema der App, siehe themes.ts */
+  theme: string;
   families: FamilySummary[];
 }
 

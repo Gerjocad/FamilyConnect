@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { api, ApiError, setToken, getToken } from './api';
 import { connectLive, onLiveChange } from './live';
 import { clearReminders, unregisterPush } from './notifications';
+import { applyTheme } from './themes';
 import type { Family, Member, User } from './types';
 
 const FAMILY_KEY = 'familyconnect.family';
@@ -55,6 +56,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     try {
       const me = await api<User>('/me');
+      applyTheme(me.theme);
       setUser(me);
       setStatus('ready');
       return me;
