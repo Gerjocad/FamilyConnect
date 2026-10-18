@@ -17,6 +17,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     title: 'Updates ohne Neustart',
     changes: [
       'Kommt die App aus dem Hintergrund zurück und gibt es eine neue Version, lädt sie sich automatisch neu – Wegwischen ist nicht mehr nötig',
+      'Server-Update: zu knapp eingestellte Tests behoben, die das Update auf dem Server blockiert haben',
     ],
   },
   {

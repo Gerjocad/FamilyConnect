@@ -29,9 +29,19 @@ if ! git diff --quiet "$OLD" "$NEW" -- deploy/install.sh 2>/dev/null; then
 fi
 
 build() {
-  npm ci --no-audit --no-fund --loglevel=error
-  npm run build --silent
-  npm test --silent
+  npm ci --no-audit --no-fund --loglevel=error || return 1
+  npm run build --silent || return 1
+  local log
+  log="$(mktemp)"
+  if ! npm test --silent >"$log" 2>&1; then
+    # Nur die fehlgeschlagenen Tests ins Protokoll – das ganze Testprotokoll ist sehr lang
+    echo "Fehlgeschlagene Tests:" >&2
+    grep -E -A12 '^\s*not ok' "$log" | grep -vE '^\s*(---|\.\.\.|duration_ms|type:)' >&2 || cat "$log" >&2
+    rm -f "$log"
+    return 1
+  fi
+  grep -E '^# (pass|fail)' "$log" || true
+  rm -f "$log"
 }
 
 git checkout --quiet -B "$BRANCH" "$NEW"

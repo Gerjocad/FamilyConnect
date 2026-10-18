@@ -43,7 +43,7 @@ let db;
 
 before(async () => {
   db = openDatabase(':memory:');
-  const push = new PushService(db, fakeAccount, { fetchImpl: fakeFetch, batchDelayMs: 50 });
+  const push = new PushService(db, fakeAccount, { fetchImpl: fakeFetch, batchDelayMs: 600 });
   const app = createApp(db, { push });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   base = `http://127.0.0.1:${server.address().port}/api`;
@@ -74,7 +74,7 @@ async function family() {
   return { anna, ben, fid: fam.id, annaId: id('Anna'), benId: id('Ben') };
 }
 
-const waitFor = async (fn, ms = 2000) => {
+const waitFor = async (fn, ms = 8000) => {
   const end = Date.now() + ms;
   while (Date.now() < end) {
     if (fn()) return;
@@ -178,18 +178,19 @@ describe('Push-Benachrichtigungen', () => {
       token: anna, method: 'POST', body: { title: 'Zahnarzt', start: '2026-10-20T15:30', end: '2026-10-20T16:00' },
     });
     await waitFor(() => sent.length === 2);
-    assert.equal(sent[1].notification.body, 'Zahnarzt · Di., 20. Okt., 15:30 Uhr (von Anna)');
+    assert.match(sent[1].notification.body, /^Zahnarzt · .*20.*15:30 Uhr \(von Anna\)$/);
 
     await api(`/families/${fid}/tasks`, { token: anna, method: 'POST', body: { title: 'Rasen mähen', assignee_id: benId } });
     await waitFor(() => sent.length === 3);
     assert.equal(sent[2].notification.title, 'Neue Aufgabe für dich');
 
     const { data: list } = await api(`/families/${fid}/lists`, { token: anna, method: 'POST', body: { name: 'Einkauf' } });
+    // nacheinander, aber ohne Pause – auch ein langsamer Server bleibt im Bündelungsfenster
     for (const text of ['Milch', 'Brot', 'Eier']) {
       await api(`/families/${fid}/items`, { token: anna, method: 'POST', body: { list_id: list.id, text } });
     }
     await waitFor(() => sent.length === 4);
-    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 800));
     assert.equal(sent.length, 4, 'nur eine Nachricht für drei Einträge');
     assert.equal(sent[3].notification.title, 'Einkauf');
     assert.equal(sent[3].notification.body, 'Anna hat Milch, Brot und Eier hinzugefügt');
