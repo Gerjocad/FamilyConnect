@@ -11,7 +11,7 @@ import { applyTheme, THEMES } from '../themes';
 import { ROLE_LABELS } from '../permissions';
 import type { Family, Role } from '../types';
 
-const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599', '#e67700', '#5c940d', '#495057'];
+const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599'];
 
 export function SettingsPage() {
   const { user, family, refreshUser, setFamily, selectFamily, signOut } = useFamily();

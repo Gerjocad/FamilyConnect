@@ -18,6 +18,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       'Sechs Farbschemata für die ganze App: Sonne, Ozean, Wald, Beere, Lavendel und Lagune – unter Familie & Profil, jeweils hell und dunkel',
       'Die Farbe gilt pro Person und folgt dir auf alle Geräte; auch das App-Symbol oben passt sich an',
+      '„Meine Farbe“ auf 6 gut unterscheidbare Farben reduziert',
       'Eltern und Kinder sehen unter Familie & Profil nur noch ihr Profil – Einladungscode, Mitglieder und weitere Gruppen verwaltet der Admin',
     ],
   },
