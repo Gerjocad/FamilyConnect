@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.18',
+    date: '2026-10-19',
+    title: 'Menü zum Reinziehen',
+    changes: [
+      'Neues Seitenmenü auf dem Handy: vom linken Rand nach rechts wischen oder oben links auf ☰ tippen',
+      'Alle Bereiche an einem Ort – Gewohnheiten, Essensplan, Rezepte, Kontakte, Beschwerden, Feedback und Familie & Profil',
+      'Wegwischen nach links, daneben tippen oder die Zurück-Taste schließen es wieder',
+      'Offene Beschwerden an dich zeigt ein roter Punkt am Menü-Symbol',
+    ],
+  },
+  {
     version: '1.17',
     date: '2026-10-19',
     title: 'Beschwerden',
@@ -19,7 +30,6 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Neue Seite „Beschwerden“ (Lautsprecher-Symbol oben): Foto und kurzer Text an eine bestimmte Person',
       'Die Person bekommt eine Push-Nachricht und einen Hinweis auf der Übersicht, kann antworten und die Beschwerde erledigen',
       'Sichtbar nur für Absender, Empfänger und Eltern – Eltern sehen unter „Alle“ jede Beschwerde',
-      'Feedback ist auf dem Handy jetzt unter Familie & Profil zu finden',
     ],
   },
   {

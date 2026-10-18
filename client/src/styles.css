@@ -156,7 +156,37 @@ textarea { resize: vertical; }
 @keyframes pulse { 50% { opacity: 0.4; transform: scale(0.94); } }
 
 .shell { min-height: 100dvh; }
-.sidebar { display: none; }
+/* Seitenleiste: am Computer fest links, auf dem Handy von links reinziehen (Layout.tsx) */
+.sidebar {
+  display: flex; flex-direction: column; gap: 6px; background: var(--surface); overflow-y: auto;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; width: min(300px, 84vw);
+  padding: max(20px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-105%); transition: transform 0.22s ease-out; box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+.drawer-open .sidebar { transform: none; }
+.drawer-backdrop {
+  position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, 0.4);
+  opacity: 0; pointer-events: none; transition: opacity 0.22s;
+}
+.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; padding: 0 8px 12px; }
+.family-name, .family-switch { margin: 0 4px 10px; font-weight: 600; color: var(--muted); }
+.family-name { padding: 0 4px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-link {
+  display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px;
+  color: var(--text); text-decoration: none; font-weight: 500;
+}
+@media (hover: hover) { .nav-link:hover { background: var(--surface-2); } }
+.nav-link.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; }
+.nav-badge { margin-left: auto; background: var(--danger); color: #fff; }
+.sidebar-user {
+  margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px;
+  text-decoration: none; color: inherit; font-weight: 600;
+}
+@media (hover: hover) { .sidebar-user:hover { background: var(--surface-2); } }
+.menu-button { position: relative; margin-left: -6px; }
+.menu-dot { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--danger); border: 2px solid var(--bg); }
 .topbar {
   position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px;
   padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top));
@@ -194,24 +224,10 @@ textarea { resize: vertical; }
   .topbar, .bottombar { display: none; }
   .content { padding: 28px 32px 48px; }
   .sidebar {
-    display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100dvh;
-    padding: 20px 14px; border-right: 1px solid var(--border); background: var(--surface);
+    position: sticky; top: 0; height: 100dvh; width: auto; z-index: auto; transform: none; transition: none;
+    box-shadow: none; padding: 20px 14px; border-right: 1px solid var(--border);
   }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; padding: 0 8px 12px; }
-  .family-name, .family-switch { margin: 0 4px 10px; font-weight: 600; color: var(--muted); }
-  .family-name { padding: 0 4px; }
-  .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
-  .nav-link {
-    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px;
-    color: var(--text); text-decoration: none; font-weight: 500;
-  }
-  .nav-link:hover { background: var(--surface-2); }
-  .nav-link.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; }
-  .sidebar-user {
-    margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px;
-    text-decoration: none; color: inherit; font-weight: 600;
-  }
-  .sidebar-user:hover { background: var(--surface-2); }
+  .drawer-backdrop { display: none; }
   .only-mobile { display: none; }
 }
 

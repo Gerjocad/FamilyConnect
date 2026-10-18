@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { CLOSE_DRAWER_EVENT } from './drawer';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { useLocation, useNavigate } from 'react-router';
@@ -31,12 +32,13 @@ function NativeNotifications() {
     return onDeepLink((path) => navigate(path));
   }, [navigate, user.id]);
 
-  // Android-Zurück-Taste: offenes Fenster schließen, sonst zur Übersicht, auf der Übersicht App minimieren
+  // Android-Zurück-Taste: offenes Fenster bzw. Menü schließen, sonst zur Übersicht, auf der Übersicht App minimieren
   useEffect(() => {
     if (!Capacitor.isPluginAvailable('App')) return;
     const handle = App.addListener('backButton', () => {
       const dialog = document.querySelector('dialog[open]');
       if (dialog) dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+      else if (document.querySelector('.drawer-open')) window.dispatchEvent(new Event(CLOSE_DRAWER_EVENT));
       else if (pathname !== '/') navigate('/', { replace: true });
       else void App.minimizeApp();
     });
