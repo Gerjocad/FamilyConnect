@@ -440,3 +440,19 @@ textarea { resize: vertical; }
 .nav-card:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
 .nav-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .nav-card-chevron { color: var(--muted); display: inline-flex; }
+
+/* --- Neuigkeiten ----------------------------------------------------------- */
+
+.news-link { display: flex !important; flex-direction: row !important; align-items: center; gap: 14px !important; text-decoration: none; color: inherit; }
+.news-link > svg:first-child { color: var(--accent); flex-shrink: 0; }
+.news-link > span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.news-link strong { display: flex; align-items: center; gap: 8px; }
+.news-link > svg:last-child { color: var(--muted); }
+.release { gap: 10px !important; }
+.release.latest { border-color: var(--accent); }
+.release-header { display: flex; align-items: center; gap: 12px; }
+.release-version { flex-shrink: 0; min-width: 48px; height: 48px; padding: 0 8px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; background: var(--surface-2); }
+.release.latest .release-version { background: var(--accent); color: #fff; }
+.release-title { display: flex; flex-direction: column; min-width: 0; }
+.release-changes { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.4; }
+.release-apk { display: flex; align-items: center; gap: 4px; }

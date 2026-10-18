@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { Icon, type IconName } from './Icon';
@@ -24,6 +25,12 @@ const MOBILE_RIGHT = NAV.filter((n) => ['/aufgaben', '/pinnwand'].includes(n.to)
 
 export function Layout() {
   const { family, user, selectFamily } = useFamily();
+  const { pathname } = useLocation();
+
+  // Neue Seite immer von oben anzeigen
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div className="shell">

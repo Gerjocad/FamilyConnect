@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, isNativeApp } from '../api';
 import { availableUpdate, installUpdate, installedVersion, type AppVersion } from '../appUpdate';
+import { CHANGELOG, CURRENT_VERSION, hasUnseenChanges } from '../changelog';
+import { Link } from 'react-router';
 import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
@@ -172,11 +174,20 @@ export function SettingsPage() {
         {other.error && <p className="error">{other.error}</p>}
       </section>
 
+      <Link to="/neuigkeiten" className="card news-link">
+        <Icon name="sparkle" size={22} />
+        <span>
+          <strong>Neuigkeiten {hasUnseenChanges() && <span className="badge">Neu</span>}</strong>
+          <small className="muted">Version {CURRENT_VERSION}: {CHANGELOG[0].title}</small>
+        </span>
+        <Icon name="right" size={18} />
+      </Link>
+
       {isNativeApp && (
         <section className="card">
           <h2>App</h2>
           <div className="row align-end">
-            <p className="muted spacer">Version {version ? `${version.versionName} (${version.versionCode})` : '…'}</p>
+            <p className="muted spacer">App-Version {version ? `${version.versionName} (${version.versionCode})` : '…'}</p>
             <button className="button" onClick={() => void checkUpdate()}><Icon name="download" size={18} /> Nach Updates suchen</button>
           </div>
           {updateInfo && <p className="muted">{updateInfo}</p>}
