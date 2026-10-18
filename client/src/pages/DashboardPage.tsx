@@ -1,4 +1,5 @@
-import { Link } from 'react-router';
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import { useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { addDays, formatDay, occurrencesInRange, sameDay, startOfDay, toDateKey } from '../dates';
@@ -10,6 +11,29 @@ import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
 import { OccurrenceRow } from './CalendarPage';
 import { TaskRow, useTaskToggle } from './TasksPage';
+
+/** Ganze Karte antippbar; Häkchen und Abhak-Knöpfe darin funktionieren weiter für sich */
+function NavCard({ to, className = '', children }: { to: string; className?: string; children: ReactNode }) {
+  const navigate = useNavigate();
+  const onClick = (e: MouseEvent) => {
+    if ((e.target as HTMLElement).closest('input, label, .check-button, a')) return;
+    navigate(to);
+  };
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target === e.currentTarget) navigate(to);
+  };
+  return (
+    <section className={`card nav-card ${className}`} onClick={onClick} onKeyDown={onKeyDown} role="link" tabIndex={0}>
+      {children}
+    </section>
+  );
+}
+
+const More = () => (
+  <span className="nav-card-chevron" aria-hidden="true">
+    <Icon name="right" size={18} />
+  </span>
+);
 
 function greeting() {
   const h = new Date().getHours();
@@ -60,11 +84,11 @@ export function DashboardPage() {
       </header>
 
       <div className="dashboard">
-        <section className="card span-2">
+        <NavCard to="/kalender" className="span-2">
           <header className="section-header">
             <h2><Icon name="calendar" size={18} /> Die nächsten 7 Tage</h2>
             <span className="spacer" />
-            <Link to="/kalender" className="link-button">Kalender</Link>
+            <More />
           </header>
           {groups.length === 0 ? (
             <EmptyState icon="calendar" title="Keine Termine in dieser Woche" />
@@ -78,13 +102,13 @@ export function DashboardPage() {
               </div>
             ))
           )}
-        </section>
+        </NavCard>
 
-        <section className="card">
+        <NavCard to="/aufgaben">
           <header className="section-header">
             <h2><Icon name="task" size={18} /> Für dich zu tun</h2>
             <span className="spacer" />
-            <Link to="/aufgaben" className="link-button">Alle</Link>
+            <More />
           </header>
           {myTasks.length === 0 ? (
             <EmptyState icon="check" title="Nichts offen" />
@@ -93,14 +117,14 @@ export function DashboardPage() {
               {myTasks.map((t) => <TaskRow key={t.id} task={t} onToggle={() => void toggle(t)} />)}
             </ul>
           )}
-        </section>
+        </NavCard>
 
         {myHabits.length > 0 && (
-          <section className="card">
+          <NavCard to="/gewohnheiten">
             <header className="section-header">
               <h2><Icon name="habit" size={18} /> Gewohnheiten</h2>
               <span className="spacer" />
-              <Link to="/gewohnheiten" className="link-button">Alle</Link>
+              <More />
             </header>
             <ul className="check-list">
               {myHabits.map(({ habit, status }) => (
@@ -120,14 +144,14 @@ export function DashboardPage() {
                 </li>
               ))}
             </ul>
-          </section>
+          </NavCard>
         )}
 
-        <section className="card">
+        <NavCard to="/essen">
           <header className="section-header">
             <h2><Icon name="meal" size={18} /> Heute auf dem Tisch</h2>
             <span className="spacer" />
-            <Link to="/essen" className="link-button">Plan</Link>
+            <More />
           </header>
           {todaysMeals.length === 0 ? (
             <EmptyState icon="meal" title="Noch nichts geplant" />
@@ -139,20 +163,20 @@ export function DashboardPage() {
               })}
             </ul>
           )}
-        </section>
+        </NavCard>
 
-        <section className="card span-2">
+        <NavCard to="/pinnwand" className="span-2">
           <header className="section-header">
             <h2><Icon name="chat" size={18} /> Pinnwand</h2>
             <span className="spacer" />
-            <Link to="/pinnwand" className="link-button">Alle Beiträge</Link>
+            <More />
           </header>
           {latestPosts.length === 0 ? (
             <EmptyState icon="chat" title="Noch keine Beiträge" />
           ) : (
             latestPosts.map((p) => <PostCard key={p.id} post={p} />)
           )}
-        </section>
+        </NavCard>
       </div>
       {toast}
     </div>

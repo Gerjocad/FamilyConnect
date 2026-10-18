@@ -14,8 +14,13 @@ const NAV: { to: string; label: string; icon: IconName; mobile: boolean }[] = [
   { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit', mobile: false },
   { to: '/essen', label: 'Essensplan', icon: 'meal', mobile: false },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts', mobile: false },
+  { to: '/feedback', label: 'Feedback', icon: 'feedback', mobile: false },
   { to: '/einstellungen', label: 'Familie & Profil', icon: 'settings', mobile: false },
 ];
+
+// Untere Leiste auf dem Handy: je zwei Bereiche links und rechts, die Übersicht rund in der Mitte
+const MOBILE_LEFT = NAV.filter((n) => ['/kalender', '/listen'].includes(n.to));
+const MOBILE_RIGHT = NAV.filter((n) => ['/aufgaben', '/pinnwand'].includes(n.to));
 
 export function Layout() {
   const { family, user, selectFamily } = useFamily();
@@ -62,6 +67,7 @@ export function Layout() {
         <NavLink to="/gewohnheiten" className="icon-button" aria-label="Gewohnheiten"><Icon name="habit" /></NavLink>
         <NavLink to="/essen" className="icon-button" aria-label="Essensplan"><Icon name="meal" /></NavLink>
         <NavLink to="/kontakte" className="icon-button" aria-label="Kontakte"><Icon name="contacts" /></NavLink>
+        <NavLink to="/feedback" className="icon-button" aria-label="Feedback"><Icon name="feedback" /></NavLink>
         <NavLink to="/einstellungen" aria-label="Familie & Profil"><Avatar member={user} size={30} /></NavLink>
       </header>
 
@@ -72,8 +78,17 @@ export function Layout() {
       <NotificationBridge />
 
       <nav className="bottombar">
-        {NAV.filter((n) => n.mobile).map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === '/'} className="bottom-link">
+        {MOBILE_LEFT.map((item) => (
+          <NavLink key={item.to} to={item.to} className="bottom-link">
+            <Icon name={item.icon} size={22} />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+        <NavLink to="/" end className="bottom-home" aria-label="Übersicht">
+          <Icon name="home" size={28} />
+        </NavLink>
+        {MOBILE_RIGHT.map((item) => (
+          <NavLink key={item.to} to={item.to} className="bottom-link">
             <Icon name={item.icon} size={22} />
             <span>{item.label}</span>
           </NavLink>

@@ -5,6 +5,7 @@ import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { FeedbackPage } from './pages/FeedbackPage';
 import { HabitCheckinPage } from './pages/HabitCheckinPage';
 import { HabitsPage } from './pages/HabitsPage';
 import { ListsPage } from './pages/ListsPage';
@@ -49,6 +50,7 @@ export function App() {
           <Route path="essen" element={<MealsPage />} />
           <Route path="kontakte" element={<ContactsPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
+          <Route path="feedback" element={<FeedbackPage />} />
           <Route path="h/:token" element={<HabitCheckinPage />} />
           <Route path="einstellungen" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

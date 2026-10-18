@@ -151,6 +151,18 @@ CREATE TABLE IF NOT EXISTS habit_checkins (
   UNIQUE (habit_id, user_id, date)
 );
 
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  kind TEXT NOT NULL DEFAULT 'idea',
+  text TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  -- Dateinamen der Screenshots im Upload-Ordner
+  images TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

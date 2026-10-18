@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { useLocation, useNavigate } from 'react-router';
 import { isNativeApp } from '../api';
 import { onDeepLink } from '../deepLinks';
 import { listenForTaps, registerPush, syncReminders } from '../notifications';
@@ -16,6 +18,7 @@ export function NotificationBridge() {
 
 function NativeNotifications() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { user } = useFamily();
   const events = useResource<CalendarEvent>('events');
   const tasks = useResource<Task>('tasks');
@@ -27,6 +30,18 @@ function NativeNotifications() {
     void registerPush();
     return onDeepLink((path) => navigate(path));
   }, [navigate, user.id]);
+
+  // Android-Zurück-Taste: offenes Fenster schließen, sonst zur Übersicht, auf der Übersicht App minimieren
+  useEffect(() => {
+    if (!Capacitor.isPluginAvailable('App')) return;
+    const handle = App.addListener('backButton', () => {
+      const dialog = document.querySelector('dialog[open]');
+      if (dialog) dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+      else if (pathname !== '/') navigate('/', { replace: true });
+      else void App.minimizeApp();
+    });
+    return () => void handle.then((h) => h.remove());
+  }, [navigate, pathname]);
 
   const loading = events.loading || tasks.loading || habits.loading || checkins.loading;
   useEffect(() => {

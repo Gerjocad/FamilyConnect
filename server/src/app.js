@@ -6,6 +6,7 @@ import {
   requireMember, requireUser, verifyPassword,
 } from './auth.js';
 import { crudRouter } from './crud.js';
+import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
 import { RESOURCES } from './resources.js';
@@ -17,7 +18,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -37,7 +38,9 @@ export function createApp(db, { staticDir, push, appRelease } = {}) {
     next();
   });
 
-  app.use(express.json({ limit: '100kb' }));
+  // Feedback mit Screenshots hat ein eigenes, größeres Limit
+  const smallJson = express.json({ limit: '100kb' });
+  app.use((req, res, next) => (/^\/api\/families\/\d+\/feedback$/.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
 
@@ -220,6 +223,7 @@ export function createApp(db, { staticDir, push, appRelease } = {}) {
   });
 
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
+  if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
 
   for (const resource of RESOURCES) {
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,
@@ -246,6 +250,7 @@ export function createApp(db, { staticDir, push, appRelease } = {}) {
 
   app.use((err, req, res, _next) => {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Ungültiges JSON' });
+    if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Die Anfrage ist zu groß' });
     console.error(err);
     res.status(500).json({ error: 'Interner Fehler' });
   });

@@ -17,7 +17,9 @@ const push = new PushService(db, loadServiceAccount(process.env.FIREBASE_SERVICE
 // GitHub-Repository mit den App-Releases; APP_RELEASES_REPO=off schaltet die Update-Prüfung ab
 const releasesRepo = process.env.APP_RELEASES_REPO ?? 'Gerjocad/FamilyConnect';
 const appRelease = new AppRelease(releasesRepo === 'off' ? null : releasesRepo);
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease });
+// Hochgeladene Dateien (Screenshots im Feedback) liegen neben der Datenbank
+const uploadDir = process.env.UPLOAD_DIR ?? join(dirname(dbFile), 'uploads');
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir });
 
 app.listen(port, host, () => {
   console.log(`FamilyConnect läuft auf http://localhost:${port}`);

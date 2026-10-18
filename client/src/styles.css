@@ -175,6 +175,15 @@ textarea { resize: vertical; }
   color: var(--muted); text-decoration: none; font-size: 0.68rem; font-weight: 600;
 }
 .bottom-link.active { color: var(--accent); }
+.bottombar { align-items: flex-end; overflow: visible; }
+.bottom-home {
+  flex: 0 0 auto; width: 62px; height: 62px; margin: -22px 6px 8px; border-radius: 50%;
+  display: grid; place-items: center; text-decoration: none;
+  background: var(--surface); color: var(--muted); border: 2px solid var(--border);
+  box-shadow: 0 4px 14px rgba(80, 40, 10, 0.18); transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.bottom-home:active { transform: scale(0.94); }
+.bottom-home.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 @media (min-width: 900px) {
   .shell { display: grid; grid-template-columns: 240px 1fr; }
@@ -411,3 +420,23 @@ textarea { resize: vertical; }
 .quick-add-block .quick-add { margin-bottom: 8px; }
 .assign-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; }
 .assign-row .chip { font-size: 0.85rem; padding-top: 3px; padding-bottom: 3px; }
+
+/* --- Feedback -------------------------------------------------------------- */
+
+.thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); padding: 0; cursor: pointer; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-style: dashed; color: var(--muted); }
+.thumb-remove { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.6); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.badge.bug { background: #fde2ea; color: #c2255c; }
+.badge.idea { background: #e7f5ff; color: #1c7ed6; }
+.feedback.is-done .post-body > p { color: var(--muted); text-decoration: line-through; }
+.feedback-actions { margin-top: 8px; }
+.screenshot-full { width: 100%; height: auto; border-radius: 10px; display: block; }
+
+/* --- Antippbare Karten auf der Übersicht ----------------------------------- */
+
+.nav-card { cursor: pointer; transition: border-color 0.15s; -webkit-tap-highlight-color: transparent; }
+.nav-card:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.nav-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav-card-chevron { color: var(--muted); display: inline-flex; }
