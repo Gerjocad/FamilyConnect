@@ -200,6 +200,12 @@ export const RESOURCES = [
       member_ids: members(),
       remind: oneOf(['none', 'evening', 'morning'], { default: 'evening' }),
       notes: text({ max: 500 }),
+      // feste Termine (Abfallkalender); dann gilt der erste als Start
+      dates: dates(),
+    },
+    transform(row) {
+      const fixed = JSON.parse(row.dates);
+      if (fixed.length) row.start_date = fixed[0];
     },
   },
   {

@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.23',
+    date: '2026-10-20',
+    title: 'Abfallkalender importieren',
+    changes: [
+      'Dienste: „Abfallkalender importieren (.ics)“ – je Abfallart ein Dienst mit den genauen Abholtagen, auch wenn Feiertage einen Termin verschieben',
+      'Bei der Übernahme wählst du, wer der Reihe nach rausstellt und wann erinnert wird; ein neuer Kalender ersetzt die alten Termine',
+    ],
+  },
+  {
     version: '1.22',
     date: '2026-10-19',
     title: 'Raumklima',

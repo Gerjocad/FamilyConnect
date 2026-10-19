@@ -50,6 +50,20 @@ describe('Dienste', () => {
     assert.equal(occurrenceIndex({ start_date: '2026-10-20', interval_weeks: 1 }, '2026-10-27'), 1);
   });
 
+  test('feste Termine aus dem Abfallkalender', async () => {
+    const { mama, tom, fid, ids } = await family();
+    const { data: chore } = await api(`/families/${fid}/chores`, { token: mama, method: 'POST', body: {
+      title: 'Papier', emoji: '📰', start_date: '2026-01-01', interval_weeks: 1, member_ids: [ids.tom],
+      dates: ['2026-12-24', '2026-12-18', '2026-12-18'],
+    } });
+    assert.deepEqual(chore.dates, ['2026-12-18', '2026-12-24'], 'sortiert, ohne Doppelte');
+    assert.equal(chore.start_date, '2026-12-18', 'Start = erster Termin');
+    const day = (date) => `/families/${fid}/chores/${chore.id}/days/${date}/done`;
+    assert.equal((await api(day('2026-12-25'), { token: tom, method: 'POST' })).status, 400, 'Feiertag – kein Termin');
+    assert.equal((await api(day('2026-12-24'), { token: tom, method: 'POST' })).status, 204);
+    assert.equal(occurrenceIndex({ dates: '["2026-12-18","2026-12-24"]' }, '2026-12-24'), 1);
+  });
+
   test('nur Eltern legen an; abhaken nur wer dran ist; tauschen', async () => {
     const { mama, tom, lea, fid, ids } = await family();
     const body = { title: 'Gelber Sack', emoji: '♻️', start_date: '2026-10-20', interval_weeks: 2, member_ids: [ids.tom, ids.lea] };

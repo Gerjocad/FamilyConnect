@@ -154,6 +154,8 @@ export interface Chore extends Base {
   member_ids: number[];
   remind: 'none' | 'evening' | 'morning';
   notes: string;
+  /** feste Termine (z. B. aus dem Abfallkalender); leer = Rhythmus */
+  dates: string[];
 }
 
 /** Ausnahme an einem Termin: getauscht und/oder erledigt */

@@ -128,6 +128,8 @@ const ADDED_COLUMNS = [
   ['lists', 'is_default', 'INTEGER NOT NULL DEFAULT 0'],
   // Warengruppe eines Eintrags (client/src/groceries.ts); leer = automatisch erkennen
   ['list_items', 'category', 'TEXT'],
+  // Feste Termine eines Dienstes (z. B. aus dem Abfallkalender); leer = Rhythmus über start_date/interval_weeks
+  ['chores', 'dates', "TEXT NOT NULL DEFAULT '[]'"],
   // Gewohnheit hängt an einem NFC-Aufkleber: Kinder haken dann nur per Aufkleber ab
   ['habits', 'nfc_linked', 'INTEGER NOT NULL DEFAULT 0'],
   // Geburtstag (JJJJ-MM-TT)

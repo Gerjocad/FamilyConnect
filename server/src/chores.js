@@ -7,6 +7,9 @@ import { isManager } from './permissions.js';
 
 /** Index des Termins (0, 1, 2 …) oder -1, wenn `date` kein Termin des Dienstes ist */
 export function occurrenceIndex(chore, date) {
+  // Feste Termine (Abfallkalender): Position in der Liste
+  const fixed = typeof chore.dates === 'string' ? JSON.parse(chore.dates) : chore.dates ?? [];
+  if (fixed.length) return fixed.indexOf(date);
   const start = Date.parse(`${chore.start_date}T00:00:00Z`);
   const day = Date.parse(`${date}T00:00:00Z`);
   const diff = Math.round((day - start) / 86_400_000);
