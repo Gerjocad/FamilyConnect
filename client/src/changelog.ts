@@ -14,8 +14,9 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.21',
     date: '2026-10-19',
-    title: 'Einkaufsliste, Dienste, Geburtstage, Ferien',
+    title: 'Einkaufsliste, Dienste, Geburtstage, Ferien, Abstimmungen',
     changes: [
+      'Pinnwand: Abstimmungen mit 2–6 Antworten („Pizza oder Burger?“) – Ergebnis live mit Balken und wer was gewählt hat, auch auf der Übersicht',
       'Neu: „Geburtstage“ – mit Countdown, Alter, Erinnerung eine Woche vorher und am Tag; Geburtstag im Profil eintragen (Eltern auch für die Kinder), bei Kontakten ebenfalls',
       'Geschenkideen pro Person mit „gekauft“-Haken – die beschenkte Person sieht sie nicht',
       'Ferien und Feiertage eures Bundeslands im Kalender und auf der Übersicht (Bundesland wählt der Admin unter Familie & Profil)',

@@ -121,6 +121,8 @@ export const RESOURCES = [
   {
     path: 'posts',
     table: 'posts',
+    // Beim Löschen eines Beitrags verschwindet auch eine Abstimmung daran
+    alsoChanges: ['polls'],
     order: 'created_at DESC, id DESC',
     limit: 200,
     ownerOnly: true,

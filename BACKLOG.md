@@ -25,9 +25,23 @@ Bisher schreibt man die Adresse einer Gewohnheit (`familyconnect://h/<token>`) m
 **Offen:** Option „Aufkleber sperren“ (danach nicht mehr überschreibbar, nicht umkehrbar) – mit
 oder ohne? Vor der Umsetzung nachfragen.
 
-## Weitere Ideen
+## Später (abgestimmt, noch nicht umsetzen)
 
-- Punktesystem und Belohnungen für Gewohnheiten
-- Tuya-Thermometer (Temperatur/Luftfeuchte aufs Dashboard, Warnungen) – braucht Konto auf platform.tuya.com
-- Standort der Familienmitglieder auf einer Karte (freiwillig, neue APK nötig)
-- Müllabfuhr-Erinnerung, Wanddisplay-Modus, Barcode-Scanner für die Einkaufsliste
+- **Punkte & Belohnungen** – „klingt gut, aber noch nicht“: Punkte für Aufgaben/Gewohnheiten/Dienste,
+  Belohnungen einlösen über Anfragen, Wochen-Rangliste
+- **Taschengeld-Konto** – Idee muss noch ausgearbeitet werden (Kontostand je Kind, wöchentliche
+  Gutschrift, Ausgaben, evtl. Verbindung zu Punkten)
+- **Wochenplan-Assistent** für den Essensplan – noch nicht
+- **Familien-Dokumente** (Impfpass, Versicherungskarten, WLAN …) – nur wenn es wirklich sicher ist:
+  Verschlüsselung der Dateien auf dem Server, Zugriff nur für Eltern, PIN/zweite Bestätigung, kein
+  Vorschaubild im Cache
+- **Müllabfuhr automatisch** aus dem ICS-Kalender der Stadt – erstmal nicht (Dienste gibt es manuell)
+- **Wanddisplay-Modus** für das Fire 7 HD – Generation klären (Fire OS 5 = nur Browser, ab Fire OS 7 auch App)
+- **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
+- **Standort teilen** – erstmal nicht
+- **Tuya-Thermometer** – wartet auf Entwicklerkonto und Cloud-Projekt bei platform.tuya.com
+
+## Erledigt aus der Ideenliste
+
+- Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
+  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland

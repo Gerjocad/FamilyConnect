@@ -330,8 +330,8 @@ textarea { resize: vertical; }
 
 /* --- Pinnwand ------------------------------------------------------------- */
 
-.composer { display: flex; gap: 12px; align-items: flex-start; }
-.composer textarea { flex: 1; }
+.composer, .page.narrow > .card.composer { display: flex; flex-direction: row; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.composer textarea { flex: 1 1 0; min-width: 0; }
 .post { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .post:first-child { padding-top: 0; }
 .post:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -694,3 +694,20 @@ textarea { resize: vertical; }
 .day-event.birthday-pill { background: #f59f00; }
 .day-extras { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
 .holiday-line { margin-top: 4px; font-weight: 600; color: var(--accent-strong); }
+
+/* --- Abstimmungen ----------------------------------------------------------- */
+.poll { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.poll-option {
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px;
+  border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.poll-option.mine { border-color: var(--accent); }
+.poll-bar { position: absolute; inset: 0 auto 0 0; background: var(--accent-soft); transition: width 0.3s ease-out; }
+.poll-option.leading .poll-bar { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+.poll-text, .poll-voters, .poll-count { position: relative; }
+.poll-text { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; overflow-wrap: anywhere; }
+.poll-voters { display: flex; }
+.poll-voters .avatar + .avatar { margin-left: -6px; box-shadow: 0 0 0 2px var(--surface); }
+.poll-count { font-weight: 700; min-width: 1.2em; text-align: right; }
+.poll-editor { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; padding-left: 48px; }
+.poll-toggle { flex-basis: 100%; text-align: left; padding-left: 48px; }

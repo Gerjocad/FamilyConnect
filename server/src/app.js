@@ -15,6 +15,7 @@ import { HolidayService, STATES } from './holidays.js';
 import { LiveHub } from './live.js';
 import { ROLES } from './permissions.js';
 import { ensureShoppingList } from './db.js';
+import { pollsRouter } from './polls.js';
 import { recipesRouter } from './recipes.js';
 import { requestsRouter } from './requests.js';
 import { RESOURCES } from './resources.js';
@@ -290,6 +291,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   });
 
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
+  app.use(pollsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(choresRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(requestsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   if (uploadDir) app.use(complaintsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir, push }));

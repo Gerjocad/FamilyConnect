@@ -274,6 +274,21 @@ CREATE TABLE IF NOT EXISTS gift_ideas (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Abstimmungen: Antworten und Stimmen gehören zu einem Pinnwand-Beitrag
+CREATE TABLE IF NOT EXISTS poll_options (
+  id INTEGER PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  option_id INTEGER NOT NULL REFERENCES poll_options(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (post_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

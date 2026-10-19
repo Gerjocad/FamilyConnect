@@ -9,7 +9,7 @@ import { habitStatus, nfcOnlyFor, statusLabel } from '../habitStatus';
 import type { CalendarEvent, Contact, Habit, Meal, Post, Task } from '../types';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
-import { PostCard } from './BoardPage';
+import { PostCard, usePolls } from './BoardPage';
 import { untilLabel, upcomingBirthdays } from '../birthdays';
 import { useHolidays } from '../holidays';
 import { allOccurrences, useChores } from '../chores';
@@ -23,7 +23,7 @@ import { TaskRow, useTaskToggle } from './TasksPage';
 function NavCard({ to, className = '', children }: { to: string; className?: string; children: ReactNode }) {
   const navigate = useNavigate();
   const onClick = (e: MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input, label, .check-button, a')) return;
+    if ((e.target as HTMLElement).closest('input, label, .check-button, .poll, a')) return;
     navigate(to);
   };
   const onKeyDown = (e: KeyboardEvent) => {
@@ -65,6 +65,7 @@ export function DashboardPage() {
   const complaints = useComplaints();
   const requests = useRequests();
   const chores = useChores();
+  const polls = usePolls();
   const contacts = useResource<Contact>('contacts');
   const holidays = useHolidays([today.getFullYear(), today.getFullYear() + 1]);
   const todayKey = toDateKey(today);
@@ -264,7 +265,12 @@ export function DashboardPage() {
           {latestPosts.length === 0 ? (
             <EmptyState icon="chat" title="Noch keine Beiträge" />
           ) : (
-            latestPosts.map((p) => <PostCard key={p.id} post={p} />)
+            latestPosts.map((p) => (
+              <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} onVote={(optionId) => {
+                const poll = polls.forPost(p.id);
+                if (poll) void polls.vote(poll, optionId);
+              }} />
+            ))
           )}
         </NavCard>
       </div>

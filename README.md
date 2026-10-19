@@ -13,6 +13,7 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 - **Dienste**: z. B. Müllabfuhr mit Rhythmus und Rotation, Erinnerung am Vorabend, Tauschen
 - **Geburtstage**: Countdown, Erinnerungen und geheime Geschenkideen
 - **Ferien & Feiertage** des Bundeslands im Kalender (Daten von openholidaysapi.org)
+- **Abstimmungen** auf der Pinnwand
 - **Anfragen**: „Darf ich …?“ an eine Person, mit Ja/Nein/Gegenvorschlag, Push-Nachrichten und Übernahme in den Kalender
 - **Beschwerden**: Foto und kurzer Text an eine Person, mit Push-Nachricht, Antwort und „erledigt“; sichtbar für Absender, Empfänger und Eltern
 - **Rezepte**: per Link von Chefkoch & Co. übernehmen oder nach einem Gericht suchen, in den Essensplan eintragen, Portionen umrechnen, Zutaten mit einem Tipp auf die Einkaufsliste setzen; optional mit KI für Seiten ohne Rezept-Daten und eingefügten Text, siehe [deploy/KI.md](deploy/KI.md)
