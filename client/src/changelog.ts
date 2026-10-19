@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.24',
+    date: '2026-10-20',
+    title: 'Urlaub im Kalender',
+    changes: [
+      'Kalender: „Urlaub“ eintragen – Zeitraum, wer fährt und eine Farbe; die Tage werden leicht eingefärbt wie die Schulferien',
+      'Überschneiden sich Ferien und Urlaube, teilt sich das Feld: zwei Hälften, drei Drittel …',
+      'Antippen eines Tages zeigt den Urlaub darunter; von dort lässt er sich ändern oder löschen',
+    ],
+  },
+  {
     version: '1.23',
     date: '2026-10-20',
     title: 'Abfallkalender importieren',

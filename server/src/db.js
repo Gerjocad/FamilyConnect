@@ -253,6 +253,21 @@ CREATE TABLE IF NOT EXISTS chores (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Urlaube: mehrtägig, im Kalender leicht eingefärbt wie die Schulferien
+CREATE TABLE IF NOT EXISTS vacations (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  member_ids TEXT NOT NULL DEFAULT '[]',
+  -- Farbe der Markierung (#rrggbb); leer = Farbe der ersten Person
+  color TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Ausnahmen pro Termin eines Dienstes: getauscht und/oder erledigt
 CREATE TABLE IF NOT EXISTS chore_days (
   chore_id INTEGER NOT NULL REFERENCES chores(id) ON DELETE CASCADE,

@@ -10,11 +10,13 @@ import {
 } from '../dates';
 import { useFamily } from '../session';
 import { useHolidays } from '../holidays';
-import type { CalendarEvent, Contact } from '../types';
+import type { CalendarEvent, Contact, Vacation } from '../types';
 import { useResource } from '../useResource';
 import { usePermissions } from '../permissions';
 import { EventForm } from './EventForm';
 import { deleteEvent, saveEvent } from '../eventSeries';
+import { SCHOOL_HOLIDAY_COLOR, markBackground, vacationColor, vacationsOn } from '../vacations';
+import { VacationForm } from './VacationForm';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
@@ -52,6 +54,7 @@ export function CalendarPage() {
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
+  const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);
   const { canEdit, isAdmin } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
@@ -69,6 +72,11 @@ export function CalendarPage() {
   // Feiertage, Schulferien und Geburtstage als Zusatz zu den Terminen
   const holidays = useHolidays([...new Set([days[0].getFullYear(), days[days.length - 1].getFullYear(), today.getFullYear()])]);
   const contacts = useResource<Contact>('contacts');
+  const vacations = useResource<Vacation>('vacations');
+  const visibleVacations = useMemo(
+    () => (filter === null ? vacations.items : vacations.items.filter((v) => !v.member_ids.length || v.member_ids.includes(filter))),
+    [vacations.items, filter]
+  );
   const birthdays = useMemo(
     () => birthdaysInRange(family.members, contacts.items, days[0], days[days.length - 1]),
     [family.members, contacts.items, days]
@@ -77,10 +85,18 @@ export function CalendarPage() {
     publicHoliday: holidays.publicHoliday(date),
     school: holidays.schoolHoliday(date),
     birthdays: birthdays.filter((b) => b.date === date).map((b) => b.label),
+    vacations: vacationsOn(visibleVacations, date),
   });
+  // Ferien und Urlaube färben das Feld leicht ein; bei Überschneidung teilt es sich auf
+  const marks = (extras: ReturnType<typeof extrasFor>) => [
+    ...(extras.school ? [SCHOOL_HOLIDAY_COLOR] : []),
+    ...extras.vacations.map((v) => vacationColor(v, member)),
+  ];
   const selectedKey = toDateKey(selected);
   const selectedExtras = extrasFor(selectedKey);
-  const hasExtras = Boolean(selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length);
+  const hasExtras = Boolean(
+    selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length || selectedExtras.vacations.length
+  );
 
   const moveMonth = (delta: number) => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
 
@@ -88,9 +104,14 @@ export function CalendarPage() {
     <div className="page">
       <header className="page-header">
         <h1>Kalender</h1>
-        <button className="button primary" onClick={() => setEditing('new')}>
-          <Icon name="plus" /> Termin
-        </button>
+        <div className="header-actions">
+          <button className="button" onClick={() => setEditingVacation('new')}>
+            <Icon name="plus" /> Urlaub
+          </button>
+          <button className="button primary" onClick={() => setEditing('new')}>
+            <Icon name="plus" /> Termin
+          </button>
+        </div>
       </header>
 
       <div className="filter-bar" role="group" aria-label="Nach Person filtern">
@@ -136,9 +157,9 @@ export function CalendarPage() {
                     sameDay(day, today) && 'today',
                     sameDay(day, selected) && 'selected',
                     extras.publicHoliday && 'public-holiday',
-                    extras.school && 'school-holiday',
                   ].filter(Boolean).join(' ')}
-                  title={[extras.publicHoliday, extras.school?.name].filter(Boolean).join(' · ') || undefined}
+                  style={{ backgroundImage: markBackground(marks(extras)) }}
+                  title={[extras.publicHoliday, extras.school?.name, ...extras.vacations.map((v) => v.title)].filter(Boolean).join(' · ') || undefined}
                   onClick={() => setSelected(day)}
                   onDoubleClick={() => setEditing('new')}
                 >
@@ -165,6 +186,17 @@ export function CalendarPage() {
             <ul className="day-extras">
               {selectedExtras.publicHoliday && <li>🎉 {selectedExtras.publicHoliday} <span className="muted">· Feiertag</span></li>}
               {selectedExtras.school && <li>🏖️ {selectedExtras.school.name} <span className="muted">· bis {formatShortDay(parseLocal(selectedExtras.school.end))}</span></li>}
+              {selectedExtras.vacations.map((v) => (
+                <li key={`v${v.id}`}>
+                  <button type="button" className="vacation-line" onClick={() => setEditingVacation(v)}>
+                    <span className="dot" style={{ background: vacationColor(v, member) }} /> ✈️ {v.title}
+                    <span className="muted">
+                      · bis {formatShortDay(parseLocal(v.end_date))}
+                      {v.member_ids.length > 0 && ` · ${v.member_ids.map((id) => member(id)?.name).filter(Boolean).join(', ')}`}
+                    </span>
+                  </button>
+                </li>
+              ))}
               {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
             </ul>
           )}
@@ -183,6 +215,17 @@ export function CalendarPage() {
           )}
         </section>
       </div>
+
+      {editingVacation && (
+        <VacationForm
+          vacation={editingVacation === 'new' ? undefined : editingVacation}
+          defaultDay={selected}
+          onClose={() => setEditingVacation(null)}
+          readOnly={editingVacation !== 'new' && !canEdit(editingVacation)}
+          onSave={(data) => (editingVacation === 'new' ? vacations.create(data) : vacations.update(editingVacation.id, data))}
+          onDelete={editingVacation === 'new' ? undefined : () => vacations.remove(editingVacation.id)}
+        />
+      )}
 
       {editing && (
         <EventForm

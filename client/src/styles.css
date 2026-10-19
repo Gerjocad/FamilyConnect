@@ -234,6 +234,7 @@ textarea { resize: vertical; }
 .page { display: flex; flex-direction: column; gap: 16px; max-width: 1200px; margin: 0 auto; }
 .page.narrow { max-width: 720px; }
 .page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .subtle-header { margin: 16px 0 4px; }
 .stack { display: flex; flex-direction: column; gap: 8px; }
@@ -688,7 +689,10 @@ textarea { resize: vertical; }
 .birthday-line { display: flex; align-items: center; gap: 6px; }
 
 /* --- Ferien, Feiertage, Geburtstage im Kalender ----------------------------- */
-.day.school-holiday { background: color-mix(in srgb, #20c997 12%, transparent); }
+/* Ferien und Urlaube: leichte Streifen als background-image (vacations.ts), Auswahl/Hover darunter */
+.vacation-line { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.vacation-line .muted { font-weight: 500; }
+.swatch-auto { color: #fff; font-weight: 800; font-size: 0.75rem; }
 .day.public-holiday .day-number { color: var(--danger); font-weight: 800; }
 .day-event.holiday-pill { background: var(--danger); }
 .day-event.birthday-pill { background: #f59f00; }

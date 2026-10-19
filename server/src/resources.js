@@ -209,6 +209,24 @@ export const RESOURCES = [
     },
   },
   {
+    path: 'vacations',
+    table: 'vacations',
+    order: 'start_date ASC, id ASC',
+    fields: {
+      title: text({ required: true, max: 100 }),
+      start_date: date({ required: true }),
+      end_date: date({ required: true }),
+      member_ids: members(),
+      color: text({ max: 7 }),
+      notes: text({ max: 1000 }),
+    },
+    childRule: ownOnly('Kinder dürfen nur eigene Urlaube ändern'),
+    check(row) {
+      if (row.end_date < row.start_date) return 'Das Ende darf nicht vor dem Beginn liegen';
+      if (row.color && !/^#[0-9a-f]{6}$/i.test(row.color)) return 'Ungültige Farbe';
+    },
+  },
+  {
     path: 'contacts',
     table: 'contacts',
     order: 'name COLLATE NOCASE ASC',

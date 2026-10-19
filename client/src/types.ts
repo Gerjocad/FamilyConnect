@@ -158,6 +158,17 @@ export interface Chore extends Base {
   dates: string[];
 }
 
+export interface Vacation extends Base {
+  title: string;
+  start_date: string;
+  /** letzter Tag (einschließlich) */
+  end_date: string;
+  member_ids: number[];
+  /** #rrggbb; leer = Farbe der ersten Person */
+  color: string;
+  notes: string;
+}
+
 /** Ausnahme an einem Termin: getauscht und/oder erledigt */
 export interface ChoreDay {
   chore_id: number;
@@ -177,4 +188,4 @@ export interface Checkin {
   created_at: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores';
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores' | 'vacations';
