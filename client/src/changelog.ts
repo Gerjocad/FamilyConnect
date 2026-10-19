@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.21',
+    date: '2026-10-19',
+    title: 'Feste Einkaufsliste mit Warengruppen',
+    changes: [
+      'Jede Familie hat jetzt eine feste „Einkaufsliste“ – immer ganz oben, kann nicht gelöscht oder umbenannt werden',
+      'Einkaufslisten sortieren nach Warengruppe (Obst & Gemüse, Kühlregal, Drogerie …), Reihenfolge oder A–Z',
+      'Die Warengruppe wird automatisch erkannt und lässt sich per Tipp auf den Eintrag ändern – dort auch Name und Menge bearbeiten',
+    ],
+  },
+  {
     version: '1.20',
     date: '2026-10-19',
     title: 'Anfragen',

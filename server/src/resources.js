@@ -16,6 +16,9 @@ const recipeRef = () => ({ type: 'recipe' });
 const int = (min, max, opts = {}) => ({ type: 'int', min, max, ...opts });
 const time = () => ({ type: 'time' });
 
+// Warengruppen der Einkaufsliste – gleiche Schlüssel wie in client/src/groceries.ts
+export const GROCERY_GROUPS = ['produce', 'bakery', 'dairy', 'meat', 'frozen', 'pantry', 'breakfast', 'snacks', 'drinks', 'drugstore', 'household', 'pets', 'other'];
+
 const RECURRENCES = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
 // Minuten vor Beginn; bei ganztägigen Terminen relativ zu 9:00 Uhr
 // Regeln für Kinder (Rolle „child“): Rückgabe = Fehlermeldung, nichts = erlaubt
@@ -53,7 +56,14 @@ export const RESOURCES = [
   {
     path: 'lists',
     table: 'lists',
-    order: 'created_at ASC, id ASC',
+    // Die feste Einkaufsliste immer zuerst
+    order: 'is_default DESC, created_at ASC, id ASC',
+    readOnlyBools: ['is_default'],
+    guard({ action, existing, row }) {
+      if (!existing?.is_default) return;
+      if (action === 'delete') return 'Die Einkaufsliste kann nicht gelöscht werden';
+      if (row.name !== existing.name || row.kind !== existing.kind) return 'Die Einkaufsliste kann nicht umbenannt werden';
+    },
     fields: {
       name: text({ required: true, max: 100 }),
       kind: oneOf(['shopping', 'todo'], { default: 'shopping' }),
@@ -71,6 +81,8 @@ export const RESOURCES = [
       text: text({ required: true, max: 200 }),
       quantity: text({ max: 50 }),
       done: bool(),
+      // Warengruppe (client/src/groceries.ts); leer = automatisch erkennen
+      category: oneOf(GROCERY_GROUPS, { default: null }),
     },
   },
   {

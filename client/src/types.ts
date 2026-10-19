@@ -59,6 +59,8 @@ export interface CalendarEvent extends Base {
 export interface List extends Base {
   name: string;
   kind: 'shopping' | 'todo';
+  /** die feste „Einkaufsliste“ – nicht löschbar, nicht umbenennbar */
+  is_default: boolean;
 }
 
 export interface ListItem extends Base {
@@ -66,6 +68,8 @@ export interface ListItem extends Base {
   text: string;
   quantity: string;
   done: boolean;
+  /** Warengruppe (groceries.ts); null = automatisch erkennen */
+  category: string | null;
 }
 
 export interface Task extends Base {

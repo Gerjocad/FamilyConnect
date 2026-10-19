@@ -11,6 +11,7 @@ import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { LiveHub } from './live.js';
 import { ROLES } from './permissions.js';
+import { ensureShoppingList } from './db.js';
 import { recipesRouter } from './recipes.js';
 import { requestsRouter } from './requests.js';
 import { RESOURCES } from './resources.js';
@@ -164,6 +165,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
       .run(name, generateInviteCode());
     const familyId = Number(lastInsertRowid);
     joinFamily(familyId, req.user.id, 'admin');
+    ensureShoppingList(db, familyId);
     res.status(201).json(familyDetails(familyId));
   });
 

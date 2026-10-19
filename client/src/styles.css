@@ -656,3 +656,11 @@ textarea { resize: vertical; }
   .request-status.declined { background: #3d1717; color: #ffc9c9; }
   .request-status.countered { background: #1b2550; color: #bac8ff; }
 }
+
+/* --- Einkaufsliste: Warengruppen ------------------------------------------- */
+.item-main { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.list-sort { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; font-size: 0.85rem; }
+.list-sort .chip { padding: 3px 10px; font-size: 0.82rem; }
+.grocery-group + .grocery-group { margin-top: 6px; }
+.grocery-group-title { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--accent-strong); padding: 10px 4px 2px; }
+.grocery-group-title .muted { font-weight: 500; }

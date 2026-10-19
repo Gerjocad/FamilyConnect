@@ -91,6 +91,7 @@ export function serialize(resource, row) {
     if (spec.type === 'bool') out[name] = Boolean(out[name]);
     if (spec.type === 'members' || spec.type === 'dates') out[name] = JSON.parse(out[name]);
   }
+  for (const name of resource.readOnlyBools ?? []) out[name] = Boolean(out[name]);
   delete out.family_id;
   return out;
 }
@@ -158,6 +159,13 @@ export function crudRouter(db, resource, publish, onChange) {
     return true;
   };
 
+  /** Feste Regeln für alle Rollen (z. B. feste Einkaufsliste nicht löschen) */
+  const guardAllowed = (res, action, existing, row) => {
+    const problem = resource.guard?.({ action, existing, row });
+    if (problem) res.status(403).json({ error: problem });
+    return !problem;
+  };
+
   /** Was Kinder dürfen, regelt `childRule` der Ressource; liefert true, wenn erlaubt */
   const childAllowed = (req, res, action, existing, row) => {
     if (req.role !== 'child' || !resource.childRule) return true;
@@ -192,7 +200,7 @@ export function crudRouter(db, resource, publish, onChange) {
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });
     if (!ensureOwner(req, res, existing)) return;
     const row = validate(req.body, existing, req.familyId);
-    if (!childAllowed(req, res, 'update', existing, row)) return;
+    if (!guardAllowed(res, 'update', existing, row) || !childAllowed(req, res, 'update', existing, row)) return;
     db.prepare(`UPDATE ${table} SET ${names.map((n) => `${n} = ?`).join(', ')} WHERE id = ?`)
       .run(...names.map((n) => row[n]), existing.id);
     notify(req.familyId);
@@ -205,7 +213,7 @@ export function crudRouter(db, resource, publish, onChange) {
     const existing = findOne(req.familyId, req.params.id);
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });
     if (!ensureOwner(req, res, existing)) return;
-    if (!childAllowed(req, res, 'delete', existing, null)) return;
+    if (!guardAllowed(res, 'delete', existing, null) || !childAllowed(req, res, 'delete', existing, null)) return;
     db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(existing.id);
     notify(req.familyId);
     res.status(204).end();

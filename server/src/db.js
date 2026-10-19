@@ -122,6 +122,10 @@ const ADDED_COLUMNS = [
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
+  // Die feste Einkaufsliste jeder Familie (nicht löschbar)
+  ['lists', 'is_default', 'INTEGER NOT NULL DEFAULT 0'],
+  // Warengruppe eines Eintrags (client/src/groceries.ts); leer = automatisch erkennen
+  ['list_items', 'category', 'TEXT'],
   // Gewohnheit hängt an einem NFC-Aufkleber: Kinder haken dann nur per Aufkleber ab
   ['habits', 'nfc_linked', 'INTEGER NOT NULL DEFAULT 0'],
   // Farbschema der App (client/src/themes.ts)
@@ -242,6 +246,17 @@ function migrate(db) {
   }
   // Früher gab es nur Admin und „Mitglied“ – bisherige Mitglieder werden Eltern
   db.exec("UPDATE memberships SET role = 'parent' WHERE role = 'member'");
+  for (const { id } of db.prepare('SELECT id FROM families').all()) ensureShoppingList(db, id);
+}
+
+/** Jede Familie hat genau eine feste „Einkaufsliste“; eine vorhandene gleichnamige wird übernommen */
+export function ensureShoppingList(db, familyId) {
+  if (db.prepare('SELECT 1 FROM lists WHERE family_id = ? AND is_default = 1').get(familyId)) return;
+  const existing = db.prepare(
+    "SELECT id FROM lists WHERE family_id = ? AND kind = 'shopping' AND name = 'Einkaufsliste' COLLATE NOCASE ORDER BY id LIMIT 1"
+  ).get(familyId);
+  if (existing) db.prepare("UPDATE lists SET is_default = 1, name = 'Einkaufsliste' WHERE id = ?").run(existing.id);
+  else db.prepare("INSERT INTO lists (family_id, name, kind, is_default) VALUES (?, 'Einkaufsliste', 'shopping', 1)").run(familyId);
 }
 
 export function openDatabase(file) {
