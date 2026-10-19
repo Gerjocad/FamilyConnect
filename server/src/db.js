@@ -122,12 +122,17 @@ const ADDED_COLUMNS = [
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
+  // Bundesland für Ferien und Feiertage (Kürzel wie NW, server/src/holidays.js)
+  ['families', 'state', 'TEXT'],
   // Die feste Einkaufsliste jeder Familie (nicht löschbar)
   ['lists', 'is_default', 'INTEGER NOT NULL DEFAULT 0'],
   // Warengruppe eines Eintrags (client/src/groceries.ts); leer = automatisch erkennen
   ['list_items', 'category', 'TEXT'],
   // Gewohnheit hängt an einem NFC-Aufkleber: Kinder haken dann nur per Aufkleber ab
   ['habits', 'nfc_linked', 'INTEGER NOT NULL DEFAULT 0'],
+  // Geburtstag (JJJJ-MM-TT)
+  ['users', 'birthday', 'TEXT'],
+  ['contacts', 'birthday', 'TEXT'],
   // Farbschema der App (client/src/themes.ts)
   ['users', 'theme', "TEXT NOT NULL DEFAULT 'orange'"],
   ['meals', 'recipe_id', 'INTEGER REFERENCES recipes(id) ON DELETE SET NULL'],
@@ -255,6 +260,18 @@ CREATE TABLE IF NOT EXISTS chore_days (
   done_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   done_at TEXT,
   PRIMARY KEY (chore_id, date)
+);
+
+-- Geschenkideen für ein Mitglied (das sie nicht sieht) oder einen Kontakt
+CREATE TABLE IF NOT EXISTS gift_ideas (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  for_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  for_contact_id INTEGER REFERENCES contacts(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  bought INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS devices (

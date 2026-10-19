@@ -2,14 +2,16 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
-import { addDays, formatDay, occurrencesInRange, sameDay, startOfDay, toDateKey } from '../dates';
+import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay, toDateKey } from '../dates';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import { habitStatus, nfcOnlyFor, statusLabel } from '../habitStatus';
-import type { CalendarEvent, Habit, Meal, Post, Task } from '../types';
+import type { CalendarEvent, Contact, Habit, Meal, Post, Task } from '../types';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
+import { untilLabel, upcomingBirthdays } from '../birthdays';
+import { useHolidays } from '../holidays';
 import { allOccurrences, useChores } from '../chores';
 import { OccurrenceRow as ChoreRow } from './ChoresPage';
 import { useComplaints } from './ComplaintsPage';
@@ -50,6 +52,7 @@ function greeting() {
 const SLOT_LABEL = { breakfast: 'Frühstück', lunch: 'Mittag', dinner: 'Abend' } as const;
 
 export function DashboardPage() {
+  const today = startOfDay(new Date());
   const { user, family } = useFamily();
   const events = useResource<CalendarEvent>('events');
   const tasks = useResource<Task>('tasks');
@@ -62,6 +65,23 @@ export function DashboardPage() {
   const complaints = useComplaints();
   const requests = useRequests();
   const chores = useChores();
+  const contacts = useResource<Contact>('contacts');
+  const holidays = useHolidays([today.getFullYear(), today.getFullYear() + 1]);
+  const todayKey = toDateKey(today);
+  const holidayLine = (() => {
+    const pub = holidays.publicHoliday(todayKey);
+    if (pub) return `🎉 Heute ist ${pub}`;
+    const school = holidays.schoolHoliday(todayKey);
+    if (school) {
+      const left = Math.round((parseLocal(school.end).getTime() - today.getTime()) / 86_400_000);
+      return `🏖️ ${school.name} – ${left === 0 ? 'letzter Tag' : `noch ${left} ${left === 1 ? 'Tag' : 'Tage'}`}`;
+    }
+    const next = holidays.nextSchoolHoliday(todayKey);
+    if (!next) return null;
+    const days = Math.round((parseLocal(next.start).getTime() - today.getTime()) / 86_400_000);
+    return days <= 30 ? `🏖️ ${next.name} in ${days} ${days === 1 ? 'Tag' : 'Tagen'}` : null;
+  })();
+  const birthdaysSoon = upcomingBirthdays(family.members, contacts.items).filter((b) => b.daysUntil <= 14).slice(0, 4);
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open');
   // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
   const myHabits = habits.items
@@ -69,7 +89,6 @@ export function DashboardPage() {
     .map((h) => ({ habit: h, status: habitStatus(h, user.id, checkins.items) }))
     .filter(({ status }) => status.doneToday || status.dueIn <= 0);
 
-  const today = startOfDay(new Date());
   const choresSoon = allOccurrences(chores.chores.items, toDateKey(today), toDateKey(addDays(today, 1)), chores.days);
   const upcoming = occurrencesInRange(events.items, today, addDays(today, 7));
   const myTasks = tasks.items.filter((t) => !t.done && (t.assignee_id === user.id || t.assignee_id === null)).slice(0, 6);
@@ -91,6 +110,7 @@ export function DashboardPage() {
         <div>
           <h1>{greeting()}, {user.name.split(' ')[0]}!</h1>
           <p className="muted">{formatDay(today)} · {family.name}</p>
+          {holidayLine && <p className="holiday-line">{holidayLine}</p>}
         </div>
       </header>
 
@@ -178,6 +198,24 @@ export function DashboardPage() {
                       <Icon name="check" size={20} />
                     </button>
                   )}
+                </li>
+              ))}
+            </ul>
+          </NavCard>
+        )}
+
+        {birthdaysSoon.length > 0 && (
+          <NavCard to="/geburtstage" className="birthday-alert">
+            <header className="section-header">
+              <h2><Icon name="cake" size={18} /> Geburtstage</h2>
+              <span className="spacer" />
+              <More />
+            </header>
+            <ul className="plain-list">
+              {birthdaysSoon.map((b) => (
+                <li key={b.key} className="birthday-line">
+                  <strong>{b.name.split(' ')[0]}</strong> wird {b.age}
+                  <span className={`birthday-until ${b.daysUntil <= 7 ? 'soon' : ''}`}>{untilLabel(b.daysUntil)}</span>
                 </li>
               ))}
             </ul>

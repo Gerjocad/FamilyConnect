@@ -7,7 +7,7 @@ import { useAsync } from '../components/useAsync';
 import type { Contact } from '../types';
 import { useResource } from '../useResource';
 
-const FIELDS = ['name', 'category', 'phone', 'email', 'address', 'notes'] as const;
+const FIELDS = ['name', 'category', 'phone', 'email', 'address', 'birthday', 'notes'] as const;
 const CATEGORY_SUGGESTIONS = ['Ärzte', 'Schule', 'Kita', 'Babysitter', 'Notfall', 'Handwerker', 'Freunde', 'Verwandte'];
 
 function ContactForm({ contact, onSave, onDelete, onClose }: {
@@ -23,7 +23,7 @@ function ContactForm({ contact, onSave, onDelete, onClose }: {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await onSave(data);
+      await onSave({ ...data, birthday: data.birthday || null });
       onClose();
     });
   };
@@ -44,6 +44,7 @@ function ContactForm({ contact, onSave, onDelete, onClose }: {
           <label>E-Mail<input type="email" value={data.email} onChange={set('email')} /></label>
         </div>
         <label>Adresse<input value={data.address} onChange={set('address')} /></label>
+        <label>Geburtstag<input type="date" value={data.birthday} onChange={set('birthday')} /></label>
         <label>Notizen<textarea value={data.notes} onChange={set('notes')} rows={3} /></label>
         {error && <p className="error">{error}</p>}
         <div className="form-actions">

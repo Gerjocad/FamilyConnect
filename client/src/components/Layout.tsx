@@ -21,6 +21,7 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/essen', label: 'Essensplan', icon: 'meal' },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },
+  { to: '/geburtstage', label: 'Geburtstage', icon: 'cake' },
   { to: '/anfragen', label: 'Anfragen', icon: 'request' },
   { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint' },
   { to: '/feedback', label: 'Feedback', icon: 'feedback' },

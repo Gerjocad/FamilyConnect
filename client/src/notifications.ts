@@ -2,12 +2,13 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { api, isNativeApp } from './api';
+import { upcomingBirthdays } from './birthdays';
 import { allOccurrences } from './chores';
 import {
   addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay, toDateKey,
 } from './dates';
 import { habitStatus } from './habitStatus';
-import type { CalendarEvent, Checkin, Chore, ChoreDay, Habit, Task } from './types';
+import type { CalendarEvent, Checkin, Chore, ChoreDay, Contact, Habit, Member, Task } from './types';
 
 /** Push braucht android/app/google-services.json (erkennt vite.config.ts); ohne sie würde die App beim Registrieren abstürzen */
 export const PUSH_ENABLED = import.meta.env.VITE_PUSH_ENABLED === 'true';
@@ -55,6 +56,8 @@ export interface HabitData {
   checkins: Checkin[];
   chores?: Chore[];
   choreDays?: ChoreDay[];
+  members?: Member[];
+  contacts?: Contact[];
 }
 
 export function buildReminders(
@@ -128,6 +131,21 @@ export function buildReminders(
       body: occ.assignee === userId ? `${when} bist du dran${evening ? ' – bitte heute Abend erledigen' : ''}` : `${when} ist es so weit`,
       path: '/dienste',
     });
+  }
+
+  // Geburtstage: eine Woche vorher und am Tag selbst (nicht der eigene)
+  for (const b of upcomingBirthdays((habitData.members ?? []).filter((m) => m.id !== userId), habitData.contacts ?? [], startOfDay(now))) {
+    const first = b.name.split(' ')[0];
+    const weekBefore = addDays(b.date, -7);
+    weekBefore.setHours(9, 0, 0, 0);
+    if (weekBefore > now && weekBefore <= horizon) {
+      reminders.push({ key: `birthday:${b.key}:week:${toDateKey(b.date)}`, at: weekBefore, title: `🎂 In einer Woche: ${first} wird ${b.age}`, body: 'Schon eine Geschenkidee?', path: '/geburtstage' });
+    }
+    const onDay = new Date(b.date);
+    onDay.setHours(8, 0, 0, 0);
+    if (onDay > now && onDay <= horizon) {
+      reminders.push({ key: `birthday:${b.key}:day:${toDateKey(b.date)}`, at: onDay, title: `🎉 ${first} hat heute Geburtstag`, body: `${first} wird ${b.age} – gratulieren nicht vergessen!`, path: '/geburtstage' });
+    }
   }
 
   return reminders.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED);

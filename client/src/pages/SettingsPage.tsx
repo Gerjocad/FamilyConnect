@@ -7,6 +7,7 @@ import { Avatar } from '../components/Avatar';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
+import { STATES } from '../holidays';
 import { applyTheme, THEMES } from '../themes';
 import { ROLE_LABELS } from '../permissions';
 import type { Family, Role } from '../types';
@@ -15,7 +16,8 @@ const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599'
 
 export function SettingsPage() {
   const { user, family, refreshUser, setFamily, selectFamily, signOut } = useFamily();
-  const isAdmin = family.members.find((m) => m.id === user.id)?.role === 'admin';
+  const me = family.members.find((m) => m.id === user.id);
+  const isAdmin = me?.role === 'admin';
   const [name, setName] = useState(user.name);
   const [familyName, setFamilyName] = useState(family.name);
   const [newFamily, setNewFamily] = useState('');
@@ -89,6 +91,17 @@ export function SettingsPage() {
               ))}
             </div>
           </div>
+          <label>
+            Geburtstag
+            <input
+              type="date"
+              value={me?.birthday ?? ''}
+              max={new Date().toLocaleDateString('sv-SE')}
+              onChange={(e) => void profile.run(async () => {
+                await api(`/families/${family.id}/members/${user.id}/birthday`, { method: 'PUT', body: { birthday: e.target.value || null } });
+              })}
+            />
+          </label>
           <div className="field">
             <span>App-Farbe</span>
             <div className="theme-picker" role="group" aria-label="App-Farbe">
@@ -132,6 +145,17 @@ export function SettingsPage() {
             </div>
           </form>
         )}
+
+        <label>
+          Bundesland <span className="hint">(für Ferien und Feiertage im Kalender)</span>
+          <select
+            value={family.state ?? ''}
+            onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}`, { method: 'PATCH', body: { state: e.target.value || null } })))}
+          >
+            <option value="">Keins</option>
+            {Object.entries(STATES).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          </select>
+        </label>
 
         <div className="invite">
           <div>

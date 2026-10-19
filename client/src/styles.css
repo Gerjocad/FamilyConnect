@@ -675,3 +675,22 @@ textarea { resize: vertical; }
 .chore-row.mine .chore-who { color: var(--accent-strong); }
 .chore-row.done .chore-day, .chore-row.done .chore-who { opacity: 0.55; text-decoration: line-through; }
 .chores-mine { border-color: var(--accent); }
+
+/* --- Geburtstage ------------------------------------------------------------ */
+.birthday-card { padding: 12px 14px; }
+.birthday-card.is-today { border-color: var(--accent); background: var(--accent-soft); }
+.birthday-main { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; text-align: left; }
+.birthday-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.birthday-until { font-weight: 700; font-size: 0.85rem; color: var(--muted); white-space: nowrap; margin-left: auto; }
+.birthday-until.soon { color: var(--accent-strong); }
+.birthday-more { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.gift-ideas { display: flex; flex-direction: column; gap: 6px; }
+.birthday-line { display: flex; align-items: center; gap: 6px; }
+
+/* --- Ferien, Feiertage, Geburtstage im Kalender ----------------------------- */
+.day.school-holiday { background: color-mix(in srgb, #20c997 12%, transparent); }
+.day.public-holiday .day-number { color: var(--danger); font-weight: 800; }
+.day-event.holiday-pill { background: var(--danger); }
+.day-event.birthday-pill { background: #f59f00; }
+.day-extras { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+.holiday-line { margin-top: 4px; font-weight: 600; color: var(--accent-strong); }

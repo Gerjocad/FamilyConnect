@@ -7,7 +7,7 @@ import { isNativeApp } from '../api';
 import { onDeepLink } from '../deepLinks';
 import { listenForTaps, registerPush, syncReminders } from '../notifications';
 import { useFamily } from '../session';
-import type { CalendarEvent, Habit, Task } from '../types';
+import type { CalendarEvent, Contact, Habit, Task } from '../types';
 import { useChores } from '../chores';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
@@ -21,12 +21,13 @@ export function NotificationBridge() {
 function NativeNotifications() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { user } = useFamily();
+  const { user, family } = useFamily();
   const events = useResource<CalendarEvent>('events');
   const tasks = useResource<Task>('tasks');
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
   const { chores, days: choreDays } = useChores();
+  const contacts = useResource<Contact>('contacts');
 
   useEffect(() => {
     listenForTaps(navigate);
@@ -50,8 +51,8 @@ function NativeNotifications() {
   const loading = events.loading || tasks.loading || habits.loading || checkins.loading || chores.loading;
   useEffect(() => {
     if (loading) return;
-    syncReminders(events.items, tasks.items, user.id, { habits: habits.items, checkins: checkins.items, chores: chores.items, choreDays });
-  }, [loading, events.items, tasks.items, habits.items, checkins.items, chores.items, choreDays, user.id]);
+    syncReminders(events.items, tasks.items, user.id, { habits: habits.items, checkins: checkins.items, chores: chores.items, choreDays, members: family.members, contacts: contacts.items });
+  }, [loading, events.items, tasks.items, habits.items, checkins.items, chores.items, choreDays, family.members, contacts.items, user.id]);
 
   return null;
 }

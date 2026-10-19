@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
+import { birthdaysInRange } from '../birthdays';
 import { AvatarStack } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import {
-  WEEKDAYS_SHORT, addDays, formatDay, formatMonth, formatTime, monthGrid, occurrencesInRange,
+  WEEKDAYS_SHORT, addDays, formatDay, formatMonth, formatShortDay, formatTime, monthGrid, occurrencesInRange, parseLocal,
   sameDay, startOfDay, toDateKey, type Occurrence,
 } from '../dates';
 import { useFamily } from '../session';
-import type { CalendarEvent } from '../types';
+import { useHolidays } from '../holidays';
+import type { CalendarEvent, Contact } from '../types';
 import { useResource } from '../useResource';
 import { usePermissions } from '../permissions';
 import { EventForm } from './EventForm';
@@ -49,7 +52,7 @@ export function CalendarPage() {
   const [selected, setSelected] = useState(today);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
-  const { canEdit } = usePermissions();
+  const { canEdit, isAdmin } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
   const visible = useMemo(
@@ -62,6 +65,22 @@ export function CalendarPage() {
     return map;
   }, [days, visible]);
   const selectedOccurrences = occurrencesInRange(visible, selected, addDays(selected, 1));
+
+  // Feiertage, Schulferien und Geburtstage als Zusatz zu den Terminen
+  const holidays = useHolidays([...new Set([days[0].getFullYear(), days[days.length - 1].getFullYear(), today.getFullYear()])]);
+  const contacts = useResource<Contact>('contacts');
+  const birthdays = useMemo(
+    () => birthdaysInRange(family.members, contacts.items, days[0], days[days.length - 1]),
+    [family.members, contacts.items, days]
+  );
+  const extrasFor = (date: string) => ({
+    publicHoliday: holidays.publicHoliday(date),
+    school: holidays.schoolHoliday(date),
+    birthdays: birthdays.filter((b) => b.date === date).map((b) => b.label),
+  });
+  const selectedKey = toDateKey(selected);
+  const selectedExtras = extrasFor(selectedKey);
+  const hasExtras = Boolean(selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length);
 
   const moveMonth = (delta: number) => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
 
@@ -107,6 +126,7 @@ export function CalendarPage() {
             {WEEKDAYS_SHORT.map((d) => <div key={d} className="weekday">{d}</div>)}
             {days.map((day) => {
               const occs = byDay.get(toDateKey(day)) ?? [];
+              const extras = extrasFor(toDateKey(day));
               return (
                 <button
                   key={toDateKey(day)}
@@ -115,12 +135,17 @@ export function CalendarPage() {
                     day.getMonth() !== cursor.getMonth() && 'other-month',
                     sameDay(day, today) && 'today',
                     sameDay(day, selected) && 'selected',
+                    extras.publicHoliday && 'public-holiday',
+                    extras.school && 'school-holiday',
                   ].filter(Boolean).join(' ')}
+                  title={[extras.publicHoliday, extras.school?.name].filter(Boolean).join(' · ') || undefined}
                   onClick={() => setSelected(day)}
                   onDoubleClick={() => setEditing('new')}
                 >
                   <span className="day-number">{day.getDate()}</span>
                   <span className="day-events">
+                    {extras.publicHoliday && <span className="day-event holiday-pill">{extras.publicHoliday}</span>}
+                    {extras.birthdays.map((b) => <span key={b} className="day-event birthday-pill">{b}</span>)}
                     {occs.slice(0, 3).map((o, i) => (
                       <span key={i} className="day-event" style={{ background: eventColor(o.event, member) }}>
                         {o.event.title}
@@ -136,7 +161,18 @@ export function CalendarPage() {
 
         <section className="card agenda">
           <h2>{formatDay(selected)}</h2>
+          {hasExtras && (
+            <ul className="day-extras">
+              {selectedExtras.publicHoliday && <li>🎉 {selectedExtras.publicHoliday} <span className="muted">· Feiertag</span></li>}
+              {selectedExtras.school && <li>🏖️ {selectedExtras.school.name} <span className="muted">· bis {formatShortDay(parseLocal(selectedExtras.school.end))}</span></li>}
+              {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
+            </ul>
+          )}
+          {!holidays.state && isAdmin && (
+            <p className="hint"><Link to="/einstellungen">Bundesland wählen</Link>, dann erscheinen Ferien und Feiertage.</p>
+          )}
           {selectedOccurrences.length === 0 ? (
+            hasExtras ? <p className="muted">Keine Termine.</p> :
             <EmptyState icon="calendar" title="Keine Termine">Doppelklick auf einen Tag oder „Termin“ zum Anlegen.</EmptyState>
           ) : (
             <div className="stack">

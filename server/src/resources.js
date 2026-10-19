@@ -211,6 +211,7 @@ export const RESOURCES = [
       email: text({ max: 200 }),
       address: text({ max: 500 }),
       notes: text({ max: 2000 }),
+      birthday: date(),
     },
   },
 ];

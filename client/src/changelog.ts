@@ -14,8 +14,11 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.21',
     date: '2026-10-19',
-    title: 'Einkaufsliste und Dienste',
+    title: 'Einkaufsliste, Dienste, Geburtstage, Ferien',
     changes: [
+      'Neu: „Geburtstage“ – mit Countdown, Alter, Erinnerung eine Woche vorher und am Tag; Geburtstag im Profil eintragen (Eltern auch für die Kinder), bei Kontakten ebenfalls',
+      'Geschenkideen pro Person mit „gekauft“-Haken – die beschenkte Person sieht sie nicht',
+      'Ferien und Feiertage eures Bundeslands im Kalender und auf der Übersicht (Bundesland wählt der Admin unter Familie & Profil)',
       'Neu: „Dienste“ im Menü – z. B. Müllabfuhr: Abholtag, Rhythmus (jede Woche, alle 2 Wochen …) und wer der Reihe nach dran ist',
       'Erinnerung am Vorabend um 19 Uhr (oder morgens) an die Person, die dran ist; abhaken und Termine tauschen per Tipp',
       'Die Übersicht zeigt die Dienste von heute und morgen',

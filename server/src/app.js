@@ -6,10 +6,12 @@ import {
   requireMember, requireUser, verifyPassword,
 } from './auth.js';
 import { crudRouter } from './crud.js';
+import { birthdaysRouter } from './birthdays.js';
 import { choresRouter } from './chores.js';
 import { complaintsRouter } from './complaints.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
+import { HolidayService, STATES } from './holidays.js';
 import { LiveHub } from './live.js';
 import { ROLES } from './permissions.js';
 import { ensureShoppingList } from './db.js';
@@ -26,7 +28,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService() } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -67,9 +69,9 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     ).all(userId);
 
   const familyDetails = (familyId) => {
-    const family = db.prepare('SELECT id, name, invite_code, created_at FROM families WHERE id = ?').get(familyId);
+    const family = db.prepare('SELECT id, name, invite_code, state, created_at FROM families WHERE id = ?').get(familyId);
     family.members = db.prepare(
-      `SELECT u.id, u.name, u.color, m.role, m.joined_at FROM memberships m
+      `SELECT u.id, u.name, u.color, u.birthday, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
     ).all(familyId);
     return family;
@@ -184,10 +186,13 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   });
 
   app.patch('/api/families/:familyId', auth, member, (req, res) => {
-    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen die Familie umbenennen' });
-    const name = cleanText(req.body?.name, 100);
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen die Familie bearbeiten' });
+    const current = db.prepare('SELECT name, state FROM families WHERE id = ?').get(req.familyId);
+    const name = req.body?.name === undefined ? current.name : cleanText(req.body.name, 100);
+    const state = req.body?.state === undefined ? current.state : req.body.state || null;
     if (!name) return res.status(400).json({ error: 'Bitte gib einen Namen für die Familie an' });
-    db.prepare('UPDATE families SET name = ? WHERE id = ?').run(name, req.familyId);
+    if (state !== null && !(state in STATES)) return res.status(400).json({ error: 'Unbekanntes Bundesland' });
+    db.prepare('UPDATE families SET name = ?, state = ? WHERE id = ?').run(name, state, req.familyId);
     hub.publish(req.familyId, 'family');
     res.json(familyDetails(req.familyId));
   });
@@ -271,6 +276,20 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
+  // Feiertage und Schulferien des Bundeslands der Familie
+  app.get('/api/families/:familyId/holidays', auth, member, async (req, res) => {
+    const { state } = db.prepare('SELECT state FROM families WHERE id = ?').get(req.familyId);
+    const year = Number(req.query.year);
+    if (!state) return res.json({ state: null, public: [], school: [] });
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) return res.status(400).json({ error: 'Ungültiges Jahr' });
+    try {
+      res.json({ state, ...(await holidays.forYear(state, year)) });
+    } catch {
+      res.status(502).json({ error: 'Ferien und Feiertage sind gerade nicht abrufbar' });
+    }
+  });
+
+  app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(choresRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(requestsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   if (uploadDir) app.use(complaintsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir, push }));

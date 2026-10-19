@@ -20,6 +20,7 @@ export interface Member {
   id: number;
   name: string;
   color: string;
+  birthday: string | null;
   role: Role;
   joined_at: string;
 }
@@ -28,6 +29,8 @@ export interface Family {
   id: number;
   name: string;
   invite_code: string;
+  /** Bundesland für Ferien und Feiertage (z. B. NW) */
+  state: string | null;
   members: Member[];
 }
 
@@ -116,6 +119,17 @@ export interface Contact extends Base {
   email: string;
   address: string;
   notes: string;
+  birthday: string | null;
+}
+
+export interface GiftIdea {
+  id: number;
+  for_user_id: number | null;
+  for_contact_id: number | null;
+  text: string;
+  bought: boolean;
+  created_by: number | null;
+  created_at: string;
 }
 
 export interface Habit extends Base {
