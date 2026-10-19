@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { AuthPage } from './pages/AuthPage';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { ChoresPage } from './pages/ChoresPage';
 import { ComplaintsPage } from './pages/ComplaintsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -57,6 +58,7 @@ export function App() {
           <Route path="rezepte/:recipeId" element={<RecipesPage />} />
           <Route path="kontakte" element={<ContactsPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
+          <Route path="dienste" element={<ChoresPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route path="beschwerden" element={<ComplaintsPage />} />
           <Route path="anfragen" element={<RequestsPage />} />

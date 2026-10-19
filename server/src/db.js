@@ -229,6 +229,34 @@ CREATE TABLE IF NOT EXISTS requests (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS chores (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  emoji TEXT NOT NULL DEFAULT '',
+  -- erster Termin; legt auch den Wochentag fest
+  start_date TEXT NOT NULL,
+  interval_weeks INTEGER NOT NULL DEFAULT 1,
+  -- Reihenfolge der Rotation; leer = niemand fest, nur Erinnerung für alle
+  member_ids TEXT NOT NULL DEFAULT '[]',
+  -- none | evening (Vorabend 19 Uhr) | morning (7 Uhr am Tag)
+  remind TEXT NOT NULL DEFAULT 'evening',
+  notes TEXT NOT NULL DEFAULT '',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Ausnahmen pro Termin eines Dienstes: getauscht und/oder erledigt
+CREATE TABLE IF NOT EXISTS chore_days (
+  chore_id INTEGER NOT NULL REFERENCES chores(id) ON DELETE CASCADE,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  done_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  done_at TEXT,
+  PRIMARY KEY (chore_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

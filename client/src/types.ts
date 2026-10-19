@@ -130,6 +130,27 @@ export interface Habit extends Base {
   nfc_linked: boolean;
 }
 
+export interface Chore extends Base {
+  title: string;
+  emoji: string;
+  /** erster Termin, legt auch den Wochentag fest */
+  start_date: string;
+  interval_weeks: number;
+  /** Reihenfolge der Rotation; leer = niemand fest */
+  member_ids: number[];
+  remind: 'none' | 'evening' | 'morning';
+  notes: string;
+}
+
+/** Ausnahme an einem Termin: getauscht und/oder erledigt */
+export interface ChoreDay {
+  chore_id: number;
+  date: string;
+  assignee_id: number | null;
+  done_by: number | null;
+  done_at: string | null;
+}
+
 export interface Checkin {
   id: number;
   habit_id: number;
@@ -140,4 +161,4 @@ export interface Checkin {
   created_at: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes';
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores';

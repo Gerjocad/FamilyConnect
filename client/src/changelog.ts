@@ -14,8 +14,11 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.21',
     date: '2026-10-19',
-    title: 'Feste Einkaufsliste mit Warengruppen',
+    title: 'Einkaufsliste und Dienste',
     changes: [
+      'Neu: „Dienste“ im Menü – z. B. Müllabfuhr: Abholtag, Rhythmus (jede Woche, alle 2 Wochen …) und wer der Reihe nach dran ist',
+      'Erinnerung am Vorabend um 19 Uhr (oder morgens) an die Person, die dran ist; abhaken und Termine tauschen per Tipp',
+      'Die Übersicht zeigt die Dienste von heute und morgen',
       'Jede Familie hat jetzt eine feste „Einkaufsliste“ – immer ganz oben, kann nicht gelöscht oder umbenannt werden',
       'Einkaufslisten sortieren nach Warengruppe (Obst & Gemüse, Kühlregal, Drogerie …), Reihenfolge oder A–Z',
       'Die Warengruppe wird automatisch erkannt und lässt sich per Tipp auf den Eintrag ändern – dort auch Name und Menge bearbeiten',

@@ -2,11 +2,12 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { api, isNativeApp } from './api';
+import { allOccurrences } from './chores';
 import {
   addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay, toDateKey,
 } from './dates';
 import { habitStatus } from './habitStatus';
-import type { CalendarEvent, Checkin, Habit, Task } from './types';
+import type { CalendarEvent, Checkin, Chore, ChoreDay, Habit, Task } from './types';
 
 /** Push braucht android/app/google-services.json (erkennt vite.config.ts); ohne sie würde die App beim Registrieren abstürzen */
 export const PUSH_ENABLED = import.meta.env.VITE_PUSH_ENABLED === 'true';
@@ -52,6 +53,8 @@ interface Reminder { key: string; at: Date; title: string; body: string; path: s
 export interface HabitData {
   habits: Habit[];
   checkins: Checkin[];
+  chores?: Chore[];
+  choreDays?: ChoreDay[];
 }
 
 export function buildReminders(
@@ -106,6 +109,24 @@ export function buildReminders(
       title: `${habit.emoji ? `${habit.emoji} ` : ''}${habit.title}`,
       body: status.dueIn < 0 ? 'Ist überfällig – jetzt erledigen?' : 'Heute ist es wieder so weit',
       path: '/gewohnheiten',
+    });
+  }
+
+  // Dienste (z. B. Müllabfuhr): für wen dran ist bzw. für alle, wenn niemand fest eingeteilt ist
+  const choreHorizon = toDateKey(addDays(startOfDay(now), 15));
+  for (const occ of allOccurrences(habitData.chores ?? [], todayKey, choreHorizon, habitData.choreDays ?? [])) {
+    if (occ.chore.remind === 'none' || occ.doneBy !== null) continue;
+    if (occ.assignee !== null && occ.assignee !== userId) continue;
+    const evening = occ.chore.remind === 'evening';
+    const at = evening ? parseLocal(`${toDateKey(addDays(parseLocal(occ.date), -1))}T19:00`) : parseLocal(`${occ.date}T07:00`);
+    if (at <= now) continue;
+    const when = evening ? 'Morgen' : 'Heute';
+    reminders.push({
+      key: `chore:${occ.chore.id}:${occ.date}`,
+      at,
+      title: `${occ.chore.emoji ? `${occ.chore.emoji} ` : ''}${occ.chore.title}`,
+      body: occ.assignee === userId ? `${when} bist du dran${evening ? ' – bitte heute Abend erledigen' : ''}` : `${when} ist es so weit`,
+      path: '/dienste',
     });
   }
 

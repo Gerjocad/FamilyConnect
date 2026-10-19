@@ -10,6 +10,8 @@ import type { CalendarEvent, Habit, Meal, Post, Task } from '../types';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard } from './BoardPage';
+import { allOccurrences, useChores } from '../chores';
+import { OccurrenceRow as ChoreRow } from './ChoresPage';
 import { useComplaints } from './ComplaintsPage';
 import { useRequests } from './RequestsPage';
 import { OccurrenceRow } from './CalendarPage';
@@ -59,6 +61,7 @@ export function DashboardPage() {
   const { isChild } = usePermissions();
   const complaints = useComplaints();
   const requests = useRequests();
+  const chores = useChores();
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open');
   // Eigene Gewohnheiten, die heute dran sind oder heute erledigt wurden
   const myHabits = habits.items
@@ -67,6 +70,7 @@ export function DashboardPage() {
     .filter(({ status }) => status.doneToday || status.dueIn <= 0);
 
   const today = startOfDay(new Date());
+  const choresSoon = allOccurrences(chores.chores.items, toDateKey(today), toDateKey(addDays(today, 1)), chores.days);
   const upcoming = occurrencesInRange(events.items, today, addDays(today, 7));
   const myTasks = tasks.items.filter((t) => !t.done && (t.assignee_id === user.id || t.assignee_id === null)).slice(0, 6);
   const latestPosts = [...posts.items].sort((a, b) => b.id - a.id).slice(0, 3);
@@ -175,6 +179,21 @@ export function DashboardPage() {
                     </button>
                   )}
                 </li>
+              ))}
+            </ul>
+          </NavCard>
+        )}
+
+        {choresSoon.length > 0 && (
+          <NavCard to="/dienste">
+            <header className="section-header">
+              <h2><Icon name="chore" size={18} /> Dienste heute & morgen</h2>
+              <span className="spacer" />
+              <More />
+            </header>
+            <ul className="chore-list">
+              {choresSoon.map((o) => (
+                <ChoreRow key={`${o.chore.id}-${o.date}`} occ={o} showTitle onDone={(d) => void chores.setDone(o, d)} />
               ))}
             </ul>
           </NavCard>

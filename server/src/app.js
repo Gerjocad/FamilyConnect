@@ -6,6 +6,7 @@ import {
   requireMember, requireUser, verifyPassword,
 } from './auth.js';
 import { crudRouter } from './crud.js';
+import { choresRouter } from './chores.js';
 import { complaintsRouter } from './complaints.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
@@ -270,6 +271,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(habitsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
+  app.use(choresRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(requestsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   if (uploadDir) app.use(complaintsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir, push }));
 

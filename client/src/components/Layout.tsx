@@ -17,6 +17,7 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/aufgaben', label: 'Aufgaben', icon: 'task' },
   { to: '/pinnwand', label: 'Pinnwand', icon: 'chat' },
   { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit' },
+  { to: '/dienste', label: 'Dienste', icon: 'chore' },
   { to: '/essen', label: 'Essensplan', icon: 'meal' },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },

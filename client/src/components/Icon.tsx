@@ -37,6 +37,7 @@ const PATHS = {
   complaint: 'M3 11v2a1 1 0 0 0 1 1h2l6 4V6L6 10H4a1 1 0 0 0-1 1zM16 9a3.5 3.5 0 0 1 0 6M19 6a7.5 7.5 0 0 1 0 12',
   menu: 'M4 6h16M4 12h16M4 18h16',
   request: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM9.5 8.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4M12 14.5h.01',
+  chore: 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11l1.5 1.5L15 9',
 } as const;
 
 export type IconName = keyof typeof PATHS;

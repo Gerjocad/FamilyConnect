@@ -184,6 +184,23 @@ export const RESOURCES = [
     },
   },
   {
+    path: 'chores',
+    table: 'chores',
+    order: 'title COLLATE NOCASE ASC',
+    // Abhaken und Tauschen laufen über chores.js; beim Löschen verschwinden auch die Ausnahmen
+    alsoChanges: ['chores'],
+    childRule: () => 'Dienste legen Eltern an',
+    fields: {
+      title: text({ required: true, max: 100 }),
+      emoji: text({ max: 16 }),
+      start_date: date({ required: true }),
+      interval_weeks: int(1, 8, { required: true }),
+      member_ids: members(),
+      remind: oneOf(['none', 'evening', 'morning'], { default: 'evening' }),
+      notes: text({ max: 500 }),
+    },
+  },
+  {
     path: 'contacts',
     table: 'contacts',
     order: 'name COLLATE NOCASE ASC',

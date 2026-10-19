@@ -8,6 +8,7 @@ import { onDeepLink } from '../deepLinks';
 import { listenForTaps, registerPush, syncReminders } from '../notifications';
 import { useFamily } from '../session';
 import type { CalendarEvent, Habit, Task } from '../types';
+import { useChores } from '../chores';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 
@@ -25,6 +26,7 @@ function NativeNotifications() {
   const tasks = useResource<Task>('tasks');
   const habits = useResource<Habit>('habits');
   const checkins = useCheckins();
+  const { chores, days: choreDays } = useChores();
 
   useEffect(() => {
     listenForTaps(navigate);
@@ -45,11 +47,11 @@ function NativeNotifications() {
     return () => void handle.then((h) => h.remove());
   }, [navigate, pathname]);
 
-  const loading = events.loading || tasks.loading || habits.loading || checkins.loading;
+  const loading = events.loading || tasks.loading || habits.loading || checkins.loading || chores.loading;
   useEffect(() => {
     if (loading) return;
-    syncReminders(events.items, tasks.items, user.id, { habits: habits.items, checkins: checkins.items });
-  }, [loading, events.items, tasks.items, habits.items, checkins.items, user.id]);
+    syncReminders(events.items, tasks.items, user.id, { habits: habits.items, checkins: checkins.items, chores: chores.items, choreDays });
+  }, [loading, events.items, tasks.items, habits.items, checkins.items, chores.items, choreDays, user.id]);
 
   return null;
 }
