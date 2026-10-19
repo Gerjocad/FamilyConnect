@@ -13,6 +13,7 @@ import { PostCard, usePolls } from './BoardPage';
 import { untilLabel, upcomingBirthdays } from '../birthdays';
 import { useHolidays } from '../holidays';
 import { allOccurrences, useChores } from '../chores';
+import { WARNING_LABELS, formatNumber, useClimate } from '../climate';
 import { OccurrenceRow as ChoreRow } from './ChoresPage';
 import { useComplaints } from './ComplaintsPage';
 import { useRequests } from './RequestsPage';
@@ -66,6 +67,7 @@ export function DashboardPage() {
   const requests = useRequests();
   const chores = useChores();
   const polls = usePolls();
+  const climate = useClimate();
   const contacts = useResource<Contact>('contacts');
   const holidays = useHolidays([today.getFullYear(), today.getFullYear() + 1]);
   const todayKey = toDateKey(today);
@@ -203,6 +205,28 @@ export function DashboardPage() {
               ))}
             </ul>
           </NavCard>
+        )}
+
+        {climate.sensors.length > 0 && (
+          <section className="card climate-card">
+            <header className="section-header">
+              <h2><Icon name="thermometer" size={18} /> Raumklima</h2>
+            </header>
+            <ul className="climate-list">
+              {climate.sensors.map((s) => (
+                <li key={s.device_id} className={`climate-row ${s.warnings.length ? 'warn' : ''}`}>
+                  <span className="climate-label">
+                    <strong>{s.label || 'Thermometer'}</strong>
+                    {s.error ? <small className="error">{s.error}</small> : s.warnings.length > 0 && (
+                      <small className="climate-warning">{s.warnings.map((w) => WARNING_LABELS[w]).join(' · ')}</small>
+                    )}
+                  </span>
+                  {s.temperature !== null && <span className={`climate-value ${s.warnings.some((w) => w.endsWith('temp')) ? 'bad' : ''}`}>{formatNumber(s.temperature)} °C</span>}
+                  {s.humidity !== null && <span className={`climate-value humidity ${s.warnings.some((w) => w.endsWith('humidity')) ? 'bad' : ''}`}>💧 {formatNumber(s.humidity)} %</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {birthdaysSoon.length > 0 && (

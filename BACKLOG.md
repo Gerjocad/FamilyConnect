@@ -39,9 +39,8 @@ oder ohne? Vor der Umsetzung nachfragen.
 - **Wanddisplay-Modus** für das Fire 7 HD – Generation klären (Fire OS 5 = nur Browser, ab Fire OS 7 auch App)
 - **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
 - **Standort teilen** – erstmal nicht
-- **Tuya-Thermometer** – wartet auf Entwicklerkonto und Cloud-Projekt bei platform.tuya.com
 
 ## Erledigt aus der Ideenliste
 
 - Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
-  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland
+  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima

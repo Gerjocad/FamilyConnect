@@ -4,6 +4,7 @@ import { availableUpdate, installUpdate, installedVersion, type AppVersion } fro
 import { CHANGELOG, CURRENT_VERSION, hasUnseenChanges } from '../changelog';
 import { Link } from 'react-router';
 import { Avatar } from '../components/Avatar';
+import { ClimateSettings } from '../components/ClimateSettings';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
@@ -260,6 +261,13 @@ export function SettingsPage() {
       </section>
 
         </>
+      )}
+
+      {isAdmin && (
+        <section className="card">
+          <h2><Icon name="thermometer" size={18} /> Thermometer</h2>
+          <ClimateSettings />
+        </section>
       )}
 
       <Link to="/neuigkeiten" className="card news-link">

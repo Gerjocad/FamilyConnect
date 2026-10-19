@@ -289,6 +289,21 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   PRIMARY KEY (post_id, user_id)
 );
 
+-- Tuya-Thermometer, die eine Familie sieht, mit Grenzwerten für Warnungen
+CREATE TABLE IF NOT EXISTS climate_sensors (
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  device_id TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  min_temp REAL,
+  max_temp REAL,
+  min_humidity REAL,
+  max_humidity REAL,
+  position INTEGER NOT NULL DEFAULT 0,
+  -- zuletzt gemeldete Überschreitungen (JSON), damit nicht ständig gewarnt wird
+  alert_state TEXT NOT NULL DEFAULT '[]',
+  PRIMARY KEY (family_id, device_id)
+);
+
 CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

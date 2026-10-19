@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.22',
+    date: '2026-10-19',
+    title: 'Raumklima',
+    changes: [
+      'Tuya-Thermometer (Smart Life) auf der Übersicht: Temperatur und Luftfeuchtigkeit je Raum',
+      'Admins wählen unter Familie & Profil → Thermometer, welche Geräte angezeigt werden, vergeben Namen und Grenzwerte',
+      'Warnung per Push an die Eltern, wenn es zu warm, zu kalt, zu feucht oder zu trocken ist oder die Batterie schwächelt',
+    ],
+  },
+  {
     version: '1.21',
     date: '2026-10-19',
     title: 'Einkaufsliste, Dienste, Geburtstage, Ferien, Abstimmungen',

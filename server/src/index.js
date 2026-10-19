@@ -6,6 +6,8 @@ import { AppRelease } from './appRelease.js';
 import { openDatabase } from './db.js';
 import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
+import { checkClimateAlerts } from './climate.js';
+import { TuyaClient } from './tuya.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const port = Number(process.env.PORT ?? 3001);
@@ -26,11 +28,16 @@ const recipeImporter = new RecipeImporter({
   apiKeyFile: process.env.ANTHROPIC_API_KEY_FILE ?? '/etc/familyconnect/anthropic.key',
   model: process.env.ANTHROPIC_MODEL,
 });
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter });
+// Thermometer über die Tuya-Cloud (optional, siehe deploy/TUYA.md)
+const tuya = new TuyaClient({ configFile: process.env.TUYA_CONFIG ?? '/etc/familyconnect/tuya.json' });
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya });
+// Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
+setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
 
 app.listen(port, host, () => {
   console.log(`FamilyConnect läuft auf http://localhost:${port}`);
   console.log(recipeImporter.aiEnabled ? '  Rezept-Import per KI: aktiv' : '  Rezept-Import per KI: aus (nur Seiten mit Rezept-Daten)');
+  console.log(tuya.enabled ? '  Tuya-Thermometer: aktiv' : '  Tuya-Thermometer: aus (keine /etc/familyconnect/tuya.json)');
   console.log(push.enabled ? '  Push-Benachrichtigungen: aktiv' : '  Push-Benachrichtigungen: aus (FIREBASE_SERVICE_ACCOUNT nicht gesetzt)');
   // Adressen anzeigen, die man in der Android-App eintragen kann
   for (const addrs of Object.values(networkInterfaces())) {
