@@ -25,8 +25,13 @@ async function fakeTuya(url, options) {
   if (path === '/v1.0/token?grant_type=1') return reply({ access_token: 'tok-1', expire_time: 7200, uid: 'u1' });
   if (h.access_token !== 'tok-1') return new Response(JSON.stringify({ success: false, code: 1010, msg: 'token invalid' }));
   if (expired) return new Response(JSON.stringify({ success: false, code: 28841105, msg: 'No permissions. Your subscription to cloud development plan has expired.' }));
-  if (path === '/v2.0/cloud/thing/device?page_size=50') {
-    return reply([{ id: 'dev-kinder', name: 'Thermometer 1', category: 'wsdcg', isOnline: true }, { id: 'dev-steckdose', name: 'Steckdose', category: 'cz', isOnline: false }]);
+  // wie im echten Projekt: die v2-Liste will device_ids, die Geräte kommen über das verknüpfte App-Konto
+  if (path === '/v2.0/cloud/thing/device?page_size=50') return new Response(JSON.stringify({ success: false, code: 1109, msg: 'device_ids param is illegal, please check it' }));
+  if (path === '/v1.0/iot-01/associated-users/devices?size=50') {
+    return reply({ devices: [{ id: 'dev-kinder', name: 'Thermometer 1', category: 'wsdcg', online: true }], has_more: true, last_row_key: 'abc' });
+  }
+  if (path === '/v1.0/iot-01/associated-users/devices?last_row_key=abc&size=50') {
+    return reply({ devices: [{ id: 'dev-steckdose', name: 'Steckdose', category: 'cz', online: false }], has_more: false });
   }
   const m = /^\/v1\.0\/iot-03\/devices\/([\w-]+)\/(status|specification)$/.exec(path);
   if (m && m[2] === 'specification') {

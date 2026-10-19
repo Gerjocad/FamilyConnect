@@ -7,6 +7,35 @@ import { useAsync } from './useAsync';
 
 type Editable = Pick<TuyaDevice, 'id' | 'selected' | 'label' | 'min_temp' | 'max_temp' | 'min_humidity' | 'max_humidity'> & { name: string; online: boolean };
 
+/** Falls Tuya keine Geräteliste liefert: Thermometer über seine Geräte-ID von Hand eintragen */
+function ManualDevice({ error, path }: { error: string; path: string }) {
+  const [id, setId] = useState('');
+  const [label, setLabel] = useState('');
+  const [maxHumidity, setMaxHumidity] = useState('');
+  const [saved, setSaved] = useState(false);
+  const { busy, error: saveError, run } = useAsync();
+  return (
+    <div className="climate-settings">
+      <p className="error">{error}</p>
+      <p className="muted">
+        Die Geräteliste kommt gerade nicht von Tuya. Du kannst das Thermometer trotzdem eintragen: Auf platform.tuya.com
+        im Projekt unter <b>Devices</b> steht die <b>Device ID</b>.
+      </p>
+      <label>Device ID<input value={id} onChange={(e) => setId(e.target.value.trim())} placeholder="z. B. bf12ab34cd56ef78gh90ij" /></label>
+      <label>Name in der App<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="z. B. Kinderzimmer" maxLength={50} /></label>
+      <label>Max. % Feuchte <span className="hint">(optional, für Warnungen)</span><input type="number" value={maxHumidity} onChange={(e) => setMaxHumidity(e.target.value)} /></label>
+      {saveError && <p className="error">{saveError}</p>}
+      {saved && <p className="success">Gespeichert – die Werte erscheinen auf der Übersicht.</p>}
+      <button className="button primary" disabled={busy || !id} onClick={() => void run(async () => {
+        await api(path, { method: 'PUT', body: { devices: [{ id, label, max_humidity: maxHumidity === '' ? null : Number(maxHumidity) }] } });
+        setSaved(true);
+      })}>
+        <Icon name="check" size={18} /> Thermometer speichern
+      </button>
+    </div>
+  );
+}
+
 /** Admin: welche Tuya-Thermometer die Familie sieht, mit Namen und Grenzwerten für Warnungen */
 export function ClimateSettings() {
   const { family } = useFamily();
@@ -21,7 +50,7 @@ export function ClimateSettings() {
     void load.run(async () => setState(await api(path)));
   }, [path]);
 
-  if (load.error) return <p className="error">{load.error}</p>;
+  if (load.error) return <ManualDevice error={load.error} path={path} />;
   if (!state) return <p className="muted">Lade Thermometer …</p>;
   if (!state.enabled) {
     return <p className="muted">Die Tuya-Zugangsdaten fehlen noch auf dem Server – siehe Anleitung deploy/TUYA.md.</p>;

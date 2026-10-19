@@ -132,16 +132,38 @@ export class TuyaClient {
   /** Alle Geräte des Cloud-Projekts: [{ id, name, category, online }] */
   async devices() {
     if (this.#devices && Date.now() - this.#devicesAt < DEVICES_CACHE_MS) return this.#devices;
-    let list;
-    try {
-      const result = await this.request('GET', '/v2.0/cloud/thing/device?page_size=50');
-      list = Array.isArray(result) ? result : result?.list ?? [];
-    } catch (err) {
-      if (err.expired) throw err;
-      // ältere Projekte: Liste über die IoT-Core-Schnittstelle
-      const result = await this.request('GET', '/v1.0/iot-03/devices?page_size=50');
-      list = result?.list ?? [];
+    // Je nach Projekt-Typ liefert eine andere Schnittstelle die Liste: zuerst die Geräte der verknüpften
+    // Smart-Life-Konten, dann die neueren Projekt-Listen
+    const sources = [
+      async () => {
+        const list = [];
+        let lastRowKey = '';
+        for (let page = 0; page < 10; page++) {
+          const result = await this.request('GET', `/v1.0/iot-01/associated-users/devices?${lastRowKey ? `last_row_key=${lastRowKey}&` : ''}size=50`);
+          list.push(...(result?.devices ?? []));
+          if (!result?.has_more || !result.last_row_key) break;
+          lastRowKey = result.last_row_key;
+        }
+        return list;
+      },
+      async () => {
+        const result = await this.request('GET', '/v2.0/cloud/thing/device?page_size=50');
+        return Array.isArray(result) ? result : result?.list ?? [];
+      },
+      async () => (await this.request('GET', '/v1.0/iot-03/devices?page_size=50'))?.list ?? [],
+    ];
+    let list = null;
+    let firstError = null;
+    for (const source of sources) {
+      try {
+        list = await source();
+        break;
+      } catch (err) {
+        if (err.expired) throw err;
+        firstError ??= err;
+      }
     }
+    if (!list) throw firstError;
     this.#devices = list.map((d) => ({
       id: d.id,
       name: d.customName || d.name || d.id,
@@ -152,10 +174,24 @@ export class TuyaClient {
     return this.#devices;
   }
 
+  /** Erste Schnittstelle, die antwortet (ältere und neuere Projekte kennen unterschiedliche Pfade) */
+  async #firstOf(paths) {
+    let firstError = null;
+    for (const path of paths) {
+      try {
+        return await this.request('GET', path);
+      } catch (err) {
+        if (err.expired) throw err;
+        firstError ??= err;
+      }
+    }
+    throw firstError;
+  }
+
   /** Kommastellen je Datenpunkt aus der Gerätebeschreibung (z. B. va_temperature: 215 → 21,5 °C) */
   async #scales(id) {
     try {
-      const spec = await this.request('GET', `/v1.0/iot-03/devices/${id}/specification`);
+      const spec = await this.#firstOf([`/v1.0/iot-03/devices/${id}/specification`, `/v1.0/devices/${id}/specifications`]);
       return Object.fromEntries((spec?.status ?? []).map((s) => {
         try {
           return [s.code, JSON.parse(s.values ?? '{}').scale ?? 0];
@@ -173,7 +209,7 @@ export class TuyaClient {
     const cached = this.#statusCache.get(id);
     if (cached && Date.now() - cached.at < STATUS_CACHE_MS) return cached.data;
     const [status, scales] = await Promise.all([
-      this.request('GET', `/v1.0/iot-03/devices/${id}/status`),
+      this.#firstOf([`/v1.0/iot-03/devices/${id}/status`, `/v1.0/devices/${id}/status`]),
       cached?.scales ? Promise.resolve(cached.scales) : this.#scales(id),
     ]);
     const value = (codes) => {

@@ -19,6 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Tuya-Thermometer (Smart Life) auf der Übersicht: Temperatur und Luftfeuchtigkeit je Raum',
       'Admins wählen unter Familie & Profil → Thermometer, welche Geräte angezeigt werden, vergeben Namen und Grenzwerte',
       'Warnung per Push an die Eltern, wenn es zu warm, zu kalt, zu feucht oder zu trocken ist oder die Batterie schwächelt',
+      'Geräteliste über das verknüpfte Smart-Life-Konto; notfalls lässt sich ein Thermometer über seine Device ID eintragen',
     ],
   },
   {
