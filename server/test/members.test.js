@@ -2,6 +2,7 @@ import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
 import { openDatabase } from '../src/db.js';
+import { newlyTagged } from '../src/activity.js';
 
 let server;
 let base;
@@ -113,3 +114,26 @@ describe('Neuigkeiten (Glocke)', () => {
     assert.ok((await api(`/families/${fid}/activity`, { token: mama })).data.seen_at);
   });
 });
+
+describe('Markierung bei Terminen', () => {
+  test('Push und Glocke für neu eingetragene Personen', async () => {
+    const { mama, tom, fid, ids } = await family();
+    const { data: ev } = await api(`/families/${fid}/events`, { token: mama, method: 'POST', body: { title: 'Kino', start: '2026-10-24T18:00', end: '2026-10-24T20:00', member_ids: [ids.Mama, ids.Tom] } });
+    let items = (await api(`/families/${fid}/activity`, { token: tom })).data.items;
+    assert.equal(items.length, 1);
+    assert.equal(items[0].kind, 'event');
+    assert.equal(items[0].subject, 'Kino');
+    assert.equal(items[0].path, `/kalender?tag=2026-10-24&termin=${ev.id}`);
+    assert.equal((await api(`/families/${fid}/activity`, { token: mama })).data.items.length, 0, 'sich selbst markieren zählt nicht');
+
+    // Erneut speichern ohne neue Personen → keine zweite Markierung
+    await api(`/families/${fid}/events/${ev.id}`, { token: mama, method: 'PATCH', body: { title: 'Kino!' } });
+    assert.equal((await api(`/families/${fid}/activity`, { token: tom })).data.items.length, 1);
+
+    // Später dazugenommen → nur die Neuen
+    const prev = { member_ids: [1] };
+    assert.deepEqual(newlyTagged({ action: 'update', path: 'events', row: { member_ids: [1, 2, 3] }, before: prev, user: { id: 3 } }).sort(), [2]);
+    assert.deepEqual(newlyTagged({ action: 'import', path: 'events', row: { member_ids: [2] }, before: null, user: { id: 1 } }), []);
+  });
+});
+

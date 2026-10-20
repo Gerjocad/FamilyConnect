@@ -13,7 +13,7 @@ import { climateRouter } from './climate.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter } from './eventComments.js';
-import { activityRouter } from './activity.js';
+import { activityRouter, recordMentions } from './activity.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -360,7 +360,10 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   for (const resource of RESOURCES) {
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,
-      crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name), (change) => push?.handleChange(change)));
+      crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name), (change) => {
+        recordMentions(db, change);
+        push?.handleChange(change);
+      }));
   }
 
   app.use('/api', (req, res) => res.status(404).json({ error: 'Unbekannter Endpunkt' }));

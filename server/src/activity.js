@@ -5,6 +5,22 @@ import { Router } from 'express';
 const DAYS = 30;
 const LIMIT = 50;
 
+/** Neu markierte Personen eines Termins (ohne den, der ihn einträgt); Kalender-Importe zählen nicht */
+export function newlyTagged({ action, path, row, before, user }) {
+  if (path !== 'events' || (action !== 'create' && action !== 'update')) return [];
+  const had = new Set(before?.member_ids ?? []);
+  return row.member_ids.filter((id) => id !== user.id && !had.has(id));
+}
+
+export const eventPath = (event) => `/kalender?tag=${event.start.slice(0, 10)}&termin=${event.id}`;
+
+/** Markierungen merken, damit sie in der Glocke auftauchen */
+export function recordMentions(db, change) {
+  const ids = newlyTagged(change);
+  const insert = db.prepare('INSERT INTO event_mentions (family_id, event_id, user_id, by_user_id) VALUES (?, ?, ?, ?)');
+  for (const id of ids) insert.run(change.familyId, change.row.id, id, change.user.id);
+}
+
 export function activityRouter(db, { auth, member }) {
   const router = Router();
   const base = '/api/families/:familyId/activity';
@@ -17,6 +33,12 @@ export function activityRouter(db, { auth, member }) {
                 '/kalender?tag=' || c.date || '&termin=' || e.id AS path
          FROM event_comments c JOIN events e ON e.id = c.event_id
          WHERE c.family_id = ? AND c.user_id != ? AND c.created_at >= ${since}`
+      ).all(familyId, userId),
+      ...db.prepare(
+        `SELECT 'event' AS kind, m.id, m.created_at AS at, m.by_user_id AS user_id, e.title AS subject, e.start AS text,
+                '/kalender?tag=' || substr(e.start, 1, 10) || '&termin=' || e.id AS path
+         FROM event_mentions m JOIN events e ON e.id = m.event_id
+         WHERE m.family_id = ? AND m.user_id = ? AND m.created_at >= ${since}`
       ).all(familyId, userId),
       ...db.prepare(
         `SELECT 'post' AS kind, id, created_at AS at, created_by AS user_id, '' AS subject, text, '/pinnwand' AS path

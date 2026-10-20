@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useActivity, type ActivityItem } from '../activity';
-import { formatTimestamp } from '../dates';
+import { formatShortDay, formatTime, formatTimestamp, parseLocal } from '../dates';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { Icon } from './Icon';
@@ -11,6 +11,11 @@ const ANSWERS: Record<string, string> = { approved: 'angenommen', declined: 'abg
 function describe(item: ActivityItem, name: string): { title: string; text: string } {
   switch (item.kind) {
     case 'comment': return { title: `${name} hat „${item.subject}“ kommentiert`, text: item.text };
+    case 'event': {
+      const start = parseLocal(item.text);
+      const when = `${formatShortDay(start)}${item.text.length > 10 && !item.text.endsWith('T00:00') ? `, ${formatTime(start)}` : ''}`;
+      return { title: `${name} hat dich bei „${item.subject}“ eingetragen`, text: when };
+    }
     case 'post': return { title: `${name} auf der Pinnwand`, text: item.text };
     case 'complaint': return { title: `Beschwerde von ${name}`, text: item.text };
     case 'complaint-resolved': return { title: `${name} hat deine Beschwerde erledigt`, text: item.text || item.subject };

@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.32',
+    date: '2026-10-20',
+    title: 'Benachrichtigung bei Markierung im Termin',
+    changes: [
+      'Trägt dich jemand bei einem Termin ein, bekommst du eine Benachrichtigung „… hat dich bei einem Termin eingetragen“ – auch wenn du später dazugenommen wirst',
+      'Die Markierung erscheint auch in der Glocke; Antippen öffnet direkt den Termin im Kalender',
+    ],
+  },
+  {
     version: '1.31',
     date: '2026-10-20',
     title: 'Neuigkeiten-Glocke',

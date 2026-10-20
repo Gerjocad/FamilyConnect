@@ -6,7 +6,7 @@ import { useFamily } from './session';
 
 export interface ActivityItem {
   key: string;
-  kind: 'comment' | 'post' | 'complaint' | 'complaint-resolved' | 'request' | 'request-answer';
+  kind: 'comment' | 'event' | 'post' | 'complaint' | 'complaint-resolved' | 'request' | 'request-answer';
   id: number;
   /** JJJJ-MM-TT HH:MM:SS (UTC, wie in SQLite) */
   at: string;
@@ -16,7 +16,7 @@ export interface ActivityItem {
   path: string;
 }
 
-const SOURCES = new Set(['event-comments', 'posts', 'complaints', 'requests']);
+const SOURCES = new Set(['events', 'event-comments', 'posts', 'complaints', 'requests']);
 
 export function useActivity() {
   const { family } = useFamily();

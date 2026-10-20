@@ -272,6 +272,17 @@ CREATE TABLE IF NOT EXISTS event_comments (
 );
 CREATE INDEX IF NOT EXISTS event_comments_event ON event_comments(event_id);
 
+-- Wer bei einem Termin eingetragen wurde (beim Anlegen oder später) – für die Glocke
+CREATE TABLE IF NOT EXISTS event_mentions (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS event_mentions_user ON event_mentions(family_id, user_id);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

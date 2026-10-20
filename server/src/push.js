@@ -2,6 +2,7 @@
 // Aktiv nur, wenn FIREBASE_SERVICE_ACCOUNT auf die JSON-Datei eines Firebase-Dienstkontos zeigt.
 import { createSign } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
+import { eventPath, newlyTagged } from './activity.js';
 
 const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 
@@ -149,19 +150,28 @@ export class PushService {
         path: '/kalender',
       });
     } else if (path === 'events' && action === 'create') {
-      // Bei Personen-Auswahl nur die Beteiligten, sonst alle
-      const targets = row.member_ids.length > 0
-        ? row.member_ids.filter((id) => id !== user.id)
-        : this.#others(familyId, user.id);
-      this.#send(targets, {
-        title: 'Neuer Termin', body: `${row.title} · ${formatEventDate(row)} (von ${actor})`, path: '/kalender',
+      // Markierte Personen bekommen eine eigene Nachricht; ohne Auswahl alle
+      const tagged = newlyTagged({ action, path, row, before, user });
+      if (row.member_ids.length > 0) this.#notifyTagged(tagged, actor, row);
+      else this.#send(this.#others(familyId, user.id), {
+        title: 'Neuer Termin', body: `${row.title} · ${formatEventDate(row)} (von ${actor})`, path: eventPath(row),
       });
+    } else if (path === 'events' && action === 'update') {
+      // Später dazugenommen → nur die Neuen benachrichtigen
+      this.#notifyTagged(newlyTagged({ action, path, row, before, user }), actor, row);
     } else if (path === 'tasks' && row.assignee_id && row.assignee_id !== user.id
       && (action === 'create' || before?.assignee_id !== row.assignee_id)) {
       this.#send([row.assignee_id], { title: 'Neue Aufgabe für dich', body: `${actor}: ${row.title}`, path: '/aufgaben' });
     } else if (path === 'items' && action === 'create') {
       this.#queueItem(familyId, user, actor, row);
     }
+  }
+
+  #notifyTagged(ids, actor, row) {
+    if (ids.length === 0) return;
+    this.#send(ids, {
+      title: `${actor} hat dich bei einem Termin eingetragen`, body: `${row.title} · ${formatEventDate(row)}`, path: eventPath(row),
+    });
   }
 
   // Mehrere Einträge kurz hintereinander → eine Nachricht ("Anna hat Milch, Brot und Eier … hinzugefügt")
