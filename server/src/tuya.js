@@ -18,6 +18,19 @@ const TEMPERATURE = ['va_temperature', 'temp_current', 'temp_indoor', 'temperatu
 const HUMIDITY = ['va_humidity', 'humidity_value', 'humidity_indoor', 'humidity'];
 const BATTERY = ['battery_percentage', 'va_battery', 'battery'];
 const BATTERY_STATE = { low: 10, middle: 50, high: 100 };
+// Hersteller benennen Datenpunkte unterschiedlich – notfalls nach Namensteil suchen (ohne Grenzwerte/Alarme)
+const NOT_A_READING = /alarm|set|max|min|unit|switch|calib|sensitivity|report|period/i;
+const FALLBACK = { temperature: /temp/i, humidity: /humi/i, battery: /batt/i };
+
+/** Wo der Gerätestatus herkommt – je nach Projekt und Steuerungsmodus liefert nur eine davon Werte */
+const statusSources = (id) => [
+  { path: `/v1.0/iot-03/devices/${id}/status`, pick: (r) => r },
+  { path: `/v1.0/devices/${id}/status`, pick: (r) => r },
+  { path: `/v2.0/cloud/thing/${id}/shadow/properties`, pick: (r) => r?.properties },
+  { path: `/v1.0/devices/${id}`, pick: (r) => r?.status },
+];
+
+const toNumber = (v) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : null);
 
 export class TuyaError extends Error {
   constructor(message, { expired = false } = {}) {
@@ -204,28 +217,61 @@ export class TuyaClient {
     }
   }
 
+  /** Erste Statusquelle mit Datenpunkten: { points: [{ code, value }], source, errors } */
+  async #status(id) {
+    const errors = [];
+    for (const { path, pick } of statusSources(id)) {
+      try {
+        const points = pick(await this.request('GET', path));
+        if (Array.isArray(points) && points.length > 0) {
+          return { points: points.map((p) => ({ code: String(p.code ?? p.dp_id ?? ''), value: p.value })), source: path, errors };
+        }
+        errors.push(`${path}: keine Datenpunkte`);
+      } catch (err) {
+        if (err.expired) throw err;
+        errors.push(`${path}: ${err.message}`);
+      }
+    }
+    return { points: [], source: null, errors };
+  }
+
+  #parse(points, scales) {
+    const find = (codes, fallback) =>
+      points.find((p) => codes.includes(p.code) && toNumber(p.value) !== null)
+      ?? points.find((p) => fallback.test(p.code) && !NOT_A_READING.test(p.code) && toNumber(p.value) !== null);
+    const value = (codes, fallback, maxPlain) => {
+      const point = find(codes, fallback);
+      if (!point) return null;
+      const raw = toNumber(point.value);
+      const scale = scales[point.code] ?? (Math.abs(raw) > maxPlain ? 1 : 0);
+      return Math.round((raw / 10 ** scale) * 10) / 10;
+    };
+    const batteryState = points.find((p) => p.code === 'battery_state')?.value;
+    return {
+      temperature: value(TEMPERATURE, FALLBACK.temperature, 100),
+      humidity: value(HUMIDITY, FALLBACK.humidity, 100),
+      battery: value(BATTERY, FALLBACK.battery, 100) ?? BATTERY_STATE[batteryState] ?? null,
+    };
+  }
+
   /** Messwerte eines Thermometers: { temperature, humidity, battery, updated_at } */
   async climate(id) {
     const cached = this.#statusCache.get(id);
     if (cached && Date.now() - cached.at < STATUS_CACHE_MS) return cached.data;
     const [status, scales] = await Promise.all([
-      this.#firstOf([`/v1.0/iot-03/devices/${id}/status`, `/v1.0/devices/${id}/status`]),
+      this.#status(id),
       cached?.scales ? Promise.resolve(cached.scales) : this.#scales(id),
     ]);
-    const value = (codes) => {
-      const point = status?.find((s) => codes.includes(s.code));
-      if (!point || typeof point.value !== 'number') return null;
-      const scale = scales[point.code] ?? (Math.abs(point.value) > 100 ? 1 : 0);
-      return Math.round((point.value / 10 ** scale) * 10) / 10;
-    };
-    const batteryState = status?.find((s) => s.code === 'battery_state')?.value;
-    const data = {
-      temperature: value(TEMPERATURE),
-      humidity: value(HUMIDITY),
-      battery: value(BATTERY) ?? BATTERY_STATE[batteryState] ?? null,
-      updated_at: new Date().toISOString(),
-    };
+    if (!status.source) throw new TuyaError('Das Thermometer liefert keine Werte – siehe „Werte testen“ in den Einstellungen');
+    const data = { ...this.#parse(status.points, scales), updated_at: new Date().toISOString() };
     this.#statusCache.set(id, { at: Date.now(), data, scales });
     return data;
+  }
+
+  /** Diagnose für die Einstellungen: was das Gerät wirklich meldet und was die App daraus liest */
+  async diagnose(id) {
+    const [status, scales] = await Promise.all([this.#status(id), this.#scales(id)]);
+    this.#statusCache.delete(id);
+    return { ...status, scales, parsed: this.#parse(status.points, scales) };
   }
 }

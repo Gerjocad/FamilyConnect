@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.34',
+    date: '2026-10-20',
+    title: 'Raumklima: mehr Thermometer werden erkannt',
+    changes: [
+      'Liest Werte jetzt auch über weitere Tuya-Schnittstellen und erkennt abweichende Namen der Messwerte',
+      'Einstellungen → Raumklima: „Werte testen“ zeigt, was das Thermometer meldet – mit Tipp, falls gar nichts kommt',
+    ],
+  },
+  {
     version: '1.33',
     date: '2026-10-20',
     title: 'NFC-Aufkleber direkt in der App beschreiben',

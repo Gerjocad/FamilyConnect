@@ -37,6 +37,11 @@ async function fakeTuya(url, options) {
   if (m && m[2] === 'specification') {
     return reply({ status: [{ code: 'va_temperature', values: '{"unit":"℃","scale":1}' }, { code: 'va_humidity', values: '{"unit":"%","scale":0}' }] });
   }
+  // Gerät im Standard-Modus ohne Datenpunkte – Werte gibt es nur im Schatten (andere Namen, Zahlen als Text)
+  if (path === '/v1.0/iot-03/devices/dev-schatten/status' || path === '/v1.0/devices/dev-schatten/status') return reply([]);
+  if (path === '/v2.0/cloud/thing/dev-schatten/shadow/properties') {
+    return reply({ properties: [{ code: 'temp_alarm', value: 1, dp_id: 9 }, { code: 'temp_now', value: '234', dp_id: 1 }, { code: 'humi_now', value: 61, dp_id: 2 }] });
+  }
   if (m) {
     const r = readings[m[1]];
     return reply([{ code: 'va_temperature', value: r.temp }, { code: 'va_humidity', value: r.hum }, { code: 'battery_percentage', value: r.battery }]);
@@ -124,5 +129,16 @@ describe('Raumklima (Tuya)', () => {
 
   test('ohne Zugangsdaten aus', () => {
     assert.equal(new TuyaClient({ configFile: '/gibt/es/nicht.json' }).enabled, false);
+  });
+
+  test('Werte aus anderen Quellen und Diagnose', async () => {
+    const tuya = new TuyaClient({ config: CONFIG, fetchImpl: fakeTuya });
+    const data = await tuya.climate('dev-schatten');
+    assert.equal(data.temperature, 23.4);
+    assert.equal(data.humidity, 61);
+    const test = await tuya.diagnose('dev-schatten');
+    assert.equal(test.source, '/v2.0/cloud/thing/dev-schatten/shadow/properties');
+    assert.equal(test.points.length, 3);
+    assert.equal(test.errors.length, 2);
   });
 });

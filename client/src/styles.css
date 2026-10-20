@@ -823,3 +823,8 @@ textarea { resize: vertical; }
 .imported-calendars li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .danger-link { color: var(--danger); }
 .import-result { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--accent-strong); }
+
+/* Raumklima: Werte testen */
+.climate-test { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-size: 0.9rem; }
+.climate-test p { margin: 0; }
+.climate-raw { margin: 0; padding-left: 18px; font-size: 0.82rem; overflow-wrap: anywhere; }

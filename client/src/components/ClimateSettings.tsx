@@ -26,12 +26,59 @@ function ManualDevice({ error, path }: { error: string; path: string }) {
       <label>Max. % Feuchte <span className="hint">(optional, für Warnungen)</span><input type="number" value={maxHumidity} onChange={(e) => setMaxHumidity(e.target.value)} /></label>
       {saveError && <p className="error">{saveError}</p>}
       {saved && <p className="success">Gespeichert – die Werte erscheinen auf der Übersicht.</p>}
+      {id && <DeviceTest path={path} id={id} />}
       <button className="button primary" disabled={busy || !id} onClick={() => void run(async () => {
         await api(path, { method: 'PUT', body: { devices: [{ id, label, max_humidity: maxHumidity === '' ? null : Number(maxHumidity) }] } });
         setSaved(true);
       })}>
         <Icon name="check" size={18} /> Thermometer speichern
       </button>
+    </div>
+  );
+}
+
+interface Diagnosis {
+  source: string | null;
+  points: { code: string; value: unknown }[];
+  errors: string[];
+  parsed: { temperature: number | null; humidity: number | null; battery: number | null };
+}
+
+const show = (v: number | null, unit: string) => (v === null ? '–' : `${String(v).replace('.', ',')} ${unit}`);
+
+/** „Werte testen“: zeigt, was das Thermometer an Tuya meldet und was die App daraus liest */
+function DeviceTest({ path, id }: { path: string; id: string }) {
+  const [result, setResult] = useState<Diagnosis | null>(null);
+  const { busy, error, run } = useAsync();
+  return (
+    <div className="climate-test">
+      <button type="button" className="button small" disabled={busy} onClick={() => void run(async () => setResult(await api<Diagnosis>(`${path}/${encodeURIComponent(id)}/test`)))}>
+        <Icon name="thermometer" size={16} /> {busy ? 'Frage ab …' : 'Werte testen'}
+      </button>
+      {error && <p className="error">{error}</p>}
+      {result && (
+        <>
+          <p>
+            Temperatur <b>{show(result.parsed.temperature, '°C')}</b> · Feuchte <b>{show(result.parsed.humidity, '%')}</b> · Batterie <b>{show(result.parsed.battery, '%')}</b>
+          </p>
+          {result.points.length > 0 ? (
+            <ul className="climate-raw">
+              {result.points.map((p) => <li key={p.code}><code>{p.code}</code> = {JSON.stringify(p.value)}</li>)}
+            </ul>
+          ) : (
+            <p className="error">
+              Tuya liefert für dieses Gerät keine Werte. Meist hilft: auf platform.tuya.com im Projekt unter <b>Devices</b> beim
+              Gerät den <b>Control Instruction Mode</b> auf <b>DP Instruction</b> stellen, ein paar Minuten warten und erneut testen.
+            </p>
+          )}
+          {result.errors.length > 0 && (
+            <details>
+              <summary className="muted">Abfragen ohne Ergebnis ({result.errors.length})</summary>
+              <ul className="climate-raw">{result.errors.map((e) => <li key={e}>{e}</li>)}</ul>
+            </details>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -93,6 +140,7 @@ export function ClimateSettings() {
                 {numberField(d, 'min_humidity', 'Min. % Feuchte')}
                 {numberField(d, 'max_humidity', 'Max. % Feuchte')}
               </div>
+              <DeviceTest path={path} id={d.id} />
             </>
           )}
         </div>

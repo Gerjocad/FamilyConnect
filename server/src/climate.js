@@ -112,6 +112,17 @@ export function climateRouter(db, { auth, member, publish, tuya }) {
     }
   });
 
+  // Diagnose: Rohdaten eines Thermometers (nur Admins)
+  router.get(`${base}/devices/:deviceId/test`, auth, member, async (req, res) => {
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins' });
+    if (!/^[\w-]{1,64}$/.test(req.params.deviceId)) return res.status(400).json({ error: 'Ungültiges Gerät' });
+    try {
+      res.json(await tuya.diagnose(req.params.deviceId));
+    } catch (err) {
+      fail(res, err);
+    }
+  });
+
   router.put(`${base}/devices`, auth, member, (req, res) => {
     if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins' });
     const list = Array.isArray(req.body?.devices) ? req.body.devices : null;
