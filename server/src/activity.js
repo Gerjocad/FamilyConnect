@@ -1,0 +1,60 @@
+// „Neuigkeiten“ oben in der App: was andere in letzter Zeit geschrieben haben, mit Ziel zum Hinspringen.
+// Gelesen-Stand je Person und Familie (memberships.activity_seen_at).
+import { Router } from 'express';
+
+const DAYS = 30;
+const LIMIT = 50;
+
+export function activityRouter(db, { auth, member }) {
+  const router = Router();
+  const base = '/api/families/:familyId/activity';
+
+  const itemsFor = (familyId, userId) => {
+    const since = `datetime('now', '-${DAYS} days')`;
+    const rows = [
+      ...db.prepare(
+        `SELECT 'comment' AS kind, c.id, c.created_at AS at, c.user_id, e.title AS subject, c.text,
+                '/kalender?tag=' || c.date || '&termin=' || e.id AS path
+         FROM event_comments c JOIN events e ON e.id = c.event_id
+         WHERE c.family_id = ? AND c.user_id != ? AND c.created_at >= ${since}`
+      ).all(familyId, userId),
+      ...db.prepare(
+        `SELECT 'post' AS kind, id, created_at AS at, created_by AS user_id, '' AS subject, text, '/pinnwand' AS path
+         FROM posts WHERE family_id = ? AND created_by != ? AND created_at >= ${since}`
+      ).all(familyId, userId),
+      ...db.prepare(
+        `SELECT 'complaint' AS kind, id, created_at AS at, created_by AS user_id, '' AS subject, text, '/beschwerden' AS path
+         FROM complaints WHERE family_id = ? AND recipient_id = ? AND created_by != ? AND created_at >= ${since}`
+      ).all(familyId, userId, userId),
+      ...db.prepare(
+        `SELECT 'complaint-resolved' AS kind, id, resolved_at AS at, resolved_by AS user_id, text AS subject, reply AS text, '/beschwerden' AS path
+         FROM complaints WHERE family_id = ? AND created_by = ? AND resolved_by != ? AND resolved_at >= ${since}`
+      ).all(familyId, userId, userId),
+      ...db.prepare(
+        `SELECT 'request' AS kind, id, created_at AS at, created_by AS user_id, title AS subject, details AS text, '/anfragen' AS path
+         FROM requests WHERE family_id = ? AND recipient_id = ? AND created_by != ? AND created_at >= ${since}`
+      ).all(familyId, userId, userId),
+      ...db.prepare(
+        `SELECT 'request-answer' AS kind, id, responded_at AS at, recipient_id AS user_id, title AS subject,
+                status || '|' || response_note AS text, '/anfragen' AS path
+         FROM requests WHERE family_id = ? AND created_by = ? AND recipient_id != ? AND responded_at >= ${since}`
+      ).all(familyId, userId, userId),
+    ];
+    return rows.sort((a, b) => b.at.localeCompare(a.at) || b.id - a.id).slice(0, LIMIT)
+      .map((r) => ({ ...r, key: `${r.kind}:${r.id}` }));
+  };
+
+  router.get(base, auth, member, (req, res) => {
+    const seen = db.prepare('SELECT activity_seen_at FROM memberships WHERE family_id = ? AND user_id = ?')
+      .get(req.familyId, req.user.id).activity_seen_at;
+    res.json({ seen_at: seen, items: itemsFor(req.familyId, req.user.id) });
+  });
+
+  // Alles bis jetzt als gelesen markieren (beim Öffnen der Liste)
+  router.post(`${base}/seen`, auth, member, (req, res) => {
+    db.prepare("UPDATE memberships SET activity_seen_at = datetime('now') WHERE family_id = ? AND user_id = ?").run(req.familyId, req.user.id);
+    res.status(204).end();
+  });
+
+  return router;
+}

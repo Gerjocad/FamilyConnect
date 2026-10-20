@@ -89,3 +89,27 @@ describe('Kommentare an Terminen', () => {
     assert.equal((await api(`/families/${fid}/event-comments`, { token: tom })).data.length, 0, 'mit dem Termin gelöscht');
   });
 });
+
+describe('Neuigkeiten (Glocke)', () => {
+  test('zeigt was andere geschrieben haben, gelesen-Stand', async () => {
+    const { mama, tom, fid, ids } = await family();
+    const { data: ev } = await api(`/families/${fid}/events`, { token: mama, method: 'POST', body: { title: 'Arzt', start: '2026-10-22T09:00', end: '2026-10-22T10:00' } });
+    await api(`/families/${fid}/events/${ev.id}/comments`, { token: tom, method: 'POST', body: { text: 'Ich komme mit' } });
+    await api(`/families/${fid}/events/${ev.id}/comments`, { token: mama, method: 'POST', body: { text: 'Super' } });
+    await api(`/families/${fid}/posts`, { token: tom, method: 'POST', body: { text: 'Pizza heute?' } });
+    await api(`/families/${fid}/requests`, { token: tom, method: 'POST', body: { title: 'Darf ich zu Ben?', recipient_id: ids.Mama } });
+
+    const { data } = await api(`/families/${fid}/activity`, { token: mama });
+    assert.equal(data.seen_at, null);
+    assert.deepEqual(data.items.map((i) => i.kind).sort(), ['comment', 'post', 'request']);
+    const comment = data.items.find((i) => i.kind === 'comment');
+    assert.equal(comment.path, `/kalender?tag=2026-10-22&termin=${ev.id}`);
+    assert.equal(comment.subject, 'Arzt');
+
+    // Tom sieht Mamas Kommentar, aber nicht seine eigenen Sachen
+    assert.deepEqual((await api(`/families/${fid}/activity`, { token: tom })).data.items.map((i) => i.text), ['Super']);
+
+    assert.equal((await api(`/families/${fid}/activity/seen`, { token: mama, method: 'POST' })).status, 204);
+    assert.ok((await api(`/families/${fid}/activity`, { token: mama })).data.seen_at);
+  });
+});

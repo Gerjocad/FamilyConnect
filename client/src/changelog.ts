@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.31',
+    date: '2026-10-20',
+    title: 'Neuigkeiten-Glocke',
+    changes: [
+      'Oben neben dem Profil: 🔔 mit Zahl, sobald andere etwas geschrieben haben – Kommentare, Pinnwand, Beschwerden und Anfragen an dich',
+      'Antippen eines Eintrags springt direkt hin; bei Kommentaren öffnet sich gleich der Termin im Kalender',
+    ],
+  },
+  {
     version: '1.30',
     date: '2026-10-20',
     title: 'Kommentare, Geburtstage & Mitglieder ohne Handy',

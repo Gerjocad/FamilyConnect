@@ -13,6 +13,7 @@ import { climateRouter } from './climate.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter } from './eventComments.js';
+import { activityRouter } from './activity.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -348,6 +349,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   });
 
   app.use(serverUpdateRouter({ auth, member, updater }));
+  app.use(activityRouter(db, { auth, member }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

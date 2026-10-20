@@ -139,6 +139,8 @@ const ADDED_COLUMNS = [
   ['users', 'birthday', 'TEXT'],
   // Familienmitglied ohne eigenes Handy/Konto (vom Admin angelegt, kann sich nicht anmelden)
   ['users', 'managed', 'INTEGER NOT NULL DEFAULT 0'],
+  // Bis wann die Neuigkeiten (Glocke oben) gelesen sind
+  ['memberships', 'activity_seen_at', 'TEXT'],
   ['contacts', 'birthday', 'TEXT'],
   // Farbschema der App (client/src/themes.ts)
   ['users', 'theme', "TEXT NOT NULL DEFAULT 'orange'"],

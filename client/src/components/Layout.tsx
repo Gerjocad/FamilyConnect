@@ -10,6 +10,7 @@ import { Icon, type IconName } from './Icon';
 import { NotificationBridge } from './NotificationBridge';
 import { UpdateBanner } from './UpdateBanner';
 import { TOPBAR_ACTIONS_ID } from './TopbarActions';
+import { ActivityBell } from './ActivityBell';
 
 const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/', label: 'Übersicht', icon: 'home' },
@@ -70,6 +71,14 @@ export function Layout() {
   const { family, user, selectFamily } = useFamily();
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Ab 900 px gibt es statt der oberen Leiste die Seitenleiste – die Glocke wandert mit
+  const [wide, setWide] = useState(() => matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    const query = matchMedia('(min-width: 900px)');
+    const update = () => setWide(query.matches);
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
   const complaints = useComplaints();
   const openComplaints = complaints.items.filter((c) => c.recipient_id === user.id && c.status === 'open').length;
   const requests = useRequests();
@@ -97,6 +106,8 @@ export function Layout() {
         <div className="brand">
           <Logo size={32} />
           <span>FamilyConnect</span>
+          <span className="spacer" />
+          {wide && <ActivityBell />}
         </div>
         {user.families.length > 1 ? (
           <select
@@ -136,6 +147,7 @@ export function Layout() {
         <strong>{family.name}</strong>
         <span className="spacer" />
         <span id={TOPBAR_ACTIONS_ID} className="topbar-actions" />
+        {!wide && <ActivityBell />}
         <NavLink to="/einstellungen" aria-label="Familie & Profil"><Avatar member={user} size={30} /></NavLink>
       </header>
 

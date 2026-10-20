@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { birthdaysInRange } from '../birthdays';
 import { AvatarStack } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
@@ -80,6 +80,22 @@ export function CalendarPage() {
   useEffect(() => {
     if (showDay) agendaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [showDay, selected]);
+
+  // Aus den Neuigkeiten: /kalender?tag=JJJJ-MM-TT&termin=ID → Tag zeigen und den Termin öffnen
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    const tag = params.get('tag');
+    if (!tag || !/^\d{4}-\d{2}-\d{2}$/.test(tag)) return;
+    const termin = Number(params.get('termin'));
+    if (termin && events.loading) return;
+    const day = parseLocal(tag);
+    setCursor(new Date(day.getFullYear(), day.getMonth(), 1));
+    setSelected(day);
+    setShowDay(true);
+    const occurrence = termin ? occurrencesInRange(events.items, day, addDays(day, 1)).find((o) => o.event.id === termin) : undefined;
+    if (occurrence) setEditing({ event: occurrence.event, occurrence });
+    setParams({}, { replace: true });
+  }, [params, setParams, events.loading, events.items]);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
   const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);

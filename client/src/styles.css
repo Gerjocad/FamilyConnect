@@ -733,6 +733,31 @@ textarea { resize: vertical; }
 .import-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: -8px; }
 .file-button { align-self: flex-start; cursor: pointer; }
 .import-row { align-items: flex-start; }
+/* Neuigkeiten (ActivityBell.tsx) */
+.activity-button { position: relative; }
+.activity-count {
+  position: absolute; top: 2px; right: 0; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 800; display: grid; place-items: center;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.activity-list { width: min(340px, calc(100vw - 24px)); max-height: min(70vh, 520px); overflow-y: auto; gap: 2px; }
+.sidebar .activity-list { position: fixed; left: 250px; top: 16px; right: auto; }
+.brand { min-width: 0; gap: 6px; padding-right: 0; padding-left: 4px; }
+.brand .activity-button { width: 30px; height: 30px; }
+.brand > .logo, .brand > .plus-menu { flex-shrink: 0; }
+.brand > span:not(.spacer) { font-size: 1rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.activity-list { font-size: 1rem; font-weight: 400; }
+.activity-head { padding: 6px 10px 4px; font-size: 0.95rem; }
+.activity-empty { padding: 4px 10px 10px; margin: 0; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border: 0; border-radius: 10px; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer; width: 100%;
+}
+.activity-item:hover, .activity-item:focus-visible { background: var(--surface-2); }
+.activity-item.is-new { background: var(--accent-soft); }
+.activity-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.activity-title { font-weight: 700; font-size: 0.88rem; }
+.activity-snippet { color: var(--text); opacity: 0.85; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* Kommentare an Terminen */
 .day { position: relative; }
 .day-comment {
