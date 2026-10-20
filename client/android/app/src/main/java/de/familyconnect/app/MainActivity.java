@@ -18,6 +18,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(NfcWriterPlugin.class);
         asViewIntent(getIntent());
         super.onCreate(savedInstanceState);
     }

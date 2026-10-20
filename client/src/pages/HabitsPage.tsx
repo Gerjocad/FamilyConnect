@@ -4,10 +4,12 @@ import { Avatar } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { MemberPicker } from '../components/MemberPicker';
+import { NfcWriteButton } from '../components/NfcWriteButton';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { addDays, startOfDay, toDateKey, WEEKDAYS_SHORT } from '../dates';
 import { habitParticipants, habitStatus, intervalLabel, nfcOnlyFor, nfcUrl, statusLabel } from '../habitStatus';
+import { canWriteNfc } from '../nfcWriter';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Checkin, Habit, Member } from '../types';
@@ -32,6 +34,7 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
   const [token, setToken] = useState(habit?.nfc_token);
   const [nfcLinked, setNfcLinked] = useState(habit?.nfc_linked ?? false);
   const [copied, setCopied] = useState(false);
+  const writable = canWriteNfc();
   const { busy, error, run } = useAsync();
 
   const submit = (e: FormEvent) => {
@@ -91,10 +94,18 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
         {habit && token && (
           <div className="nfc-box">
             <strong><Icon name="nfc" size={18} /> NFC-Aufkleber</strong>
-            <p className="muted">
-              Schreibe diese Adresse mit der kostenlosen App <b>„NFC Tools“</b> auf einen Aufkleber
-              (Schreiben → Datensatz hinzufügen → <b>Benutzerdefinierte URL / URI</b>). Wer sein Handy daranhält, hakt die Gewohnheit für sich ab.
-            </p>
+            {writable ? (
+              <>
+                <p className="muted">Klebe einen NFC-Aufkleber dorthin, wo die Gewohnheit passiert. Wer sein Handy daranhält, hakt sie für sich ab.</p>
+                <NfcWriteButton uri={nfcUrl({ nfc_token: token })} />
+                <small className="hint">Bereits beschriebene Aufkleber werden einfach überschrieben. Die Adresse zum Kopieren:</small>
+              </>
+            ) : (
+              <p className="muted">
+                Schreibe diese Adresse mit der kostenlosen App <b>„NFC Tools“</b> auf einen Aufkleber
+                (Schreiben → Datensatz hinzufügen → <b>Benutzerdefinierte URL / URI</b>). Wer sein Handy daranhält, hakt die Gewohnheit für sich ab.
+              </p>
+            )}
             <code className="nfc-url">{nfcUrl({ nfc_token: token })}</code>
             <label className="checkbox">
               <input type="checkbox" checked={nfcLinked} onChange={(e) => setNfcLinked(e.target.checked)} />

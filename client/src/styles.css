@@ -435,6 +435,11 @@ textarea { resize: vertical; }
 .emoji.active { border-color: var(--accent); background: var(--accent-soft); }
 .nfc-box { background: var(--surface-2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
 .nfc-box strong { display: flex; align-items: center; gap: 6px; }
+.nfc-write { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--accent-soft); }
+.nfc-write > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.nfc-write-icon { color: var(--accent); display: grid; animation: nfc-pulse 1.4s ease-in-out infinite; }
+@keyframes nfc-pulse { 50% { transform: scale(1.18); opacity: 0.6; } }
+.nfc-write-done { display: flex; align-items: center; gap: 6px; color: var(--success, #2e7d32); font-weight: 600; margin: 0; }
 .nfc-url { font-size: 0.85rem; background: var(--surface); padding: 8px 10px; border-radius: 8px; overflow-wrap: anywhere; user-select: all; }
 .checkin-card { align-items: center; text-align: center; gap: 12px !important; padding: 32px 20px; }
 .checkin-icon { font-size: 3.5rem; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); animation: pop 0.35s ease-out; }

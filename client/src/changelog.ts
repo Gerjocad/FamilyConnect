@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.33',
+    date: '2026-10-20',
+    title: 'NFC-Aufkleber direkt in der App beschreiben',
+    apk: true,
+    changes: [
+      'Gewohnheit öffnen → „Auf NFC-Aufkleber schreiben“ → Aufkleber an die Handy-Rückseite halten → kurzes Vibrieren, fertig – „NFC Tools“ braucht es nicht mehr',
+      'Klare Hinweise, wenn NFC aus ist, der Aufkleber schreibgeschützt oder zu klein ist; zu früh weggezogen → einfach nochmal dranhalten',
+      'Bereits beschriebene Aufkleber lassen sich überschreiben',
+    ],
+  },
+  {
     version: '1.32',
     date: '2026-10-20',
     title: 'Benachrichtigung bei Markierung im Termin',
