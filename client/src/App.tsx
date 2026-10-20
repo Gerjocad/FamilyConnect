@@ -3,6 +3,7 @@ import { Logo } from './components/Logo';
 import { Layout } from './components/Layout';
 import { AuthPage } from './pages/AuthPage';
 import { BirthdaysPage } from './pages/BirthdaysPage';
+import { WishesPage } from './pages/WishesPage';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ChoresPage } from './pages/ChoresPage';
@@ -59,6 +60,7 @@ export function App() {
           <Route path="rezepte/:recipeId" element={<RecipesPage />} />
           <Route path="kontakte" element={<ContactsPage />} />
           <Route path="geburtstage" element={<BirthdaysPage />} />
+          <Route path="wuensche" element={<WishesPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="dienste" element={<ChoresPage />} />
           <Route path="feedback" element={<FeedbackPage />} />

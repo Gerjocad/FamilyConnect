@@ -14,6 +14,8 @@ import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter } from './eventComments.js';
 import { activityRouter, recordMentions } from './activity.js';
+import { WeatherService, weatherRouter } from './weather.js';
+import { wishesRouter } from './wishes.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -35,7 +37,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate() } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService() } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -82,7 +84,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     ).all(userId);
 
   const familyDetails = (familyId) => {
-    const family = db.prepare('SELECT id, name, invite_code, state, created_at FROM families WHERE id = ?').get(familyId);
+    const family = db.prepare('SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, created_at FROM families WHERE id = ?').get(familyId);
     family.members = db.prepare(
       `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
@@ -205,7 +207,19 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     const state = req.body?.state === undefined ? current.state : req.body.state || null;
     if (!name) return res.status(400).json({ error: 'Bitte gib einen Namen für die Familie an' });
     if (state !== null && !(state in STATES)) return res.status(400).json({ error: 'Unbekanntes Bundesland' });
+    // Wetter-Ort: { name, lat, lon } oder null
+    let weather;
+    if (req.body?.weather === null) weather = [null, null, null];
+    else if (req.body?.weather !== undefined) {
+      const w = req.body.weather;
+      const lat = Number(w?.lat);
+      const lon = Number(w?.lon);
+      const place = cleanText(w?.name, 100);
+      if (!place || !(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180)) return res.status(400).json({ error: 'Ungültiger Ort' });
+      weather = [place, lat, lon];
+    }
     db.prepare('UPDATE families SET name = ?, state = ? WHERE id = ?').run(name, state, req.familyId);
+    if (weather) db.prepare('UPDATE families SET weather_place = ?, weather_lat = ?, weather_lon = ? WHERE id = ?').run(...weather, req.familyId);
     hub.publish(req.familyId, 'family');
     res.json(familyDetails(req.familyId));
   });
@@ -350,6 +364,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   app.use(serverUpdateRouter({ auth, member, updater }));
   app.use(activityRouter(db, { auth, member }));
+  app.use(weatherRouter(db, { auth, member, weather }));
+  app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

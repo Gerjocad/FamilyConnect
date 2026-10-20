@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.35',
+    date: '2026-10-20',
+    title: 'Wunschliste und Wetter',
+    changes: [
+      'Neu im Menü: Wünsche – jeder trägt ein, was er sich wünscht (mit Link, Preis und Notizen), Eltern auch für die Kinder',
+      'Bei den anderen „🎁 Ich besorge das“ antippen, damit nichts doppelt gekauft wird – der Wünschende sieht das nie',
+      'Bei Geburtstagen gibt es einen Sprung zur Wunschliste der Person',
+      'Wetter auf der Übersicht: heute und morgen, mit Hinweisen wie „Regen ab 15 Uhr“, Regen bei einem Termin oder „Morgen früh Regen – Regenjacke bereitlegen“',
+      'Den Ort fürs Wetter wählt ein Admin unter Familie & Profil',
+    ],
+  },
+  {
     version: '1.34',
     date: '2026-10-20',
     title: 'Raumklima: mehr Thermometer werden erkannt',

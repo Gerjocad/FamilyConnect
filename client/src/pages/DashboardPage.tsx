@@ -2,6 +2,7 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
+import { WeatherCard } from '../components/WeatherCard';
 import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay, toDateKey } from '../dates';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -142,6 +143,8 @@ export function DashboardPage() {
             <p className="muted">{openComplaints[0].text}</p>
           </NavCard>
         )}
+        <WeatherCard events={events.items} />
+
         <NavCard to="/kalender" className="span-2">
           <header className="section-header">
             <h2><Icon name="calendar" size={18} /> Die nächsten 7 Tage</h2>

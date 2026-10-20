@@ -33,6 +33,8 @@ export interface Family {
   invite_code: string;
   /** Bundesland für Ferien und Feiertage (z. B. NW) */
   state: string | null;
+  /** Ort fürs Wetter auf der Übersicht */
+  weather_place: string | null;
   members: Member[];
 }
 

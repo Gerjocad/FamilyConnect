@@ -8,6 +8,7 @@ import { ClimateSettings } from '../components/ClimateSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
 import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
 import { Icon } from '../components/Icon';
+import { WeatherPlace } from '../components/WeatherPlace';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
 import { STATES } from '../holidays';
@@ -161,6 +162,8 @@ export function SettingsPage() {
             {Object.entries(STATES).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
           </select>
         </label>
+
+        {isAdmin && <WeatherPlace onSaved={setFamily} />}
 
         <div className="invite">
           <div>

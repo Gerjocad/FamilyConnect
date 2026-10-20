@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { api } from '../api';
 import { Avatar, initials } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
@@ -168,6 +169,11 @@ export function BirthdaysPage() {
               </button>
               {open === b.key && (
                 <div className="birthday-more">
+                  {b.member && (
+                    <Link className="link-button wish-jump" to={isMe ? '/wuensche' : `/wuensche?person=${b.member.id}`}>
+                      🎁 {isMe ? 'Meine Wunschliste' : `Wunschliste von ${b.name.split(' ')[0]}`}
+                    </Link>
+                  )}
                   {!isMe && <GiftIdeas birthday={b} />}
                   {b.member && (isManager || isMe) && (
                     <button className="link-button" onClick={() => setEditing(b.member!)}>Geburtstag ändern</button>

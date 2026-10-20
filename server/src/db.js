@@ -127,6 +127,9 @@ const ADDED_COLUMNS = [
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
   // Bundesland für Ferien und Feiertage (Kürzel wie NW, server/src/holidays.js)
   ['families', 'state', 'TEXT'],
+  ['families', 'weather_place', 'TEXT'],
+  ['families', 'weather_lat', 'REAL'],
+  ['families', 'weather_lon', 'REAL'],
   // Die feste Einkaufsliste jeder Familie (nicht löschbar)
   ['lists', 'is_default', 'INTEGER NOT NULL DEFAULT 0'],
   // Warengruppe eines Eintrags (client/src/groceries.ts); leer = automatisch erkennen
@@ -282,6 +285,21 @@ CREATE TABLE IF NOT EXISTS event_mentions (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS event_mentions_user ON event_mentions(family_id, user_id);
+
+-- Wunschlisten: reserved_by sieht der Wünschende nie
+CREATE TABLE IF NOT EXISTS wishes (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  link TEXT NOT NULL DEFAULT '',
+  price TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  reserved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  reserved_at TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (

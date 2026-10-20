@@ -828,3 +828,32 @@ textarea { resize: vertical; }
 .climate-test { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-size: 0.9rem; }
 .climate-test p { margin: 0; }
 .climate-raw { margin: 0; padding-left: 18px; font-size: 0.82rem; overflow-wrap: anywhere; }
+
+/* Wunschliste */
+.wish-people { margin-bottom: 4px; }
+.wish-people .chip small { margin-left: 2px; }
+.wish-hint { margin: 4px 0 12px; }
+.wish-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.card.wish { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.wish-main { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.wish-title { overflow-wrap: anywhere; }
+.wish-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wish-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+.wish-notes { white-space: pre-wrap; }
+.wish-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.wish-status { font-size: 0.88rem; color: var(--muted); }
+.wish-status.mine { color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.card.wish.reserved:not(:has(.wish-status.mine)) .wish-title { color: var(--muted); }
+.wish-jump { align-self: flex-start; }
+
+/* Wetter */
+.weather-card { display: flex; flex-direction: column; gap: 8px; }
+.weather-now { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.weather-now > span:nth-child(2) { display: flex; flex-direction: column; }
+.weather-icon { font-size: 2.2rem; line-height: 1; }
+.weather-temp { font-size: 1.6rem; line-height: 1.1; }
+.weather-days { display: flex; flex-direction: column; gap: 2px; font-size: 0.9rem; }
+.weather-hints { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+.weather-place-current { display: flex; align-items: center; gap: 8px; margin: 0; }
+.place-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.place-results .link-button { text-align: left; }
