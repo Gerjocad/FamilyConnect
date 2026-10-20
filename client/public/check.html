@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FamilyConnect – Browser-Check</title>
+<style>
+  body { font-family: sans-serif; margin: 0; padding: 20px; background: #fff8f3; color: #2b2118; }
+  h1 { font-size: 1.4em; margin: 0 0 4px; }
+  table { border-collapse: collapse; width: 100%; max-width: 640px; margin-top: 12px; }
+  td { padding: 8px; border-bottom: 1px solid #f0e1d6; vertical-align: top; }
+  .ok { color: #2f9e44; font-weight: bold; }
+  .no { color: #c92a2a; font-weight: bold; }
+  .ua { font-size: 0.8em; color: #8a7a6d; word-break: break-all; }
+  .box { background: #fff; border-radius: 10px; padding: 12px; margin-top: 12px; max-width: 616px; }
+</style>
+</head>
+<body>
+<h1>Browser-Check fürs Wanddisplay</h1>
+<p>Mach bitte einen Screenshot dieser Seite (Ein/Aus + Leiser gleichzeitig drücken) und schick ihn.</p>
+<div class="box"><b>Browser:</b> <span id="browser"></span><div class="ua" id="ua"></div></div>
+<table id="results"></table>
+<div class="box" id="summary"></div>
+<script>
+  // Absichtlich altes JavaScript (ES5), damit die Seite auch auf alten Geräten läuft
+  var ua = navigator.userAgent;
+  var chrome = /Chrome\/(\d+)/.exec(ua);
+  var silk = /Silk\/([\d.]+)/.exec(ua);
+  document.getElementById('ua').textContent = ua;
+  document.getElementById('browser').textContent =
+    (silk ? 'Silk ' + silk[1] : 'unbekannt') + (chrome ? ' (Chromium ' + chrome[1] + ')' : '');
+
+  function css(rule) {
+    try { return window.CSS && CSS.supports && CSS.supports(rule); } catch (e) { return false; }
+  }
+  function js(code) {
+    try { new Function(code); return true; } catch (e) { return false; }
+  }
+  var checks = [
+    ['Sichere Verbindung (HTTPS)', location.protocol === 'https:'],
+    ['Moderne Skripte (ES2020)', js('var a = {b: 1}; var c = a?.b ?? 2; class X { #y = 1 }; (async () => {})')],
+    ['Module (type=module)', 'noModule' in document.createElement('script')],
+    ['fetch', typeof fetch === 'function'],
+    ['Live-Updates (EventSource)', typeof EventSource === 'function'],
+    ['CSS-Variablen', css('--a: 1')],
+    ['CSS-Raster (grid)', css('display: grid')],
+    ['CSS :has()', css('selector(:has(a))')],
+    ['CSS color-mix()', css('color: color-mix(in srgb, red, blue)')],
+    ['Bildschirm wach halten (Wake Lock)', 'wakeLock' in navigator]
+  ];
+  var table = document.getElementById('results');
+  var failed = 0;
+  for (var i = 0; i < checks.length; i++) {
+    var row = table.insertRow();
+    row.insertCell().textContent = checks[i][0];
+    var cell = row.insertCell();
+    cell.className = checks[i][1] ? 'ok' : 'no';
+    cell.textContent = checks[i][1] ? 'ja' : 'nein';
+    if (!checks[i][1] && i >= 1 && i < 6) failed++;
+  }
+  // Prüfen, ob die App-Schnittstelle erreichbar ist
+  var summary = document.getElementById('summary');
+  summary.textContent = 'Prüfe Verbindung zum Server …';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/health');
+  xhr.onload = function () {
+    summary.innerHTML = '<b>Server erreichbar.</b> ' + (failed === 0
+      ? 'Die normale App sollte im Browser laufen.'
+      : 'Für die normale App ist der Browser zu alt – ein einfaches Wanddisplay ist trotzdem möglich.');
+  };
+  xhr.onerror = function () { summary.innerHTML = '<b class="no">Server nicht erreichbar.</b>'; };
+  xhr.send();
+  document.getElementById('summary').setAttribute('data-screen', screen.width + 'x' + screen.height);
+  var size = table.insertRow();
+  size.insertCell().textContent = 'Bildschirm';
+  size.insertCell().textContent = screen.width + ' × ' + screen.height + ' (Pixelfaktor ' + (window.devicePixelRatio || 1) + ')';
+</script>
+</body>
+</html>
