@@ -174,6 +174,7 @@ export function ComplaintsPage() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const { busy, error, run, setError } = useAsync();
 
   const others = family.members.filter((m) => m.id !== user.id);
@@ -237,12 +238,30 @@ export function ComplaintsPage() {
                 </div>
               ))}
               {images.length < MAX_IMAGES && (
-                <button type="button" className="thumb add" onClick={() => fileInput.current?.click()} aria-label="Foto hinzufügen">
-                  <Icon name="image" size={22} />
-                  <small>Foto</small>
-                </button>
+                <>
+                  <button type="button" className="thumb add" onClick={() => cameraInput.current?.click()}>
+                    <Icon name="camera" size={22} />
+                    <small>Foto machen</small>
+                  </button>
+                  <button type="button" className="thumb add" onClick={() => fileInput.current?.click()}>
+                    <Icon name="image" size={22} />
+                    <small>Auswählen</small>
+                  </button>
+                </>
               )}
             </div>
+            {/* capture öffnet direkt die Kamera (Handy); am Computer kommt die normale Dateiauswahl */}
+            <input
+              ref={cameraInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(e) => {
+                addFiles(e.target.files);
+                e.target.value = '';
+              }}
+            />
             <input
               ref={fileInput}
               type="file"

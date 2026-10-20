@@ -462,6 +462,7 @@ textarea { resize: vertical; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); padding: 0; cursor: pointer; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.add small { font-size: 0.68rem; text-align: center; line-height: 1.1; }
 .thumb.add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-style: dashed; color: var(--muted); }
 .thumb-remove { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.6); color: #fff; display: grid; place-items: center; cursor: pointer; }
 .badge.bug { background: #fde2ea; color: #c2255c; }

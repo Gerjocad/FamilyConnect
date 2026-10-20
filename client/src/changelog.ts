@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.29',
+    date: '2026-10-20',
+    title: 'Beschwerden: Foto direkt aufnehmen',
+    changes: [
+      'Beim Foto gibt es jetzt zwei Knöpfe: „Foto machen“ öffnet direkt die Kamera, „Auswählen“ die Galerie',
+    ],
+  },
+  {
     version: '1.28',
     date: '2026-10-20',
     title: 'Aufgeräumter Kalender',
