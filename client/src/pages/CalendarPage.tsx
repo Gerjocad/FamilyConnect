@@ -18,12 +18,14 @@ import { deleteEvent, saveEvent } from '../eventSeries';
 import { SCHOOL_HOLIDAY_COLOR, markBackground, vacationColor, vacationsOn } from '../vacations';
 import { VacationForm } from './VacationForm';
 import { CalendarImport } from './CalendarImport';
+import { EventIconsDialog } from './EventIconsDialog';
+import { useEventIcons } from '../eventIcons';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
 }
 
-export function OccurrenceRow({ occ, onClick }: { occ: Occurrence; onClick?(): void }) {
+export function OccurrenceRow({ occ, onClick, icon }: { occ: Occurrence; onClick?(): void; /** Logo (eventIcons.ts) */ icon?: string | null }) {
   const { member } = useFamily();
   const { event } = occ;
   const members = event.member_ids.map((id) => member(id)).filter((m) => m !== undefined);
@@ -35,7 +37,7 @@ export function OccurrenceRow({ occ, onClick }: { occ: Occurrence; onClick?(): v
         {!event.all_day && <small>{multiDay ? 'mehrtägig' : formatTime(occ.end)}</small>}
       </span>
       <span className="event-main">
-        <strong>{event.title}</strong>
+        <strong>{icon && <img src={icon} alt="" className="event-logo" />}{event.title}</strong>
         {(event.location || event.recurrence !== 'none') && (
           <small className="muted">
             {event.recurrence !== 'none' && <Icon name="repeat" size={12} />} {event.location}
@@ -57,7 +59,9 @@ export function CalendarPage() {
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
   const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);
   const [importing, setImporting] = useState(false);
-  const { canEdit, isAdmin } = usePermissions();
+  const [editingIcons, setEditingIcons] = useState(false);
+  const icons = useEventIcons();
+  const { canEdit, isAdmin, isManager } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
   const visible = useMemo(
@@ -116,9 +120,14 @@ export function CalendarPage() {
         </div>
       </header>
 
-      <button className="link-button import-link" onClick={() => setImporting(true)}>
-        <Icon name="download" size={16} /> Kalender importieren (.ics)
-      </button>
+      <div className="calendar-links">
+        <button className="link-button import-link" onClick={() => setImporting(true)}>
+          <Icon name="download" size={16} /> Kalender importieren (.ics)
+        </button>
+        <button className="link-button import-link" onClick={() => setEditingIcons(true)}>
+          <Icon name="sparkle" size={16} /> Logos
+        </button>
+      </div>
 
       <div className="filter-bar" role="group" aria-label="Nach Person filtern">
         <button className={`chip ${filter === null ? 'chip-active' : ''}`} onClick={() => setFilter(null)}>Alle</button>
@@ -173,11 +182,15 @@ export function CalendarPage() {
                   <span className="day-events">
                     {extras.publicHoliday && <span className="day-event holiday-pill">{extras.publicHoliday}</span>}
                     {extras.birthdays.map((b) => <span key={b} className="day-event birthday-pill">{b}</span>)}
-                    {occs.slice(0, 3).map((o, i) => (
-                      <span key={i} className="day-event" style={{ background: eventColor(o.event, member) }}>
-                        {o.event.title}
-                      </span>
-                    ))}
+                    {occs.slice(0, 3).map((o, i) => {
+                      const icon = icons.iconFor(o.event.title);
+                      return (
+                        <span key={i} className={`day-event ${icon ? 'has-logo' : ''}`} style={{ background: eventColor(o.event, member) }}>
+                          {icon && <img src={icon} alt="" className="day-logo" />}
+                          <span className="day-event-title">{o.event.title}</span>
+                        </span>
+                      );
+                    })}
                     {occs.length > 3 && <span className="more">+{occs.length - 3}</span>}
                   </span>
                 </button>
@@ -215,12 +228,22 @@ export function CalendarPage() {
           ) : (
             <div className="stack">
               {selectedOccurrences.map((o, i) => (
-                <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} onClick={() => setEditing({ event: o.event, occurrence: o })} />
+                <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
               ))}
             </div>
           )}
         </section>
       </div>
+
+      {editingIcons && (
+        <EventIconsDialog
+          icons={icons.items}
+          canEdit={isManager}
+          onCreate={icons.create}
+          onDelete={icons.remove}
+          onClose={() => setEditingIcons(false)}
+        />
+      )}
 
       {importing && <CalendarImport events={events.items} onDone={() => void events.reload()} onClose={() => setImporting(false)} />}
 

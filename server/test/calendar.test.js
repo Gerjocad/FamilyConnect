@@ -105,3 +105,13 @@ test('importierten Kalender entfernen', async () => {
   assert.equal(data.deleted, 2);
   assert.deepEqual((await api(`/families/${fid}/events`, { token: mama })).data.map((e) => e.title).sort(), ['Arzt', 'c']);
 });
+
+test('Logos für Termine: nur Eltern, nur Bilder', async () => {
+  const { mama, lea, fid } = await family();
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  const path = `/families/${fid}/event-icons`;
+  assert.equal((await api(path, { token: mama, method: 'POST', body: { keyword: 'Fenerbahçe', image: png } })).status, 201);
+  assert.equal((await api(path, { token: mama, method: 'POST', body: { keyword: 'x', image: 'javascript:alert(1)' } })).status, 400);
+  assert.equal((await api(path, { token: lea, method: 'POST', body: { keyword: 'Schule', image: png } })).status, 403);
+  assert.deepEqual((await api(path, { token: lea })).data.map((i) => i.keyword), ['Fenerbahçe']);
+});

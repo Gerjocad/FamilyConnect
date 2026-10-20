@@ -232,6 +232,19 @@ export const RESOURCES = [
     },
   },
   {
+    path: 'event-icons',
+    table: 'event_icons',
+    order: 'keyword COLLATE NOCASE ASC',
+    childRule: () => 'Logos legen Eltern an',
+    fields: {
+      keyword: text({ required: true, max: 60 }),
+      image: text({ required: true, max: 60000 }),
+    },
+    check(row) {
+      if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(row.image)) return 'Nur PNG-, JPEG- oder WebP-Bilder';
+    },
+  },
+  {
     path: 'contacts',
     table: 'contacts',
     order: 'name COLLATE NOCASE ASC',

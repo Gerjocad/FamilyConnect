@@ -256,6 +256,17 @@ CREATE TABLE IF NOT EXISTS chores (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
+CREATE TABLE IF NOT EXISTS event_icons (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  keyword TEXT NOT NULL,
+  -- kleines Bild als data:-URL (im Browser auf 96 px verkleinert)
+  image TEXT NOT NULL,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Urlaube: mehrtägig, im Kalender leicht eingefärbt wie die Schulferien
 CREATE TABLE IF NOT EXISTS vacations (
   id INTEGER PRIMARY KEY,

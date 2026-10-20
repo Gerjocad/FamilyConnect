@@ -18,6 +18,7 @@ import { OccurrenceRow as ChoreRow } from './ChoresPage';
 import { useComplaints } from './ComplaintsPage';
 import { useRequests } from './RequestsPage';
 import { OccurrenceRow } from './CalendarPage';
+import { useEventIcons } from '../eventIcons';
 import { TaskRow, useTaskToggle } from './TasksPage';
 
 /** Ganze Karte antippbar; Häkchen und Abhak-Knöpfe darin funktionieren weiter für sich */
@@ -56,6 +57,7 @@ export function DashboardPage() {
   const today = startOfDay(new Date());
   const { user, family } = useFamily();
   const events = useResource<CalendarEvent>('events');
+  const icons = useEventIcons();
   const tasks = useResource<Task>('tasks');
   const posts = useResource<Post>('posts');
   const meals = useResource<Meal>('meals');
@@ -151,7 +153,7 @@ export function DashboardPage() {
               <div key={toDateKey(g.day)} className="agenda-group">
                 <h3>{sameDay(g.day, today) ? 'Heute' : formatDay(g.day)}</h3>
                 <div className="stack">
-                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} />)}
+                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} />)}
                 </div>
               </div>
             ))

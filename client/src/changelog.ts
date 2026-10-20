@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.27',
+    date: '2026-10-20',
+    title: 'Logos im Kalender',
+    changes: [
+      'Kalender → „Logos“: Stichwort + Bild hinterlegen, z. B. „Fenerbahçe“ mit dem Vereinslogo',
+      'Jeder Termin mit dem Stichwort im Titel zeigt das Logo klein – im Monat, in der Tagesliste und auf der Übersicht (auf dem Handy statt des Punkts)',
+      'Groß-/Kleinschreibung und türkische Sonderzeichen sind egal: „Fenerbahce“ findet auch „Fenerbahçe“',
+    ],
+  },
+  {
     version: '1.26',
     date: '2026-10-20',
     title: 'Server-Update per Knopfdruck',

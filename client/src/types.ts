@@ -161,6 +161,13 @@ export interface Chore extends Base {
   dates: string[];
 }
 
+/** Logo im Kalender für Termine mit dem Stichwort im Titel */
+export interface EventIcon extends Base {
+  keyword: string;
+  /** data:image/…;base64,… (96 px) */
+  image: string;
+}
+
 export interface Vacation extends Base {
   title: string;
   start_date: string;
@@ -191,4 +198,4 @@ export interface Checkin {
   created_at: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores' | 'vacations';
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores' | 'vacations' | 'event-icons';
