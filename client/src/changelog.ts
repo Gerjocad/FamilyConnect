@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.28',
+    date: '2026-10-20',
+    title: 'Aufgeräumter Kalender',
+    changes: [
+      'Termin, Urlaub, Kalender importieren und Logos stecken jetzt im „+“ oben in der Leiste',
+      'Der Monat ist größer und hat mehr Platz',
+      'Die Tagesliste erscheint erst, wenn du einen Tag antippst; nochmal antippen blendet sie wieder aus',
+    ],
+  },
+  {
     version: '1.27',
     date: '2026-10-20',
     title: 'Logos im Kalender',

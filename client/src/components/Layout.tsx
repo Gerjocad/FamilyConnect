@@ -9,6 +9,7 @@ import { CLOSE_DRAWER_EVENT } from './drawer';
 import { Icon, type IconName } from './Icon';
 import { NotificationBridge } from './NotificationBridge';
 import { UpdateBanner } from './UpdateBanner';
+import { TOPBAR_ACTIONS_ID } from './TopbarActions';
 
 const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/', label: 'Übersicht', icon: 'home' },
@@ -134,6 +135,7 @@ export function Layout() {
         <Logo size={28} />
         <strong>{family.name}</strong>
         <span className="spacer" />
+        <span id={TOPBAR_ACTIONS_ID} className="topbar-actions" />
         <NavLink to="/einstellungen" aria-label="Familie & Profil"><Avatar member={user} size={30} /></NavLink>
       </header>
 

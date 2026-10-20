@@ -234,7 +234,6 @@ textarea { resize: vertical; }
 .page { display: flex; flex-direction: column; gap: 16px; max-width: 1200px; margin: 0 auto; }
 .page.narrow { max-width: 720px; }
 .page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .subtle-header { margin: 16px 0 4px; }
 .stack { display: flex; flex-direction: column; gap: 8px; }
@@ -270,14 +269,14 @@ textarea { resize: vertical; }
 
 .filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .calendar-layout { display: grid; gap: 16px; }
-@media (min-width: 1100px) { .calendar-layout { grid-template-columns: 1fr 340px; align-items: start; } }
+@media (min-width: 1100px) { .calendar-layout:has(.agenda) { grid-template-columns: 1fr 340px; align-items: start; } }
 .calendar { padding: 12px; }
 .calendar-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
 .calendar-nav h2 { flex: 1; text-align: center; }
 .month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
 .weekday { text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--muted); padding: 4px 0; }
 .day {
-  min-height: 58px; border: 0; background: transparent; border-radius: 8px; padding: 4px;
+  min-height: 64px; border: 0; background: transparent; border-radius: 8px; padding: 4px;
   display: flex; flex-direction: column; align-items: stretch; gap: 2px; cursor: pointer; text-align: left;
 }
 .day:hover { background: var(--surface-2); }
@@ -290,7 +289,9 @@ textarea { resize: vertical; }
 .more { font-size: 0.68rem; color: var(--muted); padding-left: 4px; }
 @media (min-width: 900px) { .day { min-height: 96px; } }
 @media (max-width: 600px) {
-  .day { min-height: 48px; align-items: center; }
+  .day { min-height: 62px; align-items: center; }
+  .calendar { padding: 16px 10px 20px; }
+  .calendar-nav { margin-bottom: 14px; }
   .day-events { flex-direction: row; justify-content: center; flex-wrap: wrap; }
   .day-event { width: 6px; height: 6px; padding: 0; border-radius: 50%; font-size: 0; }
   .more { display: none; }
@@ -731,8 +732,24 @@ textarea { resize: vertical; }
 .import-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: -8px; }
 .file-button { align-self: flex-start; cursor: pointer; }
 .import-row { align-items: flex-start; }
-.calendar-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: -8px; }
-.calendar-links .import-link { margin-top: 0; }
+/* „+“-Auswahl (TopbarActions.tsx) */
+.topbar-actions { display: inline-flex; align-items: center; }
+.topbar-actions:empty { display: none; }
+.plus-menu { position: relative; }
+.plus-button { color: var(--accent); }
+.plus-menu-list {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 230px; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.plus-menu-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 8px; background: none;
+  color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer;
+}
+.plus-menu-item:hover, .plus-menu-item:focus-visible { background: var(--surface-2); }
+.plus-menu-item svg { color: var(--accent); }
+/* Kalender: auf dem Handy steht „+“ oben in der Leiste, die Überschrift entfällt */
+@media (max-width: 899px) { .calendar-header { display: none; } }
+.calendar-header .plus-button { border: 1px solid var(--border); background: var(--surface); }
 /* Logos an Terminen (eventIcons.ts) */
 .day-event.has-logo { display: flex; align-items: center; gap: 3px; }
 .day-logo { width: 13px; height: 13px; flex-shrink: 0; object-fit: contain; background: #fff; border-radius: 3px; padding: 1px; }

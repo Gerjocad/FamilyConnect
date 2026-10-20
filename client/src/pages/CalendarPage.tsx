@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { birthdaysInRange } from '../birthdays';
 import { AvatarStack } from '../components/Avatar';
@@ -20,6 +20,7 @@ import { VacationForm } from './VacationForm';
 import { CalendarImport } from './CalendarImport';
 import { EventIconsDialog } from './EventIconsDialog';
 import { useEventIcons } from '../eventIcons';
+import { PlusMenu, TopbarActions, type PlusMenuItem } from '../components/TopbarActions';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
@@ -55,6 +56,17 @@ export function CalendarPage() {
   const today = startOfDay(new Date());
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState(today);
+  // Die Tagesliste erscheint erst, wenn ein Tag angetippt wurde
+  const [showDay, setShowDay] = useState(false);
+  const agendaRef = useRef<HTMLElement>(null);
+  const pickDay = (day: Date) => {
+    const again = showDay && sameDay(day, selected);
+    setSelected(day);
+    setShowDay(!again);
+  };
+  useEffect(() => {
+    if (showDay) agendaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [showDay, selected]);
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
   const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);
@@ -104,30 +116,23 @@ export function CalendarPage() {
     selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length || selectedExtras.vacations.length
   );
 
+  const addItems: PlusMenuItem[] = [
+    { label: 'Termin', icon: 'calendar', onSelect: () => setEditing('new') },
+    { label: 'Urlaub', icon: 'sun', onSelect: () => setEditingVacation('new') },
+    { label: 'Kalender importieren (.ics)', icon: 'download', onSelect: () => setImporting(true) },
+    { label: 'Logos', icon: 'sparkle', onSelect: () => setEditingIcons(true) },
+  ];
+
   const moveMonth = (delta: number) => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
 
   return (
     <div className="page">
-      <header className="page-header">
+      {/* Handy: „+“ oben in der Leiste; größere Bildschirme: neben der Überschrift */}
+      <TopbarActions><PlusMenu items={addItems} /></TopbarActions>
+      <header className="page-header calendar-header">
         <h1>Kalender</h1>
-        <div className="header-actions">
-          <button className="button" onClick={() => setEditingVacation('new')}>
-            <Icon name="plus" /> Urlaub
-          </button>
-          <button className="button primary" onClick={() => setEditing('new')}>
-            <Icon name="plus" /> Termin
-          </button>
-        </div>
+        <PlusMenu items={addItems} />
       </header>
-
-      <div className="calendar-links">
-        <button className="link-button import-link" onClick={() => setImporting(true)}>
-          <Icon name="download" size={16} /> Kalender importieren (.ics)
-        </button>
-        <button className="link-button import-link" onClick={() => setEditingIcons(true)}>
-          <Icon name="sparkle" size={16} /> Logos
-        </button>
-      </div>
 
       <div className="filter-bar" role="group" aria-label="Nach Person filtern">
         <button className={`chip ${filter === null ? 'chip-active' : ''}`} onClick={() => setFilter(null)}>Alle</button>
@@ -170,12 +175,12 @@ export function CalendarPage() {
                     'day',
                     day.getMonth() !== cursor.getMonth() && 'other-month',
                     sameDay(day, today) && 'today',
-                    sameDay(day, selected) && 'selected',
+                    showDay && sameDay(day, selected) && 'selected',
                     extras.publicHoliday && 'public-holiday',
                   ].filter(Boolean).join(' ')}
                   style={{ backgroundImage: markBackground(marks(extras)) }}
                   title={[extras.publicHoliday, extras.school?.name, ...extras.vacations.map((v) => v.title)].filter(Boolean).join(' · ') || undefined}
-                  onClick={() => setSelected(day)}
+                  onClick={() => pickDay(day)}
                   onDoubleClick={() => setEditing('new')}
                 >
                   <span className="day-number">{day.getDate()}</span>
@@ -199,40 +204,42 @@ export function CalendarPage() {
           </div>
         </section>
 
-        <section className="card agenda">
-          <h2>{formatDay(selected)}</h2>
-          {hasExtras && (
-            <ul className="day-extras">
-              {selectedExtras.publicHoliday && <li>🎉 {selectedExtras.publicHoliday} <span className="muted">· Feiertag</span></li>}
-              {selectedExtras.school && <li>🏖️ {selectedExtras.school.name} <span className="muted">· bis {formatShortDay(parseLocal(selectedExtras.school.end))}</span></li>}
-              {selectedExtras.vacations.map((v) => (
-                <li key={`v${v.id}`}>
-                  <button type="button" className="vacation-line" onClick={() => setEditingVacation(v)}>
-                    <span className="dot" style={{ background: vacationColor(v, member) }} /> ✈️ {v.title}
-                    <span className="muted">
-                      · bis {formatShortDay(parseLocal(v.end_date))}
-                      {v.member_ids.length > 0 && ` · ${v.member_ids.map((id) => member(id)?.name).filter(Boolean).join(', ')}`}
-                    </span>
-                  </button>
-                </li>
-              ))}
-              {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
-            </ul>
-          )}
-          {!holidays.state && isAdmin && (
-            <p className="hint"><Link to="/einstellungen">Bundesland wählen</Link>, dann erscheinen Ferien und Feiertage.</p>
-          )}
-          {selectedOccurrences.length === 0 ? (
-            hasExtras ? <p className="muted">Keine Termine.</p> :
-            <EmptyState icon="calendar" title="Keine Termine">Doppelklick auf einen Tag oder „Termin“ zum Anlegen.</EmptyState>
-          ) : (
-            <div className="stack">
-              {selectedOccurrences.map((o, i) => (
-                <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
-              ))}
-            </div>
-          )}
-        </section>
+        {showDay && (
+          <section className="card agenda" ref={agendaRef}>
+            <h2>{formatDay(selected)}</h2>
+            {hasExtras && (
+              <ul className="day-extras">
+                {selectedExtras.publicHoliday && <li>🎉 {selectedExtras.publicHoliday} <span className="muted">· Feiertag</span></li>}
+                {selectedExtras.school && <li>🏖️ {selectedExtras.school.name} <span className="muted">· bis {formatShortDay(parseLocal(selectedExtras.school.end))}</span></li>}
+                {selectedExtras.vacations.map((v) => (
+                  <li key={`v${v.id}`}>
+                    <button type="button" className="vacation-line" onClick={() => setEditingVacation(v)}>
+                      <span className="dot" style={{ background: vacationColor(v, member) }} /> ✈️ {v.title}
+                      <span className="muted">
+                        · bis {formatShortDay(parseLocal(v.end_date))}
+                        {v.member_ids.length > 0 && ` · ${v.member_ids.map((id) => member(id)?.name).filter(Boolean).join(', ')}`}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+                {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
+              </ul>
+            )}
+            {!holidays.state && isAdmin && (
+              <p className="hint"><Link to="/einstellungen">Bundesland wählen</Link>, dann erscheinen Ferien und Feiertage.</p>
+            )}
+            {selectedOccurrences.length === 0 ? (
+              hasExtras ? <p className="muted">Keine Termine.</p> :
+              <EmptyState icon="calendar" title="Keine Termine">Doppelklick auf einen Tag oder „Termin“ zum Anlegen.</EmptyState>
+            ) : (
+              <div className="stack">
+                {selectedOccurrences.map((o, i) => (
+                  <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       {editingIcons && (
