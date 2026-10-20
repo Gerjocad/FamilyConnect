@@ -747,6 +747,7 @@ textarea { resize: vertical; }
 .comment-body { flex: 1; min-width: 0; }
 .comment-body p { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .members .member-name .managed-badge { display: block; width: fit-content; margin-top: 2px; font-weight: 600; font-size: 0.7rem; }
+.members .member-name:has(.managed-badge) { overflow: visible; flex-shrink: 0; }
 /* „+“-Auswahl (TopbarActions.tsx) */
 .topbar-actions { display: inline-flex; align-items: center; }
 .topbar-actions:empty { display: none; }
