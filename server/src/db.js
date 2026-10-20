@@ -121,6 +121,9 @@ const ADDED_COLUMNS = [
   ['events', 'exdates', "TEXT NOT NULL DEFAULT '[]'"],
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
+  // Aus einer Kalenderdatei (.ics) importiert: Name des Kalenders und UID des Termins (für erneuten Import)
+  ['events', 'source', "TEXT NOT NULL DEFAULT ''"],
+  ['events', 'source_uid', "TEXT NOT NULL DEFAULT ''"],
   ['tasks', 'recurrence', "TEXT NOT NULL DEFAULT 'none'"],
   // Bundesland für Ferien und Feiertage (Kürzel wie NW, server/src/holidays.js)
   ['families', 'state', 'TEXT'],

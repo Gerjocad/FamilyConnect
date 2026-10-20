@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.25',
+    date: '2026-10-20',
+    title: 'Kalender importieren',
+    changes: [
+      'Kalender: „Kalender importieren (.ics)“ – z. B. den Spielplan deines Vereins mit allen Anstoßzeiten (auch aus anderen Zeitzonen richtig umgerechnet)',
+      'Eine neuere Datei mit gleichem Namen aktualisiert verschobene Termine statt sie doppelt anzulegen; ein importierter Kalender lässt sich dort auch komplett wieder entfernen',
+      'Statt einer Nachricht je Termin gibt es nur eine: „… hat 34 Termine aus Fenerbahçe eingetragen“',
+    ],
+  },
+  {
     version: '1.24',
     date: '2026-10-20',
     title: 'Urlaub im Kalender',

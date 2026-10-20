@@ -129,13 +129,24 @@ export class PushService {
   }
 
   /** Wird von den CRUD-Routen nach jeder Änderung aufgerufen */
-  handleChange({ action, path, row, before, user, familyId }) {
+  handleChange({ action, path, row, before, user, familyId, count }) {
     if (!this.enabled) return;
     const actor = user.name.split(' ')[0];
 
     if (path === 'posts' && action === 'create') {
       this.#send(this.#others(familyId, user.id), {
         title: `${actor} auf der Pinnwand`, body: truncate(row.text, 140), path: '/pinnwand',
+      });
+    } else if (path === 'events' && action === 'import') {
+      // Kalenderdatei: nur einmal Bescheid geben, und nur wenn wirklich Neues dabei ist
+      if (!count) return;
+      const targets = row.member_ids.length > 0
+        ? row.member_ids.filter((id) => id !== user.id)
+        : this.#others(familyId, user.id);
+      this.#send(targets, {
+        title: 'Kalender importiert',
+        body: `${actor} hat ${count} ${count === 1 ? 'Termin' : 'Termine'}${row.source ? ` aus „${row.source}“` : ''} eingetragen`,
+        path: '/kalender',
       });
     } else if (path === 'events' && action === 'create') {
       // Bei Personen-Auswahl nur die Beteiligten, sonst alle

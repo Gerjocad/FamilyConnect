@@ -731,3 +731,7 @@ textarea { resize: vertical; }
 .import-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: -8px; }
 .file-button { align-self: flex-start; cursor: pointer; }
 .import-row { align-items: flex-start; }
+.import-preview, .imported-calendars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.imported-calendars li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.danger-link { color: var(--danger); }
+.import-result { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--accent-strong); }

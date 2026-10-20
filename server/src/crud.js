@@ -195,6 +195,73 @@ export function crudRouter(db, resource, publish, onChange) {
     res.status(201).json(created);
   }));
 
+  // Viele Einträge auf einmal (Kalenderdatei): gleiche `importKey` aktualisieren, neue anlegen.
+  // Alles oder nichts; eine Benachrichtigung statt einer je Eintrag.
+  if (resource.importKey) {
+    const key = resource.importKey;
+    router.post('/import', handle((req, res) => {
+      const items = req.body?.items;
+      if (!Array.isArray(items) || !items.length || items.length > 2000)
+        throw new ValidationError('Keine oder zu viele Einträge');
+      let created = 0;
+      let updated = 0;
+      const rows = [];
+      const problem = (() => {
+        for (const body of items) {
+          const existing = body?.[key]
+            ? db.prepare(`SELECT * FROM ${table} WHERE family_id = ? AND ${key} = ?`).get(req.familyId, String(body[key]))
+            : undefined;
+          const row = validate(body, existing ?? null, req.familyId);
+          const action = existing ? 'update' : 'create';
+          if (req.role === 'child' && resource.childRule) {
+            const denied = resource.childRule({ action, userId: req.user.id, body, existing, row });
+            if (denied) return denied;
+          }
+          rows.push({ row, existing });
+        }
+      })();
+      if (problem) return res.status(403).json({ error: problem });
+      const insert = db.prepare(
+        `INSERT INTO ${table} (family_id, created_by, ${names.join(', ')}) VALUES (?, ?, ${names.map(() => '?').join(', ')})`);
+      const update = db.prepare(`UPDATE ${table} SET ${names.map((n) => `${n} = ?`).join(', ')} WHERE id = ?`);
+      db.exec('BEGIN');
+      try {
+        for (const { row, existing } of rows) {
+          if (existing) {
+            update.run(...names.map((n) => row[n]), existing.id);
+            updated += 1;
+          } else {
+            insert.run(req.familyId, req.user.id, ...names.map((n) => row[n]));
+            created += 1;
+          }
+        }
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+      notify(req.familyId);
+      onChange?.({
+        action: 'import', path: resource.path, row: serialize(resource, rows[0].row), before: null,
+        count: created, user: req.user, familyId: req.familyId,
+      });
+      res.json({ created, updated });
+    }));
+
+    // Einen importierten Kalender wieder entfernen (Kinder nur ihre eigenen Einträge)
+    if (resource.importGroup) {
+      router.delete('/import', (req, res) => {
+        const group = String(req.query[resource.importGroup] ?? '');
+        if (!group) return res.status(400).json({ error: 'Welcher Kalender?' });
+        const own = req.role === 'child' ? ' AND created_by = ?' : '';
+        const { changes } = db.prepare(`DELETE FROM ${table} WHERE family_id = ? AND ${resource.importGroup} = ?${own}`)
+          .run(req.familyId, group, ...(own ? [req.user.id] : []));
+        if (changes) notify(req.familyId);
+        res.json({ deleted: changes });
+      });
+    }
+  }
+
   router.patch('/:id', handle((req, res) => {
     const existing = findOne(req.familyId, req.params.id);
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });

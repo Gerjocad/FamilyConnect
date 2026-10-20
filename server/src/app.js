@@ -54,7 +54,13 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   // Feedback mit Screenshots und der Rezept-Import haben ein eigenes, größeres Limit
   const smallJson = express.json({ limit: '100kb' });
   const largeBody = /^\/api\/families\/\d+\/(feedback|complaints|recipes\/(import|search))$/;
-  app.use((req, res, next) => (largeBody.test(req.path) && req.method === 'POST' ? next() : smallJson(req, res, next)));
+  // Kalenderdateien mit vielen Terminen
+  const importJson = express.json({ limit: '2mb' });
+  const importBody = /^\/api\/families\/\d+\/events\/import$/;
+  app.use((req, res, next) => {
+    if (req.method === 'POST' && largeBody.test(req.path)) return next();
+    return (req.method === 'POST' && importBody.test(req.path) ? importJson : smallJson)(req, res, next);
+  });
 
   app.get('/api/health', (req, res) => res.json({ app: 'familyconnect', ok: true }));
 

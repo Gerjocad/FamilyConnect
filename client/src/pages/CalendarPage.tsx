@@ -17,6 +17,7 @@ import { EventForm } from './EventForm';
 import { deleteEvent, saveEvent } from '../eventSeries';
 import { SCHOOL_HOLIDAY_COLOR, markBackground, vacationColor, vacationsOn } from '../vacations';
 import { VacationForm } from './VacationForm';
+import { CalendarImport } from './CalendarImport';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
@@ -55,6 +56,7 @@ export function CalendarPage() {
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
   const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);
+  const [importing, setImporting] = useState(false);
   const { canEdit, isAdmin } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
@@ -113,6 +115,10 @@ export function CalendarPage() {
           </button>
         </div>
       </header>
+
+      <button className="link-button import-link" onClick={() => setImporting(true)}>
+        <Icon name="download" size={16} /> Kalender importieren (.ics)
+      </button>
 
       <div className="filter-bar" role="group" aria-label="Nach Person filtern">
         <button className={`chip ${filter === null ? 'chip-active' : ''}`} onClick={() => setFilter(null)}>Alle</button>
@@ -215,6 +221,8 @@ export function CalendarPage() {
           )}
         </section>
       </div>
+
+      {importing && <CalendarImport events={events.items} onDone={() => void events.reload()} onClose={() => setImporting(false)} />}
 
       {editingVacation && (
         <VacationForm

@@ -46,7 +46,12 @@ export const RESOURCES = [
       // Letzter Tag der Serie ("dieser und alle folgenden Termine löschen")
       until: date(),
       reminder_minutes: oneOf(REMINDER_OPTIONS, { default: null }),
+      // importierte Kalender (.ics): erneuter Import aktualisiert Termine mit gleicher UID
+      source: text({ max: 100 }),
+      source_uid: text({ max: 500 }),
     },
+    importKey: 'source_uid',
+    importGroup: 'source',
     childRule: ownOnly('Kinder dürfen nur eigene Termine ändern'),
     check(row) {
       if (row.end < row.start) return 'Das Ende darf nicht vor dem Beginn liegen';

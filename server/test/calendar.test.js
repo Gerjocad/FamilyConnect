@@ -62,3 +62,46 @@ describe('Urlaub', () => {
     assert.equal((await api(path, { token: tom })).data.length, 1);
   });
 });
+
+describe('Kalender importieren', () => {
+  test('neue anlegen, gleiche UID aktualisieren', async () => {
+    const { mama, lea, fid, ids } = await family();
+    const game = (uid, title, start) => ({
+      title, start, end: start.replace(/T(\d\d)/, (_, h) => `T${String(Number(h) + 2).padStart(2, '0')}`), all_day: false,
+      member_ids: [ids.mama], source: 'Fenerbahçe', source_uid: uid, reminder_minutes: 60,
+    });
+    const first = await api(`/families/${fid}/events/import`, { token: mama, method: 'POST', body: { items: [
+      game('a@fb', 'Fenerbahçe – Galatasaray', '2026-10-25T18:00'),
+      game('b@fb', 'Beşiktaş – Fenerbahçe', '2026-11-01T17:00'),
+    ] } });
+    assert.deepEqual(first.data, { created: 2, updated: 0 });
+    const again = await api(`/families/${fid}/events/import`, { token: mama, method: 'POST', body: { items: [
+      game('a@fb', 'Fenerbahçe – Galatasaray', '2026-10-25T19:00'),
+      game('c@fb', 'Fenerbahçe – Trabzonspor', '2026-11-08T18:00'),
+    ] } });
+    assert.deepEqual(again.data, { created: 1, updated: 1 });
+    const { data: events } = await api(`/families/${fid}/events`, { token: mama });
+    assert.equal(events.length, 3);
+    assert.equal(events.find((e) => e.source_uid === 'a@fb').start, '2026-10-25T19:00', 'verschoben');
+
+    const bad = await api(`/families/${fid}/events/import`, { token: mama, method: 'POST', body: { items: [
+      game('d@fb', 'ok', '2026-12-01T18:00'), { title: '', start: 'x' },
+    ] } });
+    assert.equal(bad.status, 400);
+    assert.equal((await api(`/families/${fid}/events`, { token: mama })).data.length, 3, 'nichts halb importiert');
+
+    // Kinder dürfen fremde importierte Termine nicht überschreiben
+    const kid = await api(`/families/${fid}/events/import`, { token: lea, method: 'POST', body: { items: [game('a@fb', 'x', '2026-10-25T18:00')] } });
+    assert.equal(kid.status, 403);
+  });
+});
+
+test('importierten Kalender entfernen', async () => {
+  const { mama, fid } = await family();
+  const item = (uid, source) => ({ title: uid, start: '2026-10-25T18:00', end: '2026-10-25T20:00', source, source_uid: uid });
+  await api(`/families/${fid}/events/import`, { token: mama, method: 'POST', body: { items: [item('a', 'FB'), item('b', 'FB'), item('c', 'Schule')] } });
+  await api(`/families/${fid}/events`, { token: mama, method: 'POST', body: { title: 'Arzt', start: '2026-10-26T09:00', end: '2026-10-26T10:00' } });
+  const { data } = await api(`/families/${fid}/events/import?source=FB`, { token: mama, method: 'DELETE' });
+  assert.equal(data.deleted, 2);
+  assert.deepEqual((await api(`/families/${fid}/events`, { token: mama })).data.map((e) => e.title).sort(), ['Arzt', 'c']);
+});
