@@ -16,6 +16,7 @@ import { eventCommentsRouter } from './eventComments.js';
 import { activityRouter, recordMentions } from './activity.js';
 import { WeatherService, weatherRouter } from './weather.js';
 import { wishesRouter } from './wishes.js';
+import { wallRouter } from './wall.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -365,6 +366,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(serverUpdateRouter({ auth, member, updater }));
   app.use(activityRouter(db, { auth, member }));
   app.use(weatherRouter(db, { auth, member, weather }));
+  app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
@@ -394,6 +396,11 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
         res.set('Cache-Control', /[\\/]assets[\\/]/.test(path) ? 'public, max-age=31536000, immutable' : 'no-cache');
       },
     }));
+    // Wanddisplay für alte Browser – eigene Seite statt der App
+    app.get('/wand', (req, res) => {
+      res.set('Cache-Control', 'no-cache');
+      res.sendFile(join(staticDir, 'wand.html'));
+    });
     app.get('/{*path}', (req, res) => {
       res.set('Cache-Control', 'no-cache');
       res.sendFile(join(staticDir, 'index.html'));

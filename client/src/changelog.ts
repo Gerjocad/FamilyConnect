@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.36',
+    date: '2026-10-20',
+    title: 'Wanddisplay',
+    changes: [
+      'Eigene Anzeige fürs Tablet an der Wand: Uhr, Datum, Wetter mit Hinweisen, Termine heute und morgen (mit Logos, Geburtstagen, Ferien, Urlaub), Raumklima und Pinnwand',
+      'Läuft auch im Browser alter Tablets wie dem Fire 7 – ohne App und ohne Anmeldung, aktualisiert sich live',
+      'Einrichten: Familie & Profil → Wanddisplay → Code erstellen, am Tablet „/wand“ öffnen und den Code eintippen; jederzeit wieder entfernbar',
+      'Nachts (22–6 Uhr) wird die Anzeige dunkel',
+    ],
+  },
+  {
     version: '1.35',
     date: '2026-10-20',
     title: 'Wunschliste und Wetter',

@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { Avatar } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
+import { WallDisplays } from '../components/WallDisplays';
 import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
 import { Icon } from '../components/Icon';
 import { WeatherPlace } from '../components/WeatherPlace';
@@ -299,6 +300,13 @@ export function SettingsPage() {
         <section className="card">
           <h2><Icon name="thermometer" size={18} /> Thermometer</h2>
           <ClimateSettings />
+        </section>
+      )}
+
+      {isAdmin && (
+        <section className="card">
+          <h2><Icon name="monitor" size={18} /> Wanddisplay</h2>
+          <WallDisplays />
         </section>
       )}
 

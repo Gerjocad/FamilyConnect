@@ -6,7 +6,6 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 
 - **Tuya-Thermometer prüfen**: nach dem Update meldet sich der Nutzer, ob die Geräteliste jetzt kommt
   (sonst Device ID von Hand eintragen bzw. Fehlermeldung ansehen).
-- **Fire OS-Version** des Fire 7 HD kommt vom Nutzer → danach Wanddisplay-Modus planen.
 
 ## Später (abgestimmt, noch nicht umsetzen)
 
@@ -19,7 +18,6 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Verschlüsselung der Dateien auf dem Server, Zugriff nur für Eltern, PIN/zweite Bestätigung, kein
   Vorschaubild im Cache
 - **Müllabfuhr automatisch** aus dem ICS-Kalender der Stadt – erstmal nicht (Dienste gibt es manuell)
-- **Wanddisplay-Modus** für das Fire 7 HD – Generation klären (Fire OS 5 = nur Browser, ab Fire OS 7 auch App)
 - **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
 - **Standort teilen** – erstmal nicht
 
@@ -27,4 +25,5 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 
 - Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
   Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima,
-  Server-Update per Knopfdruck in der App, NFC-Aufkleber direkt in der App beschreiben
+  Server-Update per Knopfdruck in der App, NFC-Aufkleber direkt in der App beschreiben,
+  Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand)
