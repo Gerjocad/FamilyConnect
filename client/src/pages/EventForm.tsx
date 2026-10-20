@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { EventComments } from '../components/EventComments';
 import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
@@ -196,6 +197,7 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
           {!readOnly && <button className="button primary" disabled={busy}>Speichern</button>}
         </div>
       </form>
+      {event && <EventComments eventId={event.id} date={(occurrence ? toDateTimeKey(occurrence.start) : event.start).slice(0, 10)} />}
     </Modal>
   );
 }

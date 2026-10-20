@@ -23,6 +23,8 @@ export interface Member {
   birthday: string | null;
   role: Role;
   joined_at: string;
+  /** ohne eigenes Handy/Konto (vom Admin angelegt) */
+  managed?: boolean;
 }
 
 export interface Family {

@@ -50,6 +50,8 @@ export const RESOURCES = [
       source: text({ max: 100 }),
       source_uid: text({ max: 500 }),
     },
+    // beim Löschen verschwinden auch die Kommentare
+    alsoChanges: ['event-comments'],
     importKey: 'source_uid',
     importGroup: 'source',
     childRule: ownOnly('Kinder dürfen nur eigene Termine ändern'),

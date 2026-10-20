@@ -79,18 +79,64 @@ function BirthdayForm({ member, onClose }: { member: Member; onClose(): void }) 
   );
 }
 
+/** Geburtstag von jemandem außerhalb der App (Oma, Freunde …) – wird als Kontakt gespeichert */
+function OtherBirthdayForm({ contact, contacts, onSave, onClose }: {
+  contact?: Contact;
+  contacts: Contact[];
+  onSave(data: Partial<Contact>, existing?: Contact): Promise<unknown>;
+  onClose(): void;
+}) {
+  const [name, setName] = useState(contact?.name ?? '');
+  const [birthday, setBirthday] = useState(contact?.birthday ?? '');
+  const { busy, error, run } = useAsync();
+  // Gibt es den Kontakt schon (ohne Geburtstag), bekommt er nur den Geburtstag dazu
+  const match = contact ?? contacts.find((c) => c.name.trim().toLowerCase() === name.trim().toLowerCase());
+  return (
+    <Modal title={contact ? `Geburtstag von ${contact.name}` : 'Geburtstag eintragen'} onClose={onClose}>
+      <form className="form" onSubmit={(e) => {
+        e.preventDefault();
+        void run(async () => {
+          await onSave({ name: name.trim(), birthday: birthday || null }, match);
+          onClose();
+        });
+      }}>
+        <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Oma Ayşe" maxLength={200} required autoFocus={!contact} /></label>
+        <label>Geburtstag<input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} max={new Date().toLocaleDateString('sv-SE')} required={!contact} /></label>
+        {!contact && match && <small className="hint">„{match.name}“ steht schon bei den Kontakten – der Geburtstag wird dort ergänzt.</small>}
+        {!contact && !match && <small className="hint">Wird auch bei den Kontakten gespeichert, dort kannst du Telefon & Co. ergänzen.</small>}
+        {error && <p className="error">{error}</p>}
+        <div className="form-actions">
+          {contact && (
+            <button type="button" className="button danger" disabled={busy} onClick={() => void run(async () => {
+              await onSave({ birthday: null }, contact);
+              onClose();
+            })}>Geburtstag entfernen</button>
+          )}
+          <span className="spacer" />
+          <button type="button" className="button" onClick={onClose}>Abbrechen</button>
+          <button className="button primary" disabled={busy}>Speichern</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 export function BirthdaysPage() {
   const { family, user } = useFamily();
   const { isManager } = usePermissions();
   const contacts = useResource<Contact>('contacts');
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
+  const [editingOther, setEditingOther] = useState<Contact | 'new' | null>(null);
   const list = upcomingBirthdays(family.members, contacts.items);
   const missing = family.members.filter((m) => !m.birthday && (isManager || m.id === user.id));
 
   return (
     <div className="page narrow">
-      <header className="page-header"><h1>Geburtstage</h1></header>
+      <header className="page-header">
+        <h1>Geburtstage</h1>
+        <button className="button primary" onClick={() => setEditingOther('new')}><Icon name="plus" /> Geburtstag</button>
+      </header>
 
       {missing.length > 0 && (
         <section className="card">
@@ -102,7 +148,6 @@ export function BirthdaysPage() {
               </button>
             ))}
           </div>
-          <small className="hint">Geburtstage von Oma, Freunden & Co. trägst du bei den Kontakten ein.</small>
         </section>
       )}
 
@@ -127,6 +172,9 @@ export function BirthdaysPage() {
                   {b.member && (isManager || isMe) && (
                     <button className="link-button" onClick={() => setEditing(b.member!)}>Geburtstag ändern</button>
                   )}
+                  {b.contact && (
+                    <button className="link-button" onClick={() => setEditingOther(b.contact!)}>Geburtstag ändern</button>
+                  )}
                 </div>
               )}
             </section>
@@ -135,6 +183,16 @@ export function BirthdaysPage() {
       )}
 
       {editing && <BirthdayForm member={editing} onClose={() => setEditing(null)} />}
+      {editingOther && (
+        <OtherBirthdayForm
+          contact={editingOther === 'new' ? undefined : editingOther}
+          contacts={contacts.items}
+          onClose={() => setEditingOther(null)}
+          onSave={(data, existing) => existing
+            ? contacts.update(existing.id, { birthday: data.birthday, ...(data.name && { name: data.name }) })
+            : contacts.create({ ...data, category: 'Geburtstag' })}
+        />
+      )}
     </div>
   );
 }

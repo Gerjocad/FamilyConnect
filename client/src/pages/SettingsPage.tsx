@@ -6,13 +6,14 @@ import { Link } from 'react-router';
 import { Avatar } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
+import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
 import { STATES } from '../holidays';
 import { applyTheme, THEMES } from '../themes';
 import { ROLE_LABELS } from '../permissions';
-import type { Family, Role } from '../types';
+import type { Family, Member, Role } from '../types';
 
 const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599'];
 
@@ -25,6 +26,8 @@ export function SettingsPage() {
   const [newFamily, setNewFamily] = useState('');
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [newMember, setNewMember] = useState('');
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const profile = useAsync();
   const fam = useAsync();
   const other = useAsync();
@@ -191,8 +194,16 @@ export function SettingsPage() {
           {family.members.map((m) => (
             <li key={m.id}>
               <Avatar member={m} size={32} />
-              <span className="member-name">{m.name}{m.id === user.id && ' (du)'}</span>
+              <span className="member-name">
+                {m.name}{m.id === user.id && ' (du)'}
+                {m.managed && <small className="badge managed-badge">ohne Handy</small>}
+              </span>
               <span className="spacer" />
+              {isAdmin && m.managed && (
+                <button className="icon-button subtle" aria-label={`${m.name} bearbeiten`} onClick={() => setEditingMember(m)}>
+                  <Icon name="edit" size={16} />
+                </button>
+              )}
               {isAdmin ? (
                 <>
                   <select
@@ -224,6 +235,23 @@ export function SettingsPage() {
             </li>
           ))}
         </ul>
+        {isAdmin && (
+          <form className="form" onSubmit={(e) => {
+            e.preventDefault();
+            void fam.run(async () => {
+              setFamily(await api<Family>(`/families/${family.id}/members/managed`, { method: 'POST', body: { name: newMember } }));
+              setNewMember('');
+            });
+          }}>
+            <div className="row align-end">
+              <label>
+                Mitglied ohne Handy <span className="hint">(z. B. jüngeres Kind)</span>
+                <input value={newMember} onChange={(e) => setNewMember(e.target.value)} placeholder="Name" maxLength={100} required />
+              </label>
+              <button className="button" disabled={fam.busy}><Icon name="plus" size={18} /> Hinzufügen</button>
+            </div>
+          </form>
+        )}
         {fam.error && <p className="error">{fam.error}</p>}
         <button
           className="button danger"
@@ -299,6 +327,7 @@ export function SettingsPage() {
       )}
 
       <button className="button wide" onClick={() => void signOut()}><Icon name="logout" size={18} /> Abmelden</button>
+      {editingMember && <ManagedMemberDialog member={editingMember} onClose={() => setEditingMember(null)} />}
     </div>
   );
 }

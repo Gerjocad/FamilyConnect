@@ -137,6 +137,8 @@ const ADDED_COLUMNS = [
   ['habits', 'nfc_linked', 'INTEGER NOT NULL DEFAULT 0'],
   // Geburtstag (JJJJ-MM-TT)
   ['users', 'birthday', 'TEXT'],
+  // Familienmitglied ohne eigenes Handy/Konto (vom Admin angelegt, kann sich nicht anmelden)
+  ['users', 'managed', 'INTEGER NOT NULL DEFAULT 0'],
   ['contacts', 'birthday', 'TEXT'],
   // Farbschema der App (client/src/themes.ts)
   ['users', 'theme', "TEXT NOT NULL DEFAULT 'orange'"],
@@ -255,6 +257,18 @@ CREATE TABLE IF NOT EXISTS chores (
   created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Kommentare an Terminen; bei Serien gilt ein Kommentar für einen Tag (date)
+CREATE TABLE IF NOT EXISTS event_comments (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS event_comments_event ON event_comments(event_id);
 
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (

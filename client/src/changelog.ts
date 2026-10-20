@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.30',
+    date: '2026-10-20',
+    title: 'Kommentare, Geburtstage & Mitglieder ohne Handy',
+    changes: [
+      'Termine haben Kommentare: im Termin unten schreiben; im Kalender zeigt eine kleine Sprechblase am Tag, dass es Kommentare gibt',
+      'Wer beim Termin dabei ist (oder alle), bekommt eine Nachricht zum neuen Kommentar',
+      'Geburtstage: „+ Geburtstag“ für Oma, Freunde & Co., die nicht in der App sind (wird auch bei den Kontakten gespeichert)',
+      'Familie & Profil (Admins): „Mitglied ohne Handy“ hinzufügen – z. B. für jüngere Kinder; später „Zugang einrichten“, wenn das Handy da ist',
+    ],
+  },
+  {
     version: '1.29',
     date: '2026-10-20',
     title: 'Beschwerden: Foto direkt aufnehmen',

@@ -733,6 +733,20 @@ textarea { resize: vertical; }
 .import-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: -8px; }
 .file-button { align-self: flex-start; cursor: pointer; }
 .import-row { align-items: flex-start; }
+/* Kommentare an Terminen */
+.day { position: relative; }
+.day-comment {
+  position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: #fff; box-shadow: 0 0 0 2px var(--surface);
+}
+.comment-count { display: inline-flex; align-items: center; gap: 3px; font-size: 0.8rem; font-weight: 700; color: var(--accent-strong); margin-right: 6px; }
+.event-comments { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.event-comments h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 0.95rem; }
+.comment-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.comment { display: flex; align-items: flex-start; gap: 8px; }
+.comment-body { flex: 1; min-width: 0; }
+.comment-body p { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.members .member-name .managed-badge { display: block; width: fit-content; margin-top: 2px; font-weight: 600; font-size: 0.7rem; }
 /* „+“-Auswahl (TopbarActions.tsx) */
 .topbar-actions { display: inline-flex; align-items: center; }
 .topbar-actions:empty { display: none; }

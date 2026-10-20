@@ -20,13 +20,21 @@ import { VacationForm } from './VacationForm';
 import { CalendarImport } from './CalendarImport';
 import { EventIconsDialog } from './EventIconsDialog';
 import { useEventIcons } from '../eventIcons';
+import { commentKey, useEventComments } from '../eventComments';
 import { PlusMenu, TopbarActions, type PlusMenuItem } from '../components/TopbarActions';
 
 export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFamily>['member']) {
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
 }
 
-export function OccurrenceRow({ occ, onClick, icon }: { occ: Occurrence; onClick?(): void; /** Logo (eventIcons.ts) */ icon?: string | null }) {
+export function OccurrenceRow({ occ, onClick, icon, comments = 0 }: {
+  occ: Occurrence;
+  onClick?(): void;
+  /** Logo (eventIcons.ts) */
+  icon?: string | null;
+  /** Anzahl Kommentare an diesem Tag */
+  comments?: number;
+}) {
   const { member } = useFamily();
   const { event } = occ;
   const members = event.member_ids.map((id) => member(id)).filter((m) => m !== undefined);
@@ -45,6 +53,11 @@ export function OccurrenceRow({ occ, onClick, icon }: { occ: Occurrence; onClick
           </small>
         )}
       </span>
+      {comments > 0 && (
+        <span className="comment-count" aria-label={`${comments} ${comments === 1 ? 'Kommentar' : 'Kommentare'}`}>
+          <Icon name="chat" size={14} /> {comments}
+        </span>
+      )}
       <AvatarStack members={members} size={22} />
     </button>
   );
@@ -73,6 +86,8 @@ export function CalendarPage() {
   const [importing, setImporting] = useState(false);
   const [editingIcons, setEditingIcons] = useState(false);
   const icons = useEventIcons();
+  const comments = useEventComments();
+  const commentsOn = (o: Occurrence) => comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0;
   const { canEdit, isAdmin, isManager } = usePermissions();
 
   const days = useMemo(() => monthGrid(cursor.getFullYear(), cursor.getMonth()), [cursor]);
@@ -168,6 +183,7 @@ export function CalendarPage() {
             {days.map((day) => {
               const occs = byDay.get(toDateKey(day)) ?? [];
               const extras = extrasFor(toDateKey(day));
+              const commented = occs.some((o) => sameDay(o.start, day) && commentsOn(o) > 0);
               return (
                 <button
                   key={toDateKey(day)}
@@ -184,6 +200,7 @@ export function CalendarPage() {
                   onDoubleClick={() => setEditing('new')}
                 >
                   <span className="day-number">{day.getDate()}</span>
+                  {commented && <span className="day-comment" title="Mit Kommentar" aria-label="Mit Kommentar"><Icon name="chat" size={10} /></span>}
                   <span className="day-events">
                     {extras.publicHoliday && <span className="day-event holiday-pill">{extras.publicHoliday}</span>}
                     {extras.birthdays.map((b) => <span key={b} className="day-event birthday-pill">{b}</span>)}
@@ -234,7 +251,7 @@ export function CalendarPage() {
             ) : (
               <div className="stack">
                 {selectedOccurrences.map((o, i) => (
-                  <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
+                  <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} comments={commentsOn(o)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
                 ))}
               </div>
             )}

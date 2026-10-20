@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -11,6 +12,7 @@ import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
+import { eventCommentsRouter } from './eventComments.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -81,9 +83,9 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   const familyDetails = (familyId) => {
     const family = db.prepare('SELECT id, name, invite_code, state, created_at FROM families WHERE id = ?').get(familyId);
     family.members = db.prepare(
-      `SELECT u.id, u.name, u.color, u.birthday, m.role, m.joined_at FROM memberships m
+      `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
-    ).all(familyId);
+    ).all(familyId).map((m) => ({ ...m, managed: Boolean(m.managed) }));
     return family;
   };
 
@@ -121,8 +123,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.post('/api/auth/login', (req, res) => {
     const email = cleanText(req.body?.email, 200).toLowerCase();
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
-    const user = db.prepare('SELECT id, password_hash FROM users WHERE email = ?').get(email);
-    if (!user || !verifyPassword(password, user.password_hash))
+    const user = db.prepare('SELECT id, password_hash, managed FROM users WHERE email = ?').get(email);
+    if (!user || user.managed || !verifyPassword(password, user.password_hash))
       return res.status(401).json({ error: 'E-Mail oder Passwort ist falsch' });
     res.json({ token: createSession(db, user.id) });
   });
@@ -219,6 +221,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     db.exec('BEGIN');
     try {
       db.prepare('DELETE FROM memberships WHERE family_id = ? AND user_id = ?').run(familyId, userId);
+      // Mitglieder ohne eigenes Konto gibt es nur in dieser Familie
+      db.prepare('DELETE FROM users WHERE id = ? AND managed = 1 AND NOT EXISTS (SELECT 1 FROM memberships WHERE user_id = ?)').run(userId, userId);
       db.prepare('UPDATE tasks SET assignee_id = NULL WHERE family_id = ? AND assignee_id = ?').run(familyId, userId);
       const remaining = db.prepare('SELECT user_id, role FROM memberships WHERE family_id = ? ORDER BY joined_at').all(familyId);
       if (remaining.length === 0) {
@@ -245,12 +249,56 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   const membershipOf = (familyId, userId) =>
     db.prepare('SELECT role FROM memberships WHERE family_id = ? AND user_id = ?').get(familyId, userId);
 
-  // Rolle ändern (Admin, Eltern, Kind) – nur Admins
+  // Familienmitglied ohne eigenes Handy (z. B. kleines Kind) – nur Admins.
+  // Es taucht überall als Person auf (Aufgaben, Dienste, Termine), kann sich aber nicht anmelden.
+  app.post('/api/families/:familyId/members/managed', auth, member, (req, res) => {
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Mitglieder anlegen' });
+    const name = cleanText(req.body?.name, 100);
+    if (!name) return res.status(400).json({ error: 'Bitte einen Namen angeben' });
+    const { lastInsertRowid } = db
+      .prepare("INSERT INTO users (name, email, password_hash, color, managed) VALUES (?, ?, '', ?, 1)")
+      .run(name, `ohne-konto-${randomBytes(12).toString('hex')}@familyconnect.invalid`, randomColor());
+    joinFamily(req.familyId, Number(lastInsertRowid), 'child');
+    res.status(201).json(familyDetails(req.familyId));
+  });
+
+  // Später ein eigenes Konto einrichten (E-Mail + Passwort), damit die Person sich auf ihrem Handy anmeldet
+  app.put('/api/families/:familyId/members/:userId/account', auth, member, (req, res) => {
+    if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Zugänge einrichten' });
+    const userId = Number(req.params.userId);
+    const target = membershipOf(req.familyId, userId) && db.prepare('SELECT managed FROM users WHERE id = ?').get(userId);
+    if (!target) return res.status(404).json({ error: 'Kein Mitglied dieser Familie' });
+    if (!target.managed) return res.status(400).json({ error: 'Diese Person hat schon ein eigenes Konto' });
+    const email = cleanText(req.body?.email, 200).toLowerCase();
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Bitte gib eine gültige E-Mail-Adresse an' });
+    if (password.length < 8) return res.status(400).json({ error: 'Das Passwort muss mindestens 8 Zeichen haben' });
+    if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(email))
+      return res.status(409).json({ error: 'Diese E-Mail-Adresse ist bereits registriert' });
+    db.prepare('UPDATE users SET email = ?, password_hash = ?, managed = 0 WHERE id = ?').run(email, hashPassword(password), userId);
+    hub.publish(req.familyId, 'family');
+    res.json(familyDetails(req.familyId));
+  });
+
+  // Rolle ändern (Admin, Eltern, Kind) – nur Admins; bei Mitgliedern ohne Konto auch Name und Farbe
   app.patch('/api/families/:familyId/members/:userId', auth, member, (req, res) => {
     if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Rollen vergeben' });
     const userId = Number(req.params.userId);
     const target = membershipOf(req.familyId, userId);
     if (!target) return res.status(404).json({ error: 'Kein Mitglied dieser Familie' });
+    const managed = db.prepare('SELECT managed FROM users WHERE id = ?').get(userId).managed;
+    if (req.body?.name !== undefined || req.body?.color !== undefined) {
+      if (!managed) return res.status(400).json({ error: 'Name und Farbe ändert jede Person selbst' });
+      const name = req.body.name === undefined ? undefined : cleanText(req.body.name, 100);
+      if (name === '') return res.status(400).json({ error: 'Bitte einen Namen angeben' });
+      if (req.body.color !== undefined && !COLORS.includes(req.body.color)) return res.status(400).json({ error: 'Ungültige Farbe' });
+      if (name) db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, userId);
+      if (req.body.color) db.prepare('UPDATE users SET color = ? WHERE id = ?').run(req.body.color, userId);
+      if (req.body.role === undefined) {
+        hub.publish(req.familyId, 'family');
+        return res.json(familyDetails(req.familyId));
+      }
+    }
     const role = req.body?.role;
     if (!ROLES.includes(role)) return res.status(400).json({ error: 'Ungültige Rolle' });
     const admins = db.prepare("SELECT COUNT(*) AS n FROM memberships WHERE family_id = ? AND role = 'admin'").get(req.familyId).n;
@@ -300,6 +348,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   });
 
   app.use(serverUpdateRouter({ auth, member, updater }));
+  app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(pollsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
