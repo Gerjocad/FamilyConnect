@@ -9,6 +9,7 @@ import { crudRouter } from './crud.js';
 import { birthdaysRouter } from './birthdays.js';
 import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
+import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
@@ -31,7 +32,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient() } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate() } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -298,6 +299,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     }
   });
 
+  app.use(serverUpdateRouter({ auth, member, updater }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(pollsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));

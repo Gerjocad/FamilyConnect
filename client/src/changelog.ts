@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.26',
+    date: '2026-10-20',
+    title: 'Server-Update per Knopfdruck',
+    changes: [
+      'Familie & Profil → Server (nur Admins): zeigt den installierten Stand und ob es auf GitHub etwas Neueres gibt',
+      '„Server jetzt aktualisieren“ startet das Update sofort – ohne Computer und SSH; danach „App neu laden“',
+      'Schlägt der Bau oder ein Test fehl, läuft die bisherige Version weiter und die App zeigt das an',
+    ],
+  },
+  {
     version: '1.25',
     date: '2026-10-20',
     title: 'Kalender importieren',

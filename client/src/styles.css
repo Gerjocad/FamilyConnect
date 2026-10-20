@@ -731,6 +731,13 @@ textarea { resize: vertical; }
 .import-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: -8px; }
 .file-button { align-self: flex-start; cursor: pointer; }
 .import-row { align-items: flex-start; }
+.server-update { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.server-update p { margin: 0; }
+.server-update code { font-size: 0.85rem; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+.server-update-ok, .server-update-done p { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-strong); font-weight: 600; }
+.server-update-done { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.server-update-running { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.server-update-running .spinner { margin-left: 0; }
 .import-preview, .imported-calendars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
 .imported-calendars li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .danger-link { color: var(--danger); }

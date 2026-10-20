@@ -27,11 +27,6 @@ oder ohne? Vor der Umsetzung nachfragen.
 
 ## Für morgen
 
-- **Knopf „Server jetzt aktualisieren“** unter Familie & Profil → App (nur Admins): legt eine
-  Anforderungsdatei an, eine systemd-Path-Unit startet daraufhin `familyconnect-update.service`
-  (FamilyConnect bekommt keine sudo-Rechte); danach Stand/Protokoll in der App anzeigen.
-  Einmalige Einrichtung auf dem Server per SSH (install.sh erweitern, Befehl dem Nutzer geben).
-  Alternative ohne Code: Termius-App mit SSH-Schlüssel (Nachteil: Schlüssel auf dem Handy).
 - **Tuya-Thermometer prüfen**: nach dem Update meldet sich der Nutzer, ob die Geräteliste jetzt kommt
   (sonst Device ID von Hand eintragen bzw. Fehlermeldung ansehen).
 - **Fire OS-Version** des Fire 7 HD kommt vom Nutzer → danach Wanddisplay-Modus planen.
@@ -54,4 +49,5 @@ oder ohne? Vor der Umsetzung nachfragen.
 ## Erledigt aus der Ideenliste
 
 - Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
-  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima
+  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima,
+  Server-Update per Knopfdruck in der App

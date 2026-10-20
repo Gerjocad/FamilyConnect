@@ -8,6 +8,7 @@ import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
 import { checkClimateAlerts } from './climate.js';
 import { TuyaClient } from './tuya.js';
+import { readInstalled, ServerUpdate } from './serverUpdate.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const port = Number(process.env.PORT ?? 3001);
@@ -30,7 +31,9 @@ const recipeImporter = new RecipeImporter({
 });
 // Thermometer über die Tuya-Cloud (optional, siehe deploy/TUYA.md)
 const tuya = new TuyaClient({ configFile: process.env.TUYA_CONFIG ?? '/etc/familyconnect/tuya.json' });
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya });
+// Update aus der App: Anforderungsdatei für familyconnect-update.path (nur auf dem Server gesetzt, siehe deploy/install.sh)
+const updater = new ServerUpdate({ requestFile: process.env.UPDATE_REQUEST_FILE, installed: readInstalled(root) });
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater });
 // Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
 setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
 

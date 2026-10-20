@@ -98,6 +98,8 @@ Environment=DATABASE_FILE=$DATA_DIR/familyconnect.db
 Environment=TZ=${TIMEZONE:-Europe/Berlin}
 # Für Push-Benachrichtigungen (optional, siehe deploy/FIREBASE.md)
 Environment=FIREBASE_SERVICE_ACCOUNT=/etc/familyconnect/firebase.json
+# Update aus der App: der Dienst legt nur diese Datei an, familyconnect-update.path startet das Update
+Environment=UPDATE_REQUEST_FILE=$DATA_DIR/update-request
 ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning server/src/index.js
 Restart=always
 RestartSec=3
@@ -143,6 +145,19 @@ Persistent=true
 WantedBy=timers.target
 UNIT
 
+# Update auf Knopfdruck aus der App (Familie & Profil → Server, nur Admins)
+cat > /etc/systemd/system/familyconnect-update.path <<UNIT
+[Unit]
+Description=FamilyConnect auf Anforderung aus der App aktualisieren
+
+[Path]
+PathExists=$DATA_DIR/update-request
+Unit=familyconnect-update.service
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
 # --- Tägliches Backup (14 Tage aufbewahren) -----------------------------------
 cat > /etc/cron.daily/familyconnect-backup <<BACKUP
 #!/bin/sh
@@ -176,7 +191,7 @@ fi
 say "Starte Dienste"
 systemctl daemon-reload
 systemctl enable -q familyconnect caddy
-systemctl enable -q --now familyconnect-update.timer
+systemctl enable -q --now familyconnect-update.timer familyconnect-update.path
 systemctl restart familyconnect
 systemctl reload caddy 2>/dev/null || systemctl restart caddy
 

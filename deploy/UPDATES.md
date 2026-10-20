@@ -26,5 +26,10 @@ Die Schlüsseldatei zusätzlich sicher aufbewahren (z. B. Passwort-Manager). Ohn
 ## Server
 
 - Protokoll der Updates: `journalctl -u familyconnect-update`
-- Sofort aktualisieren: `sudo systemctl start familyconnect-update`
+- Sofort aktualisieren: in der App unter **Familie & Profil → Server → „Server jetzt aktualisieren“** (nur Admins)
+  oder per SSH `sudo systemctl start familyconnect-update`
+- So funktioniert der Knopf: Die App legt `/var/lib/familyconnect/update-request` an,
+  `familyconnect-update.path` (systemd) startet daraufhin das Update als Root. Der App-Dienst selbst bekommt
+  keine Root-Rechte. Den Fortschritt schreibt `deploy/update.sh` nach `/var/lib/familyconnect/update-status.json`.
+- Eingerichtet wird der Knopf automatisch beim ersten Update nach dieser Änderung (Installationsskript läuft dann neu).
 - Schlägt der Bau oder ein Test fehl, bleibt die bisherige Version in Betrieb.
