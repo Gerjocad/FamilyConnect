@@ -19,6 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Termin, Urlaub, Kalender importieren und Logos stecken jetzt im „+“ oben in der Leiste',
       'Der Monat ist größer und hat mehr Platz',
       'Die Tagesliste erscheint erst, wenn du einen Tag antippst; nochmal antippen blendet sie wieder aus',
+      'Logos an Terminen sind größer',
     ],
   },
   {
