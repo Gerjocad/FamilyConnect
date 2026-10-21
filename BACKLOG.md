@@ -2,10 +2,10 @@
 
 Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 
-## Für morgen
+## Offen – wartet auf Rückmeldung
 
-- **Tuya-Thermometer prüfen**: nach dem Update meldet sich der Nutzer, ob die Geräteliste jetzt kommt
-  (sonst Device ID von Hand eintragen bzw. Fehlermeldung ansehen).
+- **Tuya-Thermometer**: Werte kommen inzwischen an (Wanddisplay zeigt 19,1 °C / 70 %). Falls in der App
+  noch etwas fehlt: „Werte testen“ in den Einstellungen ansehen.
 
 ## Später (abgestimmt, noch nicht umsetzen)
 
@@ -44,4 +44,5 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 - Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
   Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima,
   Server-Update per Knopfdruck in der App, NFC-Aufkleber direkt in der App beschreiben,
-  Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand)
+  Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand),
+  Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum)
