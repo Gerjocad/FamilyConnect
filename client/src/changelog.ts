@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.41',
+    date: '2026-10-21',
+    title: 'Orte auf der Karte',
+    changes: [
+      'Orte werden auf einer Karte gezeigt – mit Kreis für den Radius, in dem „angekommen“ gilt',
+      'Ort festlegen per Adresssuche, Antippen der Karte oder Verschieben des Symbols; der Kreis wächst live mit dem Radius',
+      'Schnellwahl für den Radius: 50 m (Haus), 100 m, 150 m (Schule), 250 m (Gelände)',
+    ],
+  },
+  {
     version: '1.40',
     date: '2026-10-21',
     title: 'Orte: angekommen & losgegangen',

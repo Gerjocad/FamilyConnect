@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { Suspense, lazy, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { api } from '../api';
 import { formatTimestamp } from '../dates';
 import { Geofence, canUseGeofence, syncGeofences, type GeofenceState } from '../geofence';
@@ -11,7 +11,16 @@ import { Modal } from './Modal';
 import { useAsync } from './useAsync';
 
 type Places = ReturnType<typeof usePlaces>;
-const mapsLink = (p: Pick<Place, 'lat' | 'lon'>) => `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`;
+
+// Karte (Leaflet) erst laden, wenn sie gebraucht wird
+const LazyMap = lazy(() => import('./PlaceMap').then((m) => ({ default: m.PlaceMap })));
+function PlaceMap(props: ComponentProps<typeof LazyMap>) {
+  return (
+    <Suspense fallback={<div className="place-map" style={{ height: props.height ?? 260 }} />}>
+      <LazyMap {...props} />
+    </Suspense>
+  );
+}
 
 /** Ort anlegen/bearbeiten: Adresse suchen oder aktuellen Standort nehmen, Radius (Standard 50 m) */
 function PlaceForm({ place, places, onClose }: { place?: Place; places: Places; onClose(): void }) {
@@ -55,15 +64,9 @@ function PlaceForm({ place, places, onClose }: { place?: Place; places: Places; 
           </div>
         </div>
         <div className="field">
-          <span>Adresse</span>
-          {spot && (
-            <p className="place-spot">
-              <Icon name="pin" size={16} /> <span>{spot.address || `${spot.lat}, ${spot.lon}`}</span>
-              <a href={mapsLink(spot)} target="_blank" rel="noopener noreferrer" className="link-button">Karte</a>
-            </p>
-          )}
+          <span>Wo? <small className="hint">Adresse suchen, auf die Karte tippen oder das Symbol verschieben</small></span>
           <div className="row align-end">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={spot ? 'Andere Adresse suchen …' : 'Straße Nr., Ort'} aria-label="Adresse suchen"
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Straße Nr., Ort" aria-label="Adresse suchen"
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (query.trim().length >= 3) search(); } }} />
             <button type="button" className="button" disabled={busy || query.trim().length < 3} onClick={search}><Icon name="search" size={18} /> Suchen</button>
           </div>
@@ -78,13 +81,32 @@ function PlaceForm({ place, places, onClose }: { place?: Place; places: Places; 
               ))}
             </ul>
           ))}
-          <button type="button" className="link-button place-here" onClick={here}><Icon name="pin" size={16} /> Ich bin gerade hier</button>
+          <div className="place-map-wrap">
+            <PlaceMap
+              places={(places.data?.places ?? []).filter((p) => p.id !== place?.id)}
+              editing={spot ? { id: place?.id ?? -1, lat: spot.lat, lon: spot.lon, radius, icon } : null}
+              center={spot ? [spot.lat, spot.lon] : places.data?.places[0] ? [places.data.places[0].lat, places.data.places[0].lon] : null}
+              onPick={(lat, lon) => setSpot({ address: 'Punkt auf der Karte', lat, lon })}
+            />
+            {!spot && <span className="place-map-hint">Tippe auf die Karte, wo der Ort ist</span>}
+          </div>
+          <div className="place-spot-row">
+            {spot && <span className="place-spot"><Icon name="pin" size={16} /> <span>{spot.address || `${spot.lat}, ${spot.lon}`}</span></span>}
+            <button type="button" className="link-button place-here" onClick={here}><Icon name="pin" size={16} /> Ich bin gerade hier</button>
+          </div>
         </div>
-        <label>
-          Radius: {radius} m
-          <input type="range" min={30} max={500} step={10} value={radius} onChange={(e) => setRadius(Number(e.target.value))} />
+        <div className="field">
+          <span>Radius – so groß ist der Kreis, in dem „angekommen“ gilt: <b>{radius} m</b></span>
+          <input type="range" min={30} max={500} step={10} value={radius} onChange={(e) => setRadius(Number(e.target.value))} aria-label="Radius" />
+          <div className="radius-chips">
+            {[50, 100, 150, 250].map((r) => (
+              <button type="button" key={r} className={`chip ${radius === r ? 'chip-active' : ''}`} onClick={() => setRadius(r)}>
+                {r} m{r === 50 ? ' · Haus' : r === 150 ? ' · Schule' : r === 250 ? ' · Gelände' : ''}
+              </button>
+            ))}
+          </div>
           {radius < 100 && <small className="hint">Klein = genau, aber Android meldet erst ab ca. 100 m wirklich zuverlässig. Bleibt eine Meldung aus, den Radius etwas vergrößern.</small>}
-        </label>
+        </div>
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
           {place && (
@@ -112,6 +134,9 @@ export function PlacesManager({ places }: { places: Places }) {
 
   return (
     <div className="places">
+      {data.places.length > 0 && (
+        <PlaceMap places={data.places} onSelect={isManager ? (p) => setEditing(data.places.find((x) => x.id === p.id) ?? null) : undefined} height={220} />
+      )}
       {data.places.length === 0 && <p className="muted">Noch keine Orte. {isManager ? 'Leg z. B. Zuhause, Schule und Arbeit an.' : 'Orte legen die Eltern an.'}</p>}
       <ul className="place-list">
         {data.places.map((p) => {

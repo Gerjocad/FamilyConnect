@@ -940,3 +940,15 @@ textarea { resize: vertical; }
 .place-pref-toggles .is-set { background: var(--accent-soft); }
 .place-pref-window { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; padding: 4px 0 2px 4px; }
 .place-pref-window input[type="time"] { width: auto; }
+
+/* Karte für Orte (Leaflet) */
+.place-map { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); z-index: 0; }
+.place-map-wrap { position: relative; }
+.place-map-hint { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 500; background: var(--surface); color: var(--text); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.15)); pointer-events: none; white-space: nowrap; }
+.place-marker { display: grid; place-items: center; }
+.place-marker span { font-size: 24px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+.place-spot-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.radius-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.radius-chips .chip { font-size: 0.82rem; padding: 3px 10px; }
+.places .place-map { margin-bottom: 4px; }
+.leaflet-container { font: inherit; }
