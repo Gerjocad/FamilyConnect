@@ -313,7 +313,20 @@
     };
   }
 
+  // Bildschirm anlassen (ab Silk 84 / Fire OS-Update); wird beim Ausblenden freigegeben und danach neu angefordert
+  var wakeLock = null;
+  function keepAwake() {
+    if (!navigator.wakeLock || wakeLock || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (lock) {
+      wakeLock = lock;
+      lock.addEventListener('release', function () { wakeLock = null; });
+    }, function () { /* z. B. Energiesparmodus – beim nächsten Antippen nochmal */ });
+  }
+  document.addEventListener('visibilitychange', keepAwake);
+  document.addEventListener('click', keepAwake);
+
   function start(body) {
+    keepAwake();
     data = body;
     lastOk = new Date();
     render();

@@ -20,6 +20,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Läuft auch im Browser alter Tablets wie dem Fire 7 – ohne App und ohne Anmeldung, aktualisiert sich live',
       'Einrichten: Familie & Profil → Wanddisplay → Code erstellen, am Tablet „/wand“ öffnen und den Code eintippen; jederzeit wieder entfernbar',
       'Nachts (22–6 Uhr) wird die Anzeige dunkel',
+      'Hält den Bildschirm selbst wach, wo der Browser das kann (z. B. Silk 108)',
+      'Die App selbst funktioniert jetzt auch in Browsern ohne color-mix (Urlaubsfarben, Leisten)',
     ],
   },
   {
