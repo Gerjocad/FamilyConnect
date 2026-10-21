@@ -23,6 +23,9 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 - **ESP32-Aufsteh-Ampel** für die Kinder (gefällt – merken, noch nicht umsetzen): WS2812B-Ring rot = noch
   schlafen, grün = aufstehen erlaubt; rundes GC9A01 mit Mond/Sonne; BH1750 dimmt nachts. Zeiten je Kind in
   der App einstellbar (Wochenende anders).
+- **ESP32-„Bitte lüften“-Lampe** (gefällt – merken, noch nicht umsetzen): WS2812B-Ring im Zimmer leuchtet
+  blau, solange die Luftfeuchte des Tuya-Thermometers über dem Grenzwert liegt (Werte/Grenzen kommen aus
+  dem Raumklima der App), geht nach dem Lüften wieder aus.
 
 - **Punkte & Belohnungen** – „klingt gut, aber noch nicht“: Punkte für Aufgaben/Gewohnheiten/Dienste,
   Belohnungen einlösen über Anfragen, Wochen-Rangliste
