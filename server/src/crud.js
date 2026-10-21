@@ -18,6 +18,7 @@ function emptyValue(spec) {
     case 'text': return '';
     case 'bool': return 0;
     case 'enum': return spec.default ?? null;
+    case 'int': return spec.default ?? null;
     case 'members': return '[]';
     case 'dates': return '[]';
     default: return null;

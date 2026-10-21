@@ -257,6 +257,8 @@ export const RESOURCES = [
       lender: text({ max: 100 }),
       borrowed_on: date(),
       due_date: date({ required: true }),
+      // so viele Tage vorher erinnern (0 = nur am Tag selbst)
+      remind_days: int(0, 14, { default: 1 }),
       returned: bool(),
       notes: text({ max: 1000 }),
     },

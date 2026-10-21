@@ -130,6 +130,7 @@ const ADDED_COLUMNS = [
   ['families', 'weather_place', 'TEXT'],
   // Eigene Ankunft/Abfahrt an Orten teilen (jeder entscheidet selbst, je Familie)
   ['memberships', 'share_places', 'INTEGER NOT NULL DEFAULT 0'],
+  ['loans', 'remind_days', 'INTEGER DEFAULT 1'],
   ['families', 'weather_lat', 'REAL'],
   ['families', 'weather_lon', 'REAL'],
   // Die feste Einkaufsliste jeder Familie (nicht löschbar)

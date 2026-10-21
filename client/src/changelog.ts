@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.42',
+    date: '2026-10-21',
+    title: 'Ausgeliehen: Erinnerung frei wählbar',
+    changes: [
+      'Bei jeder Ausleihe wählbar, wie früh erinnert wird: nur am Tag, 1, 2, 3, 5 Tage oder 1 Woche vorher (um 17 Uhr, dazu immer am Rückgabetag um 7 Uhr)',
+      'Die letzte Auswahl wird für die nächste Ausleihe übernommen',
+    ],
+  },
+  {
     version: '1.41',
     date: '2026-10-21',
     title: 'Orte auf der Karte',

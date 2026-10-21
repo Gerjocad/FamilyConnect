@@ -19,3 +19,25 @@ export const loansDueOn = (loans: Loan[], date: string) => loans.filter((l) => !
 
 /** übliche Leihfrist der Büchereien */
 export const DEFAULT_WEEKS = 3;
+
+/** Auswahl „so viele Tage vorher erinnern“ */
+export const REMIND_OPTIONS = [0, 1, 2, 3, 5, 7];
+export const remindLabel = (days: number) => (days === 0 ? 'Nur am Tag' : days === 1 ? '1 Tag vorher' : days === 7 ? '1 Woche vorher' : `${days} Tage vorher`);
+
+const REMIND_KEY = 'familyconnect-loan-remind';
+/** zuletzt gewählte Erinnerung als Vorgabe für die nächste Ausleihe */
+export function lastRemindDays(): number {
+  try {
+    const v = Number(localStorage.getItem(REMIND_KEY));
+    return REMIND_OPTIONS.includes(v) && localStorage.getItem(REMIND_KEY) !== null ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+export function rememberRemindDays(days: number) {
+  try {
+    localStorage.setItem(REMIND_KEY, String(days));
+  } catch {
+    // egal
+  }
+}

@@ -5,7 +5,7 @@ import { Icon } from '../components/Icon';
 import { LoanForm } from '../components/LoanForm';
 import { useAsync } from '../components/useAsync';
 import { addDays, formatShortDay, parseLocal, toDateKey } from '../dates';
-import { DEFAULT_WEEKS, daysUntil, dueLabel } from '../loans';
+import { DEFAULT_WEEKS, daysUntil, dueLabel, remindLabel } from '../loans';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Loan } from '../types';
@@ -44,7 +44,7 @@ function LoanCard({ loan, onEdit, onUpdate }: { loan: Loan; onEdit(): void; onUp
           ) : (
             <>
               <span className={`badge loan-badge ${urgency}`}>{dueLabel(days)}</span>
-              <small className="muted"> bis {formatShortDay(parseLocal(loan.due_date))}</small>
+              <small className="muted"> bis {formatShortDay(parseLocal(loan.due_date))} · 🔔 {remindLabel(loan.remind_days ?? 1)}</small>
             </>
           )}
         </span>

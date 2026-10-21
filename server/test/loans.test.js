@@ -56,9 +56,18 @@ describe('Ausgeliehen', () => {
     assert.equal(sent.length, 1, 'nur einmal');
     checkLoanReminders(db, push, new Date(2026, 9, 22, 7, 5));
     assert.equal(sent.at(-1)[1].title, '📚 Heute zurückgeben');
+    // 3 Tage vorher erinnern
+    const { data: third } = await api(path, { token: lea, method: 'POST', body: { title: 'Pferdebuch', member_id: ids.Lea, due_date: '2026-10-25', remind_days: 3 } });
+    assert.equal(third.remind_days, 3);
+    assert.equal(book.remind_days, 1, 'Standard: am Vortag');
+    assert.equal((await api(path, { token: lea, method: 'POST', body: { title: 'X', due_date: '2026-10-25', remind_days: 30 } })).status, 400);
+    const before = sent.length;
+    checkLoanReminders(db, push, new Date(2026, 9, 22, 17, 10));
+    assert.deepEqual(sent.slice(before).map((s) => s[1].title), ['📚 In 3 Tagen zurückgeben']);
     await api(`${path}/${book.id}`, { token: lea, method: 'PATCH', body: { returned: true } });
     db.prepare("UPDATE loans SET reminded = '' WHERE id = ?").run(book.id);
+    const count = sent.length;
     checkLoanReminders(db, push, new Date(2026, 9, 22, 8, 0));
-    assert.equal(sent.length, 2, 'zurückgegeben → keine Erinnerung');
+    assert.equal(sent.length, count, 'zurückgegeben → keine Erinnerung');
   });
 });

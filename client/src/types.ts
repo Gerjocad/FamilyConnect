@@ -192,6 +192,8 @@ export interface Loan extends Base {
   lender: string;
   borrowed_on: string | null;
   due_date: string;
+  /** so viele Tage vorher erinnern (0 = nur am Tag selbst) */
+  remind_days: number | null;
   returned: boolean;
   notes: string;
 }

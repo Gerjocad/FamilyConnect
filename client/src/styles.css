@@ -997,3 +997,6 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .radius-chips .chip { font-size: 0.82rem; padding: 3px 10px; }
 .places .place-map { margin-bottom: 4px; }
 .leaflet-container { font: inherit; }
+
+.remind-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.remind-chips .chip { font-size: 0.85rem; padding: 4px 12px; }

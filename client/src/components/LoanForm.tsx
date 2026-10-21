@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, toDateKey, parseLocal } from '../dates';
-import { DEFAULT_WEEKS } from '../loans';
+import { DEFAULT_WEEKS, REMIND_OPTIONS, lastRemindDays, rememberRemindDays, remindLabel } from '../loans';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Loan } from '../types';
@@ -30,12 +30,14 @@ export function LoanForm({ loan, lenders, onSave, onDelete, onClose }: Props) {
   const [due, setDue] = useState(loan?.due_date ?? toDateKey(addDays(today, DEFAULT_WEEKS * 7)));
   const [notes, setNotes] = useState(loan?.notes ?? '');
   const [returned, setReturned] = useState(loan?.returned ?? false);
+  const [remind, setRemind] = useState(loan ? (loan.remind_days ?? 1) : lastRemindDays());
   const { busy, error, run } = useAsync();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await onSave({ title, author, member_id: memberId, lender, borrowed_on: borrowedOn || null, due_date: due, notes, returned });
+      await onSave({ title, author, member_id: memberId, lender, borrowed_on: borrowedOn || null, due_date: due, notes, returned, remind_days: remind });
+      rememberRemindDays(remind);
       onClose();
     });
   };
@@ -77,6 +79,19 @@ export function LoanForm({ loan, lenders, onSave, onDelete, onClose }: Props) {
             Rückgabe bis
             <input type="date" value={due} min={borrowedOn || undefined} onChange={(e) => setDue(e.target.value)} required />
           </label>
+        </div>
+        <div className="field">
+          <span>🔔 Erinnern</span>
+          <div className="remind-chips" role="group" aria-label="Erinnern">
+            {REMIND_OPTIONS.map((d) => (
+              <button type="button" key={d} className={`chip ${remind === d ? 'chip-active' : ''}`} aria-pressed={remind === d} onClick={() => setRemind(d)}>
+                {remindLabel(d)}
+              </button>
+            ))}
+          </div>
+          <small className="hint">
+            {remind === 0 ? 'Erinnerung am Rückgabetag um 7 Uhr.' : `Erinnerung ${remindLabel(remind).replace(' vorher', '')} vorher um 17 Uhr und am Rückgabetag um 7 Uhr.`}
+          </small>
         </div>
         <label>
           Notizen
