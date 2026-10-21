@@ -7,6 +7,10 @@ import { useAsync } from '../components/useAsync';
 import type { Contact } from '../types';
 import { useResource } from '../useResource';
 
+/** Google Maps mit der Adresse (öffnet am Handy die Maps-App) */
+const mapsUrl = (address: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.replace(/\s*\n\s*/g, ', '))}`;
+
 const FIELDS = ['name', 'category', 'phone', 'email', 'address', 'birthday', 'notes'] as const;
 const CATEGORY_SUGGESTIONS = ['Ärzte', 'Schule', 'Kita', 'Babysitter', 'Notfall', 'Handwerker', 'Freunde', 'Verwandte'];
 
@@ -43,7 +47,10 @@ function ContactForm({ contact, onSave, onDelete, onClose }: {
           <label>Telefon<input type="tel" value={data.phone} onChange={set('phone')} /></label>
           <label>E-Mail<input type="email" value={data.email} onChange={set('email')} /></label>
         </div>
-        <label>Adresse<input value={data.address} onChange={set('address')} /></label>
+        <label>
+          Adresse
+          <textarea value={data.address} onChange={set('address')} rows={2} placeholder={'Straße Nr.\nPLZ Ort'} maxLength={500} />
+        </label>
         <label>Geburtstag<input type="date" value={data.birthday} onChange={set('birthday')} /></label>
         <label>Notizen<textarea value={data.notes} onChange={set('notes')} rows={3} /></label>
         {error && <p className="error">{error}</p>}
@@ -105,11 +112,20 @@ export function ContactsPage() {
                   <span className="avatar neutral">{initials(c.name)}</span>
                   <span>
                     <strong>{c.name}</strong>
-                    {c.address && <small className="muted">{c.address}</small>}
                   </span>
                 </button>
+                {c.address && (
+                  <a className="icon-button" href={mapsUrl(c.address)} target="_blank" rel="noopener noreferrer" aria-label={`${c.name} in Google Maps öffnen`}>
+                    <Icon name="pin" size={18} />
+                  </a>
+                )}
                 {c.phone && <a className="icon-button" href={`tel:${c.phone}`} aria-label={`${c.name} anrufen`}><Icon name="phone" size={18} /></a>}
                 {c.email && <a className="icon-button" href={`mailto:${c.email}`} aria-label={`E-Mail an ${c.name}`}><Icon name="mail" size={18} /></a>}
+                {c.address && (
+                  <a className="contact-address" href={mapsUrl(c.address)} target="_blank" rel="noopener noreferrer">
+                    {c.address}
+                  </a>
+                )}
               </div>
             ))}
           </section>

@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.39',
+    date: '2026-10-21',
+    title: 'Kontakte: Adresse öffnet Google Maps',
+    changes: [
+      'Adresse bei Kontakten jetzt mehrzeilig (Straße, PLZ Ort)',
+      'Antippen der Adresse oder des 📍-Knopfs öffnet sie in Google Maps – am Handy direkt in der Maps-App',
+    ],
+  },
+  {
     version: '1.38',
     date: '2026-10-21',
     title: 'Ausgeliehen – Bücher mit Rückgabedatum',

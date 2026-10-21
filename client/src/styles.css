@@ -376,7 +376,7 @@ textarea { resize: vertical; }
 /* --- Kontakte ------------------------------------------------------------- */
 
 .group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 8px; }
-.contact { display: flex; align-items: center; gap: 4px; padding: 6px 0; }
+.contact { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 0; }
 .contact-main { flex: 1; display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; min-width: 0; }
 .contact-main > span:last-child { display: flex; flex-direction: column; min-width: 0; }
 .contact a.icon-button { color: var(--accent); }
@@ -894,3 +894,6 @@ textarea { resize: vertical; }
 }
 .loan-line a { color: inherit; text-decoration: none; }
 .loan-line.overdue { color: var(--danger); font-weight: 600; }
+
+/* Kontakt-Adresse: antippen öffnet Google Maps */
+.contact-address { flex-basis: 100%; margin: -4px 0 0 52px; font-size: 0.85rem; color: var(--muted); white-space: pre-line; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
