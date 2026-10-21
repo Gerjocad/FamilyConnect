@@ -10,13 +10,16 @@ import {
 } from '../dates';
 import { useFamily } from '../session';
 import { useHolidays } from '../holidays';
-import type { CalendarEvent, Contact, Vacation } from '../types';
+import type { CalendarEvent, Contact, Loan, Vacation } from '../types';
 import { useResource } from '../useResource';
 import { usePermissions } from '../permissions';
 import { EventForm } from './EventForm';
 import { deleteEvent, saveEvent } from '../eventSeries';
 import { SCHOOL_HOLIDAY_COLOR, markBackground, vacationColor, vacationsOn } from '../vacations';
 import { VacationForm } from './VacationForm';
+import { LoanForm } from '../components/LoanForm';
+import { loansDueOn } from '../loans';
+import { useLenders } from './LoansPage';
 import { CalendarImport } from './CalendarImport';
 import { EventIconsDialog } from './EventIconsDialog';
 import { useEventIcons } from '../eventIcons';
@@ -99,6 +102,7 @@ export function CalendarPage() {
   const [filter, setFilter] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ event: CalendarEvent; occurrence: Occurrence } | 'new' | null>(null);
   const [editingVacation, setEditingVacation] = useState<Vacation | 'new' | null>(null);
+  const [editingLoan, setEditingLoan] = useState<Loan | 'new' | null>(null);
   const [importing, setImporting] = useState(false);
   const [editingIcons, setEditingIcons] = useState(false);
   const icons = useEventIcons();
@@ -122,6 +126,12 @@ export function CalendarPage() {
   const holidays = useHolidays([...new Set([days[0].getFullYear(), days[days.length - 1].getFullYear(), today.getFullYear()])]);
   const contacts = useResource<Contact>('contacts');
   const vacations = useResource<Vacation>('vacations');
+  const loans = useResource<Loan>('loans');
+  const lenders = useLenders(loans.items);
+  const visibleLoans = useMemo(
+    () => (filter === null ? loans.items : loans.items.filter((l) => l.member_id === filter)),
+    [loans.items, filter]
+  );
   const visibleVacations = useMemo(
     () => (filter === null ? vacations.items : vacations.items.filter((v) => !v.member_ids.length || v.member_ids.includes(filter))),
     [vacations.items, filter]
@@ -135,6 +145,7 @@ export function CalendarPage() {
     school: holidays.schoolHoliday(date),
     birthdays: birthdays.filter((b) => b.date === date).map((b) => b.label),
     vacations: vacationsOn(visibleVacations, date),
+    loans: loansDueOn(visibleLoans, date),
   });
   // Ferien und Urlaube färben das Feld leicht ein; bei Überschneidung teilt es sich auf
   const marks = (extras: ReturnType<typeof extrasFor>) => [
@@ -145,11 +156,13 @@ export function CalendarPage() {
   const selectedExtras = extrasFor(selectedKey);
   const hasExtras = Boolean(
     selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length || selectedExtras.vacations.length
+    || selectedExtras.loans.length
   );
 
   const addItems: PlusMenuItem[] = [
     { label: 'Termin', icon: 'calendar', onSelect: () => setEditing('new') },
     { label: 'Urlaub', icon: 'sun', onSelect: () => setEditingVacation('new') },
+    { label: 'Ausleihe (Rückgabe)', icon: 'book', onSelect: () => setEditingLoan('new') },
     { label: 'Kalender importieren (.ics)', icon: 'download', onSelect: () => setImporting(true) },
     { label: 'Logos', icon: 'sparkle', onSelect: () => setEditingIcons(true) },
   ];
@@ -220,6 +233,11 @@ export function CalendarPage() {
                   <span className="day-events">
                     {extras.publicHoliday && <span className="day-event holiday-pill">{extras.publicHoliday}</span>}
                     {extras.birthdays.map((b) => <span key={b} className="day-event birthday-pill">{b}</span>)}
+                    {extras.loans.map((l) => (
+                      <span key={`l${l.id}`} className="day-event loan-pill" title={`Rückgabe: ${l.title}`}>
+                        <span className="loan-emoji" aria-hidden>📚</span><span className="day-event-title">{l.title}</span>
+                      </span>
+                    ))}
                     {occs.slice(0, 3).map((o, i) => {
                       const icon = icons.iconFor(o.event.title);
                       return (
@@ -256,6 +274,14 @@ export function CalendarPage() {
                   </li>
                 ))}
                 {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
+                {selectedExtras.loans.map((l) => (
+                  <li key={`l${l.id}`}>
+                    <button type="button" className="vacation-line" onClick={() => setEditingLoan(l)}>
+                      📚 Rückgabe: {l.title}
+                      <span className="muted"> {[l.member_id ? member(l.member_id)?.name.split(' ')[0] : '', l.lender].filter(Boolean).join(' · ')}</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             )}
             {!holidays.state && isAdmin && (
@@ -275,6 +301,15 @@ export function CalendarPage() {
         )}
       </div>
 
+      {editingLoan && (
+        <LoanForm
+          loan={editingLoan === 'new' ? undefined : editingLoan}
+          lenders={lenders}
+          onSave={(data) => (editingLoan === 'new' ? loans.create(data) : loans.update(editingLoan.id, data))}
+          onDelete={editingLoan === 'new' ? undefined : () => loans.remove(editingLoan.id)}
+          onClose={() => setEditingLoan(null)}
+        />
+      )}
       {editingIcons && (
         <EventIconsDialog
           icons={icons.items}

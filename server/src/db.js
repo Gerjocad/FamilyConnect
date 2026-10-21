@@ -323,6 +323,24 @@ CREATE TABLE IF NOT EXISTS complaint_comments (
 );
 CREATE INDEX IF NOT EXISTS complaint_comments_complaint ON complaint_comments(complaint_id);
 
+-- Ausgeliehenes (z. B. Bücher aus der Bücherei) mit Rückgabedatum
+CREATE TABLE IF NOT EXISTS loans (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL DEFAULT '',
+  member_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  lender TEXT NOT NULL DEFAULT '',
+  borrowed_on TEXT,
+  due_date TEXT NOT NULL,
+  returned INTEGER NOT NULL DEFAULT 0,
+  notes TEXT NOT NULL DEFAULT '',
+  -- zuletzt verschickte Erinnerung, z. B. „2026-10-21:morgen“ (pro Tag und Art nur einmal)
+  reminded TEXT NOT NULL DEFAULT '',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

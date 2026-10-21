@@ -7,6 +7,7 @@ import { openDatabase } from './db.js';
 import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
 import { checkClimateAlerts } from './climate.js';
+import { checkLoanReminders } from './loans.js';
 import { TuyaClient } from './tuya.js';
 import { readInstalled, ServerUpdate } from './serverUpdate.js';
 
@@ -36,6 +37,14 @@ const updater = new ServerUpdate({ requestFile: process.env.UPDATE_REQUEST_FILE,
 const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater });
 // Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
 setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
+// Rückgabe-Erinnerungen für Ausgeliehenes (Vortag 17 Uhr, Tag selbst 7 Uhr)
+setInterval(() => {
+  try {
+    checkLoanReminders(db, push);
+  } catch (err) {
+    console.error('Ausleih-Erinnerungen:', err.message);
+  }
+}, 10 * 60 * 1000).unref();
 
 app.listen(port, host, () => {
   console.log(`FamilyConnect läuft auf http://localhost:${port}`);

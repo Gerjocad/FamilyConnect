@@ -183,6 +183,19 @@ export interface Vacation extends Base {
   notes: string;
 }
 
+/** Ausgeliehenes (z. B. Bücherei) mit Rückgabedatum */
+export interface Loan extends Base {
+  title: string;
+  author: string;
+  member_id: number | null;
+  /** woher, z. B. „Stadtbücherei“ */
+  lender: string;
+  borrowed_on: string | null;
+  due_date: string;
+  returned: boolean;
+  notes: string;
+}
+
 /** Ausnahme an einem Termin: getauscht und/oder erledigt */
 export interface ChoreDay {
   chore_id: number;
@@ -202,4 +215,4 @@ export interface Checkin {
   created_at: string;
 }
 
-export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores' | 'vacations' | 'event-icons';
+export type ResourceName = 'events' | 'lists' | 'items' | 'tasks' | 'posts' | 'meals' | 'contacts' | 'habits' | 'recipes' | 'chores' | 'vacations' | 'event-icons' | 'loans';

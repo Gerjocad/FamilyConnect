@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.38',
+    date: '2026-10-21',
+    title: 'Ausgeliehen – Bücher mit Rückgabedatum',
+    changes: [
+      'Neu im Menü: Ausgeliehen – Bücher (oder anderes) mit Rückgabedatum, Woher und für wen eintragen',
+      'Der Rückgabetag steht mit 📚 im Kalender; „Verlängert“ schiebt ihn um 3 Wochen, „Zurückgegeben“ hakt ab',
+      'Erinnerung am Vortag um 17 Uhr und am Tag selbst um 7 Uhr; auf der Übersicht steht, was heute/morgen fällig oder überfällig ist',
+      'Kinder können ihre eigenen Ausleihen selbst eintragen und abhaken; das Wanddisplay zeigt Rückgaben ebenfalls',
+    ],
+  },
+  {
     version: '1.37',
     date: '2026-10-21',
     title: 'Kommentare bei Beschwerden',

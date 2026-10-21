@@ -869,3 +869,28 @@ textarea { resize: vertical; }
 /* Kommentare unter Beschwerden */
 .complaint-comment-toggle { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-top: 4px; }
 .complaint-comments { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* Ausgeliehen */
+.loan-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.card.loan { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; border-left: 4px solid var(--border); }
+.card.loan.soon { border-left-color: #f59f00; }
+.card.loan.today, .card.loan.overdue { border-left-color: var(--danger); }
+.card.loan.returned { opacity: 0.6; }
+.loan-icon { font-size: 1.6rem; line-height: 1.2; }
+.loan-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.loan-title { overflow-wrap: anywhere; }
+.loan-notes { white-space: pre-wrap; }
+.loan-side { display: flex; align-items: center; gap: 6px; }
+.loan-actions { flex-basis: 100%; display: flex; justify-content: flex-end; gap: 8px; }
+.loan-badge.soon { background: #fff3bf; color: #8a5a00; }
+.loan-badge.today, .loan-badge.overdue { background: #ffe3e3; color: var(--danger); }
+.loan-returned { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.loan-returned > .link-button { align-self: flex-start; }
+.day-event.loan-pill { background: var(--surface-2); color: var(--text); display: flex; align-items: center; gap: 2px; }
+/* Handy: statt Punkt das Bücher-Symbol (wie die Logos) */
+@media (max-width: 600px) {
+  .day-event.loan-pill { width: auto; height: auto; padding: 0; border-radius: 0; background: none; font-size: 15px; line-height: 1; }
+  .day-event.loan-pill .day-event-title { display: none; }
+}
+.loan-line a { color: inherit; text-decoration: none; }
+.loan-line.overdue { color: var(--danger); font-weight: 600; }

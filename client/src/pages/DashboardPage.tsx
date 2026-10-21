@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { WeatherCard } from '../components/WeatherCard';
@@ -7,7 +7,8 @@ import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import { habitStatus, nfcOnlyFor, statusLabel } from '../habitStatus';
-import type { CalendarEvent, Contact, Habit, Meal, Post, Task } from '../types';
+import type { CalendarEvent, Contact, Habit, Loan, Meal, Post, Task } from '../types';
+import { daysUntil, dueLabel } from '../loans';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard, usePolls } from './BoardPage';
@@ -57,7 +58,7 @@ const SLOT_LABEL = { breakfast: 'Frühstück', lunch: 'Mittag', dinner: 'Abend' 
 
 export function DashboardPage() {
   const today = startOfDay(new Date());
-  const { user, family } = useFamily();
+  const { user, family, member } = useFamily();
   const events = useResource<CalendarEvent>('events');
   const icons = useEventIcons();
   const comments = useEventComments();
@@ -74,6 +75,9 @@ export function DashboardPage() {
   const polls = usePolls();
   const climate = useClimate();
   const contacts = useResource<Contact>('contacts');
+  const loans = useResource<Loan>('loans');
+  // Rückgaben, die heute/morgen fällig oder überfällig sind
+  const loansDue = loans.items.filter((l) => !l.returned && daysUntil(l, today) <= 1).sort((a, b) => a.due_date.localeCompare(b.due_date));
   const holidays = useHolidays([today.getFullYear(), today.getFullYear() + 1]);
   const todayKey = toDateKey(today);
   const holidayLine = (() => {
@@ -119,6 +123,11 @@ export function DashboardPage() {
           <h1>{greeting()}, {user.name.split(' ')[0]}!</h1>
           <p className="muted">{formatDay(today)} · {family.name}</p>
           {holidayLine && <p className="holiday-line">{holidayLine}</p>}
+          {loansDue.map((l) => (
+            <p key={l.id} className={`holiday-line loan-line ${daysUntil(l, today) < 0 ? 'overdue' : ''}`}>
+              <Link to="/ausgeliehen">📚 {l.title}: {dueLabel(daysUntil(l, today))}{l.member_id && l.member_id !== user.id ? ` (${member(l.member_id)?.name.split(' ')[0] ?? ''})` : ''}</Link>
+            </p>
+          ))}
         </div>
       </header>
 

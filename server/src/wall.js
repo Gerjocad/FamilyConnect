@@ -129,6 +129,9 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
         const row = serialize(VACATIONS, v);
         out.push({ kind: 'vacation', text: row.title, member_ids: row.member_ids });
       }
+      for (const l of db.prepare('SELECT title FROM loans WHERE family_id = ? AND returned = 0 AND due_date = ?').all(familyId, key)) {
+        out.push({ kind: 'loan', text: `${l.title} zurückgeben` });
+      }
       return { key, out };
     };
     const days = [0, 1].map((offset) => {

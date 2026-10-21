@@ -247,6 +247,28 @@ export const RESOURCES = [
     },
   },
   {
+    path: 'loans',
+    table: 'loans',
+    order: 'returned ASC, due_date ASC, id ASC',
+    fields: {
+      title: text({ required: true, max: 200 }),
+      author: text({ max: 200 }),
+      member_id: member(),
+      lender: text({ max: 100 }),
+      borrowed_on: date(),
+      due_date: date({ required: true }),
+      returned: bool(),
+      notes: text({ max: 1000 }),
+    },
+    // Kinder verwalten, was sie selbst ausgeliehen oder eingetragen haben
+    childRule({ action, userId, existing, row }) {
+      if (action !== 'create' && existing.created_by !== userId && existing.member_id !== userId)
+        return 'Kinder dürfen nur ihre eigenen Ausleihen ändern';
+      if (action !== 'delete' && row.member_id !== null && row.member_id !== userId)
+        return 'Kinder tragen nur eigene Ausleihen ein';
+    },
+  },
+  {
     path: 'contacts',
     table: 'contacts',
     order: 'name COLLATE NOCASE ASC',
