@@ -20,6 +20,9 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Omron 12 mm, TTP223, MCP23017, OV7670 (ohne FIFO, eher nicht nutzen), WS2812B 8×8 + Ring 16, SMD-LEDs
   3528 grün/weiß, SMD-Widerstände 1206 (20/51/100 Ω), IR-Handwisch-Schalter, FTS-06, 3-Stufen-Drehschalter
   6 A, N20-Motor.
+- **ESP32-Aufsteh-Ampel** für die Kinder (gefällt – merken, noch nicht umsetzen): WS2812B-Ring rot = noch
+  schlafen, grün = aufstehen erlaubt; rundes GC9A01 mit Mond/Sonne; BH1750 dimmt nachts. Zeiten je Kind in
+  der App einstellbar (Wochenende anders).
 
 - **Punkte & Belohnungen** – „klingt gut, aber noch nicht“: Punkte für Aufgaben/Gewohnheiten/Dienste,
   Belohnungen einlösen über Anfragen, Wochen-Rangliste
