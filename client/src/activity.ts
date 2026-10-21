@@ -6,7 +6,7 @@ import { useFamily } from './session';
 
 export interface ActivityItem {
   key: string;
-  kind: 'comment' | 'event' | 'post' | 'complaint' | 'complaint-resolved' | 'request' | 'request-answer';
+  kind: 'comment' | 'event' | 'post' | 'complaint' | 'complaint-comment' | 'complaint-resolved' | 'request' | 'request-answer';
   id: number;
   /** JJJJ-MM-TT HH:MM:SS (UTC, wie in SQLite) */
   at: string;

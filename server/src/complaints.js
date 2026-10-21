@@ -13,7 +13,8 @@ export function complaintsRouter(db, { auth, member, publish, uploadDir, push })
   const router = Router();
   mkdirSync(uploadDir, { recursive: true });
 
-  const serialize = (row) => ({ ...row, family_id: undefined, images: JSON.parse(row.images) });
+  const commentsOf = db.prepare('SELECT id, user_id, text, created_at FROM complaint_comments WHERE complaint_id = ? ORDER BY created_at, id');
+  const serialize = (row) => ({ ...row, family_id: undefined, images: JSON.parse(row.images), comments: commentsOf.all(row.id) });
   const find = (req) => db.prepare('SELECT * FROM complaints WHERE family_id = ? AND id = ?').get(req.familyId, Number(req.params.id));
   const canSee = (req, row) => isManager(req.role) || row.created_by === req.user.id || row.recipient_id === req.user.id;
   const isMember = (familyId, userId) =>
@@ -76,6 +77,29 @@ export function complaintsRouter(db, { auth, member, publish, uploadDir, push })
     if (row.created_by !== req.user.id && !isManager(req.role)) return res.status(403).json({ error: 'Keine Berechtigung' });
     db.prepare('DELETE FROM complaints WHERE id = ?').run(row.id);
     removeImages(uploadDir, JSON.parse(row.images));
+    publish(req.familyId, 'complaints');
+    res.status(204).end();
+  });
+
+  // Kommentare: alle, die die Beschwerde sehen dürfen – auch nach dem Erledigen
+  router.post('/api/families/:familyId/complaints/:id/comments', auth, member, (req, res) => {
+    const row = find(req);
+    if (!row || !canSee(req, row)) return res.status(404).json({ error: 'Nicht gefunden' });
+    const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, 1000) : '';
+    if (!text) return res.status(400).json({ error: 'Bitte schreib einen Kommentar' });
+    db.prepare('INSERT INTO complaint_comments (family_id, complaint_id, user_id, text) VALUES (?, ?, ?, ?)').run(req.familyId, row.id, req.user.id, text);
+    publish(req.familyId, 'complaints');
+    // Beteiligte (Absender und Empfänger) außer dem Schreibenden
+    const targets = [...new Set([row.created_by, row.recipient_id])].filter((id) => id && id !== req.user.id);
+    push?.notify?.(targets, { title: `${req.user.name.split(' ')[0]} zu einer Beschwerde`, body: text, path: '/beschwerden' });
+    res.status(201).json(serialize(find(req)));
+  });
+
+  router.delete('/api/families/:familyId/complaint-comments/:id', auth, member, (req, res) => {
+    const comment = db.prepare('SELECT * FROM complaint_comments WHERE family_id = ? AND id = ?').get(req.familyId, Number(req.params.id));
+    if (!comment) return res.status(404).json({ error: 'Nicht gefunden' });
+    if (comment.user_id !== req.user.id && !isManager(req.role)) return res.status(403).json({ error: 'Nur eigene Kommentare' });
+    db.prepare('DELETE FROM complaint_comments WHERE id = ?').run(comment.id);
     publish(req.familyId, 'complaints');
     res.status(204).end();
   });

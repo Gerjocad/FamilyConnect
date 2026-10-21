@@ -49,6 +49,11 @@ export function activityRouter(db, { auth, member }) {
          FROM complaints WHERE family_id = ? AND recipient_id = ? AND created_by != ? AND created_at >= ${since}`
       ).all(familyId, userId, userId),
       ...db.prepare(
+        `SELECT 'complaint-comment' AS kind, cc.id, cc.created_at AS at, cc.user_id, c.text AS subject, cc.text, '/beschwerden' AS path
+         FROM complaint_comments cc JOIN complaints c ON c.id = cc.complaint_id
+         WHERE cc.family_id = ? AND cc.user_id != ? AND (c.created_by = ? OR c.recipient_id = ?) AND cc.created_at >= ${since}`
+      ).all(familyId, userId, userId, userId),
+      ...db.prepare(
         `SELECT 'complaint-resolved' AS kind, id, resolved_at AS at, resolved_by AS user_id, text AS subject, reply AS text, '/beschwerden' AS path
          FROM complaints WHERE family_id = ? AND created_by = ? AND resolved_by != ? AND resolved_at >= ${since}`
       ).all(familyId, userId, userId),

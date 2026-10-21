@@ -312,6 +312,17 @@ CREATE TABLE IF NOT EXISTS wall_displays (
   last_seen_at TEXT
 );
 
+-- Kommentare zu Beschwerden (sehen nur, wer die Beschwerde sehen darf)
+CREATE TABLE IF NOT EXISTS complaint_comments (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  complaint_id INTEGER NOT NULL REFERENCES complaints(id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS complaint_comments_complaint ON complaint_comments(complaint_id);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

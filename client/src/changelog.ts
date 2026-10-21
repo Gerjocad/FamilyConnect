@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.37',
+    date: '2026-10-21',
+    title: 'Kommentare bei Beschwerden',
+    changes: [
+      'Unter jeder Beschwerde „Kommentieren“ – Absender, Empfänger und Eltern können darüber schreiben, auch nach dem Erledigen',
+      'Neue Kommentare kommen als Benachrichtigung und in der 🔔-Glocke',
+    ],
+  },
+  {
     version: '1.36',
     date: '2026-10-20',
     title: 'Wanddisplay',

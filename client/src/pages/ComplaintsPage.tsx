@@ -23,7 +23,10 @@ export interface Complaint {
   resolved_by: number | null;
   resolved_at: string | null;
   created_at: string;
+  comments: ComplaintComment[];
 }
+
+export interface ComplaintComment { id: number; user_id: number | null; text: string; created_at: string }
 
 const MAX_IMAGES = 3;
 const FORMER = { name: 'Ehemaliges Mitglied', color: '#868e96' };
@@ -53,6 +56,72 @@ export function useComplaints() {
     return onLiveChange((resource) => resource === 'complaints' && void reload());
   }, [reload]);
   return { base, items, loading, reload };
+}
+
+/** Kommentare unter einer Beschwerde – für alle, die sie sehen dürfen */
+function ComplaintComments({ complaint, base, onChanged }: { complaint: Complaint; base: string; onChanged(): void }) {
+  const { user, member, family } = useFamily();
+  const { isManager } = usePermissions();
+  const [opened, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const { busy, error, run } = useAsync();
+  const count = complaint.comments.length;
+  // mit Kommentaren immer offen, sonst erst auf Antippen
+  const open = opened || count > 0;
+
+  const send = (e: FormEvent) => {
+    e.preventDefault();
+    const value = text.trim();
+    if (!value) return;
+    void run(async () => {
+      await api(`${base}/${complaint.id}/comments`, { method: 'POST', body: { text: value } });
+      setText('');
+      onChanged();
+    });
+  };
+
+  if (!open) {
+    return (
+      <button type="button" className="link-button complaint-comment-toggle" onClick={() => setOpen(true)}>
+        <Icon name="chat" size={16} /> Kommentieren
+      </button>
+    );
+  }
+  return (
+    <section className="event-comments complaint-comments">
+      <h3><Icon name="chat" size={16} /> Kommentare{count > 0 && ` (${count})`}</h3>
+      {count > 0 && (
+        <ul className="comment-list">
+          {complaint.comments.map((c) => {
+            const author = c.user_id ? member(c.user_id) : undefined;
+            return (
+              <li key={c.id} className="comment">
+                {author ? <Avatar member={author} size={26} /> : <span className="avatar neutral" style={{ width: 26, height: 26 }}>?</span>}
+                <div className="comment-body">
+                  <small className="muted"><strong>{c.user_id === user.id ? 'Du' : author?.name.split(' ')[0] ?? FORMER.name}</strong> · {formatTimestamp(c.created_at)}</small>
+                  <p>{c.text}</p>
+                </div>
+                {(c.user_id === user.id || isManager) && (
+                  <button type="button" className="icon-button subtle" aria-label="Kommentar löschen" disabled={busy}
+                    onClick={() => confirm('Kommentar löschen?') && void run(async () => {
+                      await api(`/families/${family.id}/complaint-comments/${c.id}`, { method: 'DELETE' });
+                      onChanged();
+                    })}>
+                    <Icon name="trash" size={14} />
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <form className="quick-add" onSubmit={send}>
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Kommentar schreiben …" aria-label="Kommentar" maxLength={1000} autoFocus={count === 0} />
+        <button className="button" disabled={busy || !text.trim()} aria-label="Kommentar senden"><Icon name="send" /></button>
+      </form>
+      {error && <p className="error">{error}</p>}
+    </section>
+  );
 }
 
 function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
@@ -114,6 +183,8 @@ function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
           </span>
         </div>
       )}
+
+      <ComplaintComments complaint={complaint} base={base} onChanged={onChanged} />
 
       {answering && (
         <div className="form complaint-answer">

@@ -18,6 +18,7 @@ before(async () => {
   const push = {
     notifyComplaint: (m) => pushes.push(['neu', m]),
     notifyComplaintResolved: (m) => pushes.push(['erledigt', m]),
+    notify: (ids, m) => pushes.push(['kommentar', ids, m]),
     handleChange() {},
   };
   const app = createApp(openDatabase(':memory:'), { uploadDir, push });
@@ -111,4 +112,36 @@ describe('Beschwerden', () => {
     assert.equal((await api(`${path}/${c.id}`, { token: lea, method: 'DELETE' })).status, 204);
     assert.equal(readdirSync(uploadDir).length, before - 2, 'Fotos werden mit gelöscht');
   });
+
+  test('Kommentare: Beteiligte schreiben, Glocke und Push, Unbeteiligte sehen nichts', async () => {
+    const { mama, tom, lea, fid, ids } = await family();
+    const path = `/families/${fid}/complaints`;
+    const { data: c } = await api(path, { token: lea, method: 'POST', body: { text: 'Bad!', recipient_id: ids.tom, images: [PNG] } });
+    assert.deepEqual(c.comments, []);
+
+    const r1 = await api(`${path}/${c.id}/comments`, { token: tom, method: 'POST', body: { text: 'Das war ich nicht!' } });
+    assert.equal(r1.status, 201);
+    assert.deepEqual(r1.data.comments.map((k) => [k.user_id, k.text]), [[ids.tom, 'Das war ich nicht!']]);
+    assert.deepEqual(pushes.at(-1), ['kommentar', [ids.lea], { title: 'Tom zu einer Beschwerde', body: 'Das war ich nicht!', path: '/beschwerden' }]);
+    assert.equal((await api(`${path}/${c.id}/comments`, { token: tom, method: 'POST', body: { text: '  ' } })).status, 400);
+
+    // Mama (Eltern) darf mitreden, beide Beteiligten werden benachrichtigt
+    await api(`${path}/${c.id}/comments`, { token: mama, method: 'POST', body: { text: 'Klärt das bitte' } });
+    assert.deepEqual(pushes.at(-1)[1].sort(), [ids.lea, ids.tom].sort());
+
+    // Lea sieht beide Kommentare in der Glocke, Tom nur Mamas
+    const kinds = async (token) => (await api(`/families/${fid}/activity`, { token })).data.items.filter((i) => i.kind === 'complaint-comment').map((i) => i.text);
+    assert.deepEqual((await kinds(lea)).sort(), ['Das war ich nicht!', 'Klärt das bitte']);
+    assert.deepEqual(await kinds(tom), ['Klärt das bitte']);
+
+    // Eine Beschwerde, die Tom nicht sieht, kann er auch nicht kommentieren
+    const { data: other } = await api(path, { token: mama, method: 'POST', body: { text: 'Zimmer', recipient_id: ids.lea, images: [PNG] } });
+    assert.equal((await api(`${path}/${other.id}/comments`, { token: tom, method: 'POST', body: { text: 'Haha' } })).status, 404);
+
+    const commentId = r1.data.comments[0].id;
+    assert.equal((await api(`/families/${fid}/complaint-comments/${commentId}`, { token: lea, method: 'DELETE' })).status, 403);
+    assert.equal((await api(`/families/${fid}/complaint-comments/${commentId}`, { token: tom, method: 'DELETE' })).status, 204);
+    assert.equal((await api(path, { token: lea })).data.find((x) => x.id === c.id).comments.length, 1);
+  });
 });
+

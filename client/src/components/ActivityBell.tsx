@@ -18,6 +18,7 @@ function describe(item: ActivityItem, name: string): { title: string; text: stri
     }
     case 'post': return { title: `${name} auf der Pinnwand`, text: item.text };
     case 'complaint': return { title: `Beschwerde von ${name}`, text: item.text };
+    case 'complaint-comment': return { title: `${name} hat eine Beschwerde kommentiert`, text: item.text };
     case 'complaint-resolved': return { title: `${name} hat deine Beschwerde erledigt`, text: item.text || item.subject };
     case 'request': return { title: `Anfrage von ${name}: ${item.subject}`, text: item.text };
     case 'request-answer': {
