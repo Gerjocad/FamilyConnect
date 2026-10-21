@@ -19,6 +19,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Orte werden auf einer Karte gezeigt – mit Kreis für den Radius, in dem „angekommen“ gilt',
       'Ort festlegen per Adresssuche, Antippen der Karte oder Verschieben des Symbols; der Kreis wächst live mit dem Radius',
       'Schnellwahl für den Radius: 50 m (Haus), 100 m, 150 m (Schule), 250 m (Gelände)',
+      'Übersichtlicher in drei Schritten: Orte · Teile ich mein Ankommen? · Worüber möchte ich Bescheid bekommen?',
+      'Je Person und Ort zwei große Schalter „Ankommen“ und „Losgehen“, Zeitfenster per Antippen („Nur Mo–Fr“, „Nur von … bis …“) und ein Satz zur Kontrolle; speichert von selbst',
     ],
   },
   {

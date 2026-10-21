@@ -188,110 +188,167 @@ export function PlaceSharing({ places }: { places: Places }) {
     setState(await Geofence.status());
   });
 
-  if (!native) {
-    return (
-      <p className="hint">
-        {sharing ? 'Du teilst deine Ankunft – das Handy mit der Android-App meldet sie. ' : ''}
-        Ankommen und Losgehen meldet die <b>Android-App</b> (ab Version 2.5). Benachrichtigungen über andere kannst du hier trotzdem einstellen.
-        {sharing && <button className="link-button" onClick={() => void run(() => places.setSharing(false))}> Teilen ausschalten</button>}
-      </p>
-    );
-  }
+  const toggle = (on: boolean) => (on ? enable() : void run(async () => { await places.setSharing(false); if (native) await Geofence.stop(); }));
+  const status = !sharing
+    ? { cls: 'off', text: 'Aus – niemand bekommt Meldungen über dich.' }
+    : !native
+      ? { cls: 'warn', text: 'An – gemeldet wird vom Handy mit der Android-App (ab Version 2.5).' }
+      : state && !state.available
+        ? { cls: 'warn', text: 'Auf diesem Gerät fehlen die Google-Play-Dienste – hier funktioniert es nicht.' }
+        : state && !state.background
+          ? { cls: 'warn', text: 'Fast fertig: beim Standort „Immer erlauben“ wählen, sonst klappt es nur bei offener App.' }
+          : { cls: 'on', text: 'Aktiv – Android meldet, wenn du an einem Ort ankommst oder losgehst.' };
+
   return (
-    <div className="place-sharing">
-      <label className="checkbox">
-        <input type="checkbox" checked={sharing} disabled={busy}
-          onChange={(e) => (e.target.checked ? enable() : void run(async () => { await places.setSharing(false); await Geofence.stop(); }))} />
-        <span>
-          <strong>Meine Ankunft und Abfahrt an diesen Orten teilen</strong>
-          <small className="muted"> Andere sehen dann „angekommen / losgegangen“ – nie deinen genauen Standort oder Weg.</small>
+    <div className={`share-card ${sharing ? 'on' : ''}`}>
+      <label className="share-row">
+        <span className="share-icon" aria-hidden>📡</span>
+        <span className="share-text">
+          <strong>Mein Ankommen und Losgehen teilen</strong>
+          <small className="muted">Die Familie sieht nur „angekommen / losgegangen“ – nie deinen genauen Standort oder Weg.</small>
         </span>
+        <input type="checkbox" className="switch" checked={sharing} disabled={busy || (!native && !sharing)} onChange={(e) => toggle(e.target.checked)} aria-label="Teilen" />
       </label>
-      {sharing && state && !state.background && (
-        <p className="warning-line">
-          ⚠️ Damit es auch bei geschlossener App klappt, braucht die App „<b>Immer erlauben</b>“ beim Standort.
-          <button className="button small" onClick={() => void run(async () => setState(await Geofence.requestBackground()))}>Berechtigung ändern</button>
-        </p>
+      <p className={`share-status ${status.cls}`}>{status.text}</p>
+      {!native && !sharing && <small className="hint">Einschalten geht in der Android-App. Was du über andere wissen möchtest, kannst du hier trotzdem einstellen.</small>}
+      {native && sharing && state && !state.background && (
+        <button className="button small" onClick={() => void run(async () => setState(await Geofence.requestBackground()))}>Berechtigung „Immer erlauben“ öffnen</button>
       )}
-      {sharing && state && !state.available && <p className="error">Auf diesem Gerät fehlen die Google-Play-Dienste – Orte funktionieren hier nicht.</p>}
-      {sharing && state?.background && <p className="success">✓ Aktiv – Android meldet Ankommen und Losgehen.</p>}
       {error && <p className="error">{error}</p>}
     </div>
   );
 }
 
-/** Wann möchte ICH Bescheid bekommen? Je Person und Ort: Ankommen / Losgehen, optional Zeitfenster */
+const EMPTY = { arrive: false, leave: false, weekdays_only: false, from_time: null, to_time: null };
+
+/** „Mo–Fr · 7–9 Uhr“ bzw. „immer“ */
+function scheduleLabel(p: PlacePref) {
+  const days = p.weekdays_only ? 'Mo–Fr' : 'jeden Tag';
+  const hours = p.from_time && p.to_time ? `${p.from_time.replace(/^0/, '')}–${p.to_time.replace(/^0/, '')} Uhr` : 'rund um die Uhr';
+  return `${days} · ${hours}`;
+}
+
+/** Satz zur Kontrolle: „Du bekommst Bescheid, wenn Lea in der Schule ankommt und sie verlässt.“ */
+function sentence(name: string, place: Place, p: PlacePref) {
+  const what = [p.arrive && 'ankommt', p.leave && 'losgeht'].filter(Boolean).join(' oder ');
+  return `${name} bei „${place.name}“ ${what}`;
+}
+
+/** Ein Ort für eine Person: zwei große Schalter (Ankommen / Losgehen) und das Zeitfenster */
+function PrefCard({ name, place, pref, onChange }: { name: string; place: Place; pref: PlacePref; onChange(p: PlacePref): void }) {
+  const [editingTime, setEditingTime] = useState(false);
+  const on = pref.arrive || pref.leave;
+  return (
+    <div className={`pref-card ${on ? 'on' : ''}`}>
+      <div className="pref-card-head">
+        <span className="pref-card-icon" aria-hidden>{place.icon}</span>
+        <strong>{place.name}</strong>
+      </div>
+      <div className="pref-toggles" role="group" aria-label={`${name} bei ${place.name}`}>
+        <button type="button" className={`pref-toggle arrive ${pref.arrive ? 'active' : ''}`} aria-pressed={pref.arrive} onClick={() => onChange({ ...pref, arrive: !pref.arrive })}>
+          <Icon name="arrive" size={18} />
+          <span>Ankommen</span>
+          <span className="pref-check" aria-hidden>{pref.arrive ? '✓' : ''}</span>
+        </button>
+        <button type="button" className={`pref-toggle leave ${pref.leave ? 'active' : ''}`} aria-pressed={pref.leave} onClick={() => onChange({ ...pref, leave: !pref.leave })}>
+          <Icon name="leave" size={18} />
+          <span>Losgehen</span>
+          <span className="pref-check" aria-hidden>{pref.leave ? '✓' : ''}</span>
+        </button>
+      </div>
+      {on && (
+        <>
+          <button type="button" className="pref-schedule" onClick={() => setEditingTime(!editingTime)} aria-expanded={editingTime}>
+            ⏰ {scheduleLabel(pref)} <span className="muted">· ändern</span>
+          </button>
+          {editingTime && (
+            <div className="pref-time">
+              <div className="segmented" role="group" aria-label="Tage">
+                <button type="button" className={!pref.weekdays_only ? 'active' : ''} onClick={() => onChange({ ...pref, weekdays_only: false })}>Jeden Tag</button>
+                <button type="button" className={pref.weekdays_only ? 'active' : ''} onClick={() => onChange({ ...pref, weekdays_only: true })}>Nur Mo–Fr</button>
+              </div>
+              <div className="segmented" role="group" aria-label="Uhrzeit">
+                <button type="button" className={!pref.from_time ? 'active' : ''} onClick={() => onChange({ ...pref, from_time: null, to_time: null })}>Rund um die Uhr</button>
+                <button type="button" className={pref.from_time ? 'active' : ''} onClick={() => onChange({ ...pref, from_time: pref.from_time ?? '07:00', to_time: pref.to_time ?? '09:00' })}>Nur von … bis …</button>
+              </div>
+              {pref.from_time && (
+                <div className="pref-hours">
+                  <input type="time" value={pref.from_time} onChange={(e) => e.target.value && onChange({ ...pref, from_time: e.target.value })} aria-label="von" />
+                  <span>bis</span>
+                  <input type="time" value={pref.to_time ?? ''} onChange={(e) => e.target.value && onChange({ ...pref, to_time: e.target.value })} aria-label="bis" />
+                </div>
+              )}
+            </div>
+          )}
+          <p className="pref-sentence">🔔 Du bekommst Bescheid, wenn {sentence(name, place, pref)} – {scheduleLabel(pref)}.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Wann möchte ICH Bescheid bekommen? Je Person und Ort: Ankommen / Losgehen, optional Zeitfenster – speichert von selbst */
 export function PlaceNotifications({ places }: { places: Places }) {
   const { user, family } = useFamily();
   const data = places.data;
   const [prefs, setPrefs] = useState<PlacePref[] | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [openWindow, setOpenWindow] = useState<string | null>(null);
-  const { busy, error, run } = useAsync();
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [person, setPerson] = useState<number | null>(null);
   useEffect(() => {
     if (data && prefs === null) setPrefs(data.prefs);
   }, [data, prefs]);
-  if (!data || !prefs) return null;
-  if (data.places.length === 0) return <p className="muted">Sobald Orte angelegt sind, kannst du hier auswählen, worüber du Bescheid bekommst.</p>;
 
+  // kurz nach der letzten Änderung speichern
+  const [dirty, setDirty] = useState(0);
+  useEffect(() => {
+    if (!dirty || !prefs) return;
+    setStatus('saving');
+    const t = setTimeout(() => {
+      places.savePrefs(prefs.filter((p) => p.arrive || p.leave)).then(() => setStatus('saved'), () => setStatus('error'));
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
+
+  if (!data || !prefs) return null;
   const others = family.members.filter((m) => m.id !== user.id && !m.managed);
-  const get = (memberId: number, placeId: number) =>
-    prefs.find((p) => p.member_id === memberId && p.place_id === placeId)
-    ?? { member_id: memberId, place_id: placeId, arrive: false, leave: false, weekdays_only: false, from_time: null, to_time: null };
+  if (data.places.length === 0) return <p className="muted">Sobald Orte angelegt sind, kannst du hier auswählen, worüber du Bescheid bekommst.</p>;
+  if (others.length === 0) return <p className="muted">Noch niemand sonst in der Familie hat die App.</p>;
+
+  const selected = others.find((m) => m.id === person) ?? others[0];
+  const get = (memberId: number, placeId: number): PlacePref =>
+    prefs.find((p) => p.member_id === memberId && p.place_id === placeId) ?? { member_id: memberId, place_id: placeId, ...EMPTY };
   const set = (pref: PlacePref) => {
-    setSaved(false);
     setPrefs([...prefs.filter((p) => !(p.member_id === pref.member_id && p.place_id === pref.place_id)), pref]);
+    setDirty((n) => n + 1);
   };
+  const countFor = (id: number) => prefs.filter((p) => p.member_id === id && (p.arrive || p.leave)).length;
+  const shares = data.sharing.includes(selected.id);
+  const first = selected.name.split(' ')[0];
 
   return (
     <div className="place-prefs">
-      {others.map((m) => (
-        <div key={m.id} className="place-pref-person">
-          <h4><Avatar member={m} size={24} /> {m.name.split(' ')[0]} {!data.sharing.includes(m.id) && <small className="muted">· teilt noch nicht</small>}</h4>
-          {data.places.map((pl) => {
-            const p = get(m.id, pl.id);
-            const key = `${m.id}-${pl.id}`;
-            return (
-              <div key={pl.id} className="place-pref-row">
-                <span className="place-pref-name">{pl.icon} {pl.name}</span>
-                <span className="place-pref-toggles">
-                  <button type="button" className={`chip ${p.arrive ? 'chip-active' : ''}`} aria-pressed={p.arrive} onClick={() => set({ ...p, arrive: !p.arrive })}>Ankommen</button>
-                  <button type="button" className={`chip ${p.leave ? 'chip-active' : ''}`} aria-pressed={p.leave} onClick={() => set({ ...p, leave: !p.leave })}>Losgehen</button>
-                  {(p.arrive || p.leave) && (
-                    <button type="button" className={`icon-button subtle ${p.from_time || p.weekdays_only ? 'is-set' : ''}`} aria-label="Zeitfenster" title="Zeitfenster"
-                      onClick={() => setOpenWindow(openWindow === key ? null : key)}>⏰</button>
-                  )}
-                </span>
-                {openWindow === key && (p.arrive || p.leave) && (
-                  <div className="place-pref-window">
-                    <label className="checkbox">
-                      <input type="checkbox" checked={p.weekdays_only} onChange={(e) => set({ ...p, weekdays_only: e.target.checked })} /> nur Mo–Fr
-                    </label>
-                    <label className="checkbox">
-                      <input type="checkbox" checked={Boolean(p.from_time)} onChange={(e) => set({ ...p, from_time: e.target.checked ? '07:00' : null, to_time: e.target.checked ? '09:00' : null })} /> nur von
-                    </label>
-                    {p.from_time && (
-                      <>
-                        <input type="time" value={p.from_time} onChange={(e) => set({ ...p, from_time: e.target.value })} aria-label="von" />
-                        bis
-                        <input type="time" value={p.to_time ?? ''} onChange={(e) => set({ ...p, to_time: e.target.value })} aria-label="bis" />
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ))}
-      {error && <p className="error">{error}</p>}
-      {saved && <p className="success">Gespeichert</p>}
-      <button className="button primary" disabled={busy} onClick={() => void run(async () => {
-        await places.savePrefs(prefs.filter((p) => p.arrive || p.leave));
-        setSaved(true);
-      })}>
-        <Icon name="check" size={18} /> Benachrichtigungen speichern
-      </button>
+      <div className="pref-people" role="tablist" aria-label="Person">
+        {others.map((m) => (
+          <button key={m.id} role="tab" aria-selected={m.id === selected.id} className={`pref-person ${m.id === selected.id ? 'active' : ''}`}
+            style={m.id === selected.id ? { borderColor: m.color } : undefined} onClick={() => setPerson(m.id)}>
+            <Avatar member={m} size={30} />
+            <span>{m.name.split(' ')[0]}</span>
+            {countFor(m.id) > 0 && <span className="pref-count">{countFor(m.id)}</span>}
+          </button>
+        ))}
+      </div>
+      <p className={`pref-share-state ${shares ? 'yes' : 'no'}`}>
+        {shares ? `✓ ${first} teilt Ankommen und Losgehen` : `${first} teilt noch nicht – Benachrichtigungen kommen, sobald ${first} es in der App einschaltet.`}
+      </p>
+      <div className="pref-cards">
+        {data.places.map((pl) => (
+          <PrefCard key={`${selected.id}-${pl.id}`} name={first} place={pl} pref={get(selected.id, pl.id)} onChange={set} />
+        ))}
+      </div>
+      <small className={`pref-save ${status}`}>
+        {status === 'saving' ? 'Speichere …' : status === 'saved' ? '✓ Gespeichert' : status === 'error' ? 'Konnte nicht speichern – bitte nochmal versuchen' : 'Änderungen werden automatisch gespeichert'}
+      </small>
     </div>
   );
 }

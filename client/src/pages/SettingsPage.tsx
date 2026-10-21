@@ -150,11 +150,11 @@ export function SettingsPage() {
           title="Orte & Ankommen"
           summary={`${placeCount} ${placeCount === 1 ? 'Ort' : 'Orte'} · ${sharingOn ? 'du teilst deine Ankunft' : 'du teilst nicht'}`}
         >
-          <h3>Orte der Familie</h3>
+          <h3 className="step-title"><span className="step-no">1</span> Orte der Familie</h3>
           <PlacesManager places={places} />
-          <h3>Mein Ankommen teilen</h3>
+          <h3 className="step-title"><span className="step-no">2</span> Teile ich mein Ankommen?</h3>
           <PlaceSharing places={places} />
-          <h3>Benachrichtige mich, wenn …</h3>
+          <h3 className="step-title"><span className="step-no">3</span> Worüber möchte ich Bescheid bekommen?</h3>
           <PlaceNotifications places={places} />
         </SettingsGroup>
 

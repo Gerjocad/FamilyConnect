@@ -931,15 +931,60 @@ textarea { resize: vertical; }
 .place-sharing .checkbox { align-items: flex-start; }
 .place-sharing .checkbox > span { display: flex; flex-direction: column; }
 .warning-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 0.9rem; }
-.place-prefs { display: flex; flex-direction: column; gap: 14px; }
-.place-pref-person h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
-.place-pref-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
-.place-pref-name { flex: 1 1 120px; }
-.place-pref-toggles { display: flex; align-items: center; gap: 6px; }
-.place-pref-toggles .chip { font-size: 0.85rem; padding: 3px 10px; }
-.place-pref-toggles .is-set { background: var(--accent-soft); }
-.place-pref-window { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; padding: 4px 0 2px 4px; }
-.place-pref-window input[type="time"] { width: auto; }
+.step-title .step-no { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.75rem; display: inline-grid; place-items: center; flex-shrink: 0; }
+
+/* Teilen-Schalter */
+.share-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--surface-2); border: 2px solid transparent; }
+.share-card.on { border-color: var(--success); }
+.share-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.share-icon { font-size: 1.6rem; }
+.share-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.share-status { margin: 0; font-size: 0.88rem; padding: 6px 10px; border-radius: 8px; }
+.share-status.on { background: #d3f9d8; color: #2b8a3e; }
+.share-status.off { background: var(--surface); color: var(--muted); }
+.share-status.warn { background: #fff3bf; color: #8a5a00; }
+input.switch { appearance: none; -webkit-appearance: none; width: 48px; height: 28px; border-radius: 999px; background: var(--border); position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s; margin: 0; }
+input.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s; }
+input.switch:checked { background: var(--success); }
+input.switch:checked::after { transform: translateX(20px); }
+input.switch:disabled { opacity: 0.5; cursor: default; }
+
+/* Benachrichtigungen: Person wählen, je Ort zwei große Schalter */
+.place-prefs { display: flex; flex-direction: column; gap: 10px; }
+.pref-people { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.pref-person { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; font: inherit; color: inherit; flex-shrink: 0; }
+.pref-person.active { background: var(--accent-soft); font-weight: 700; }
+.pref-count { background: var(--accent); color: #fff; border-radius: 999px; font-size: 0.72rem; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 5px; }
+.pref-share-state { margin: 0; font-size: 0.85rem; }
+.pref-share-state.yes { color: var(--success); }
+.pref-share-state.no { color: var(--muted); }
+.pref-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.pref-card { border: 2px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); transition: border-color 0.2s; }
+.pref-card.on { border-color: var(--accent); }
+.pref-card-head { display: flex; align-items: center; gap: 10px; }
+.pref-card-icon { font-size: 1.6rem; }
+.pref-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pref-toggle { display: flex; align-items: center; gap: 6px; padding: 10px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface-2); font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+.pref-toggle .pref-check { margin-left: auto; font-weight: 800; }
+.pref-toggle.arrive.active { background: #d3f9d8; border-color: #2f9e44; color: #2b8a3e; }
+.pref-toggle.leave.active { background: #ffe8cc; border-color: #e8590c; color: #c2410c; }
+.pref-schedule { align-self: flex-start; background: none; border: 0; padding: 0; font: inherit; font-size: 0.88rem; cursor: pointer; color: var(--text); }
+.pref-time { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 10px; background: var(--surface-2); }
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.segmented button { padding: 7px 6px; background: var(--surface); border: 0; font: inherit; font-size: 0.85rem; cursor: pointer; color: var(--text); }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button.active { background: var(--accent); color: #fff; font-weight: 700; }
+.pref-hours { display: flex; align-items: center; gap: 8px; }
+.pref-hours input { width: auto; flex: 1; }
+.pref-sentence { margin: 0; font-size: 0.82rem; color: var(--muted); }
+.pref-save { color: var(--muted); }
+.pref-save.saved { color: var(--success); }
+.pref-save.error { color: var(--danger); }
+@media (prefers-color-scheme: dark) {
+  .share-status.on, .pref-toggle.arrive.active { background: #1f3a26; }
+  .share-status.warn { background: #3d3214; color: #f5d27a; }
+  .pref-toggle.leave.active { background: #3d2516; }
+}
 
 /* Karte für Orte (Leaflet) */
 .place-map { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); z-index: 0; }
