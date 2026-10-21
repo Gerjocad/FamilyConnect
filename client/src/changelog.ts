@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.44',
+    date: '2026-10-21',
+    title: 'Erledigte Erinnerungen verschwinden',
+    changes: [
+      'Hakst du eine Gewohnheit ab (z. B. per NFC-Aufkleber), verschwindet die Erinnerung dazu von selbst aus den Benachrichtigungen',
+      'Genauso bei erledigten Aufgaben und Diensten – auch wenn sie auf einem anderen Gerät abgehakt wurden',
+    ],
+  },
+  {
     version: '1.43',
     date: '2026-10-21',
     title: 'Übersicht: Wo ist wer?',

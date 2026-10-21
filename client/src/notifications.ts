@@ -151,6 +151,26 @@ export function buildReminders(
   return reminders.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED);
 }
 
+/**
+ * Schlüssel bereits angezeigter Erinnerungen, die sich erledigt haben: Gewohnheit heute abgehakt
+ * (auch eine Erinnerung von gestern, wenn sie überfällig war), Aufgabe erledigt, Dienst erledigt.
+ */
+export function doneReminderKeys(tasks: Task[], userId: number, now = new Date(), habitData: HabitData = { habits: [], checkins: [] }): string[] {
+  const keys: string[] = [];
+  const todayKey = toDateKey(now);
+  for (const habit of habitData.habits) {
+    if (!habitStatus(habit, userId, habitData.checkins, todayKey).doneToday) continue;
+    for (let i = 0; i <= 7; i++) keys.push(`habit:${habit.id}:${toDateKey(addDays(startOfDay(now), -i))}`);
+  }
+  for (const task of tasks) if (task.done && task.due_date) keys.push(`task:${task.id}:${task.due_date}`);
+  const from = toDateKey(addDays(startOfDay(now), -2));
+  const to = toDateKey(addDays(startOfDay(now), 2));
+  for (const occ of allOccurrences(habitData.chores ?? [], from, to, habitData.choreDays ?? [])) {
+    if (occ.doneBy !== null) keys.push(`chore:${occ.chore.id}:${occ.date}`);
+  }
+  return keys;
+}
+
 let syncing: Promise<void> = Promise.resolve();
 
 /** Plant alle anstehenden Erinnerungen neu (nach jeder Änderung an Terminen oder Aufgaben) */
@@ -160,6 +180,11 @@ export function syncReminders(events: CalendarEvent[], tasks: Task[], userId: nu
     if (!(await ensurePermission())) return;
     const { notifications: pending } = await LocalNotifications.getPending();
     if (pending.length) await LocalNotifications.cancel({ notifications: pending.map((n) => ({ id: n.id })) });
+    // Schon angezeigte Erinnerungen wegräumen, die inzwischen erledigt sind (z. B. per NFC abgehakt)
+    const done = new Set(doneReminderKeys(tasks, userId, new Date(), habitData).map(notificationId));
+    const { notifications: shown } = await LocalNotifications.getDeliveredNotifications();
+    const stale = shown.filter((n) => done.has(n.id));
+    if (stale.length) await LocalNotifications.removeDeliveredNotifications({ notifications: stale });
     const reminders = buildReminders(events, tasks, userId, new Date(), habitData);
     if (!reminders.length) return;
     await LocalNotifications.schedule({
