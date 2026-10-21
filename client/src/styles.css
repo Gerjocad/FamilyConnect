@@ -1000,3 +1000,12 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 
 .remind-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .remind-chips .chip { font-size: 0.85rem; padding: 4px 12px; }
+
+/* Übersicht: Wo ist wer? */
+.where-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.where-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); }
+.where-row.here { box-shadow: inset 3px 0 0 var(--success); }
+.where-row.away { box-shadow: inset 3px 0 0 #f59f00; }
+.where-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.where-text small { color: var(--muted); overflow-wrap: anywhere; }
+.where-badge { font-size: 1.4rem; }

@@ -73,6 +73,9 @@ describe('Orte', () => {
     assert.equal(sent.at(-1)[1].title, '🏫 Lea ist losgegangen');
     assert.deepEqual(sent.at(-1)[0], [ids.Papa]);
     assert.equal((await event({ transition: 'exit' })).data.notified, 0, 'doppelt');
+    overview = (await api(path, { token: mama })).data;
+    assert.deepEqual(overview.presence, []);
+    assert.deepEqual(overview.away.map((a) => [a.user_id, a.place_id]), [[ids.Lea, school.id]], 'unterwegs seit dem Losgehen');
     const arrived = await event({ transition: 'enter' });
     assert.equal(arrived.data.notified, 2);
     assert.match(sent.at(-1)[1].body, /^Schule · \d\d:\d\d$/);

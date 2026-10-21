@@ -86,7 +86,14 @@ export function placesRouter(db, { auth, member, publish, push, geocoder = new G
     const prefs = db.prepare('SELECT member_id, place_id, arrive, leave, weekdays_only, from_time, to_time FROM place_prefs WHERE family_id = ? AND user_id = ?')
       .all(req.familyId, req.user.id)
       .map((p) => ({ ...p, arrive: Boolean(p.arrive), leave: Boolean(p.leave), weekdays_only: Boolean(p.weekdays_only) }));
-    res.json({ places: places.map(serialize), sharing, presence, prefs });
+    // Wer zuletzt irgendwo losgegangen ist und seitdem nirgends angekommen ist (letzte 12 Stunden)
+    const inside = new Set(presence.map((p) => p.user_id));
+    const away = db.prepare(
+      `SELECT pp.user_id, pp.place_id, MAX(pp.changed_at) AS changed_at FROM place_presence pp JOIN places p ON p.id = pp.place_id
+       JOIN memberships m ON m.user_id = pp.user_id AND m.family_id = p.family_id AND m.share_places = 1
+       WHERE p.family_id = ? AND pp.inside = 0 AND pp.changed_at >= datetime('now', '-12 hours') GROUP BY pp.user_id`
+    ).all(req.familyId).filter((a) => !inside.has(a.user_id));
+    res.json({ places: places.map(serialize), sharing, presence, away, prefs });
   });
 
   router.get(`${base}/search`, auth, member, managersOnly, async (req, res) => {

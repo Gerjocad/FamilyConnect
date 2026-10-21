@@ -1,8 +1,9 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { WeatherCard } from '../components/WeatherCard';
+import { NavCard } from '../components/NavCard';
+import { WhereCard } from '../components/WhereCard';
 import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay, toDateKey } from '../dates';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -25,22 +26,6 @@ import { commentKey, useEventComments } from '../eventComments';
 import { TaskRow, useTaskToggle } from './TasksPage';
 
 /** Ganze Karte antippbar; Häkchen und Abhak-Knöpfe darin funktionieren weiter für sich */
-function NavCard({ to, className = '', children }: { to: string; className?: string; children: ReactNode }) {
-  const navigate = useNavigate();
-  const onClick = (e: MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input, label, .check-button, .poll, a')) return;
-    navigate(to);
-  };
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && e.target === e.currentTarget) navigate(to);
-  };
-  return (
-    <section className={`card nav-card ${className}`} onClick={onClick} onKeyDown={onKeyDown} role="link" tabIndex={0}>
-      {children}
-    </section>
-  );
-}
-
 const More = () => (
   <span className="nav-card-chevron" aria-hidden="true">
     <Icon name="right" size={18} />
@@ -153,6 +138,7 @@ export function DashboardPage() {
           </NavCard>
         )}
         <WeatherCard events={events.items} />
+        <WhereCard />
 
         <NavCard to="/kalender" className="span-2">
           <header className="section-header">

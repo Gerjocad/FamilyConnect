@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.43',
+    date: '2026-10-21',
+    title: 'Übersicht: Wo ist wer?',
+    changes: [
+      'Neue Karte auf der Übersicht: wer gerade an welchem Ort ist („🏫 Schule · seit 7:52“) und wer unterwegs ist („unterwegs seit 13:10 · von Schule“)',
+      'Erscheint nur, wenn jemand sein Ankommen teilt; aktualisiert sich live',
+    ],
+  },
+  {
     version: '1.42',
     date: '2026-10-21',
     title: 'Ausgeliehen: Erinnerung frei wählbar',

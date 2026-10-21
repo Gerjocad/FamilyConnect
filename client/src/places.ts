@@ -15,7 +15,15 @@ export interface PlacePref {
   to_time: string | null;
 }
 export interface Presence { user_id: number; place_id: number; changed_at: string }
-export interface PlacesData { places: Place[]; sharing: number[]; presence: Presence[]; prefs: PlacePref[] }
+export interface PlacesData {
+  places: Place[];
+  sharing: number[];
+  /** wer gerade an welchem Ort ist */
+  presence: Presence[];
+  /** wer zuletzt losgegangen und noch nirgends angekommen ist (letzte 12 Stunden) */
+  away: Presence[];
+  prefs: PlacePref[];
+}
 
 export const PLACE_ICONS = ['🏠', '🏫', '💼', '👵', '⚽', '🏥', '🛒', '🎵', '🏊', '📍'];
 export const DEFAULT_RADIUS = 50;
