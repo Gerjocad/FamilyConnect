@@ -37,7 +37,18 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Vorschaubild im Cache
 - **Müllabfuhr automatisch** aus dem ICS-Kalender der Stadt – erstmal nicht (Dienste gibt es manuell)
 - **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
-- **Standort teilen** – erstmal nicht
+- **Standort-Abfrage** – nur geplant, noch nicht umsetzen. Plan:
+  - Stufe 1 (empfohlen): „📍 Wo bist du?“ bei einer Person → Push → Person tippt „Standort senden“ (oder
+    „Nicht jetzt“) → einmaliger GPS-Standort an den Fragenden, Anzeige mit Uhrzeit, Genauigkeit und Link
+    zu Google Maps; nach 24 h automatisch gelöscht. Braucht neue APK (Standort-Berechtigung), geht auch im
+    Browser. Zusätzlich „Ich bin angekommen“-Knopf (Standort ungefragt an die Familie senden).
+  - Stufe 2 (optional, für Kinder): Antwort automatisch ohne Antippen – eigener Android-Teil, der die
+    Push-Nachricht im Hintergrund annimmt und den Standort schickt; Kind sieht jedes Mal „Mama hat deinen
+    Standort abgerufen“. Mehr Aufwand, Berechtigung „Immer erlauben“.
+  - Bewusst nicht: dauerhaftes Live-Tracking wie Life360 (Akku, Privatsphäre).
+  - Später denkbar: „Angekommen in der Schule“ (Orte festlegen, Benachrichtigung beim Ankommen).
+  - Offene Fragen: Wer darf wen fragen (Eltern → Kinder, Erwachsene untereinander?), Stufe 1 oder gleich 2,
+    jemand mit iPhone in der Familie (dann nur Stufe 1 im Browser)?
 
 ## Erledigt aus der Ideenliste
 
