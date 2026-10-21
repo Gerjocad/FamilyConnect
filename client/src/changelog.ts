@@ -21,6 +21,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Einrichten: Familie & Profil → Wanddisplay → Code erstellen, am Tablet „/wand“ öffnen und den Code eintippen; jederzeit wieder entfernbar',
       'Nachts (22–6 Uhr) wird die Anzeige dunkel',
       'Hält den Bildschirm selbst wach, wo der Browser das kann (z. B. Silk 108)',
+      'Vollbild ohne Adressleiste: einmal aufs Display tippen; oder über „Zum Startbildschirm hinzufügen“ direkt im Vollbild starten',
       'Die App selbst funktioniert jetzt auch in Browsern ohne color-mix (Urlaubsfarben, Leisten)',
     ],
   },
