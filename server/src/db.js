@@ -128,6 +128,8 @@ const ADDED_COLUMNS = [
   // Bundesland für Ferien und Feiertage (Kürzel wie NW, server/src/holidays.js)
   ['families', 'state', 'TEXT'],
   ['families', 'weather_place', 'TEXT'],
+  // Eigene Ankunft/Abfahrt an Orten teilen (jeder entscheidet selbst, je Familie)
+  ['memberships', 'share_places', 'INTEGER NOT NULL DEFAULT 0'],
   ['families', 'weather_lat', 'REAL'],
   ['families', 'weather_lon', 'REAL'],
   // Die feste Einkaufsliste jeder Familie (nicht löschbar)
@@ -339,6 +341,46 @@ CREATE TABLE IF NOT EXISTS loans (
   reminded TEXT NOT NULL DEFAULT '',
   created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Orte (Zuhause, Schule, Arbeit …) für „angekommen/losgegangen“ – Android meldet das Betreten/Verlassen
+CREATE TABLE IF NOT EXISTS places (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT '📍',
+  address TEXT NOT NULL DEFAULT '',
+  lat REAL NOT NULL,
+  lon REAL NOT NULL,
+  radius INTEGER NOT NULL DEFAULT 50,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Wer worüber Bescheid bekommen möchte: Person (member_id) an Ort, Ankommen/Verlassen, optional Zeitfenster
+CREATE TABLE IF NOT EXISTS place_prefs (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  member_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE CASCADE,
+  arrive INTEGER NOT NULL DEFAULT 1,
+  leave INTEGER NOT NULL DEFAULT 0,
+  weekdays_only INTEGER NOT NULL DEFAULT 0,
+  from_time TEXT,
+  to_time TEXT,
+  UNIQUE (user_id, member_id, place_id)
+);
+
+-- Wo jemand gerade ist (letzte Meldung je Person und Ort)
+CREATE TABLE IF NOT EXISTS place_presence (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE CASCADE,
+  inside INTEGER NOT NULL,
+  changed_at TEXT NOT NULL,
+  notified_enter_at TEXT,
+  notified_exit_at TEXT,
+  PRIMARY KEY (user_id, place_id)
 );
 
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild

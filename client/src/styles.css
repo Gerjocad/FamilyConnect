@@ -897,3 +897,46 @@ textarea { resize: vertical; }
 
 /* Kontakt-Adresse: antippen öffnet Google Maps */
 .contact-address { flex-basis: 100%; margin: -4px 0 0 52px; font-size: 0.85rem; color: var(--muted); white-space: pre-line; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
+
+/* Familie & Profil: aufklappbare Gruppen, auf breiten Bildschirmen zweispaltig */
+.settings-page { max-width: 1100px; }
+.settings-grid { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; margin-bottom: 12px; }
+@media (min-width: 900px) { .settings-grid { grid-template-columns: 1fr 1fr; } .settings-group.open { grid-column: 1 / -1; } }
+.card.settings-group { padding: 0; overflow: hidden; }
+.settings-group-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: none; border: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.settings-group-head > svg:last-child { transition: transform 0.2s; color: var(--muted); flex-shrink: 0; }
+.settings-group.open .settings-group-head > svg:last-child { transform: rotate(90deg); }
+.settings-group-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); flex-shrink: 0; }
+.settings-group-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.settings-group-title small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-group-body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); }
+.settings-group-body > h3 { margin: 10px 0 0; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+.settings-page .news-link { margin-bottom: 12px; }
+
+/* Orte */
+.places { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.place-list { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.place-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.place-icon { font-size: 1.5rem; }
+.place-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.place-info small { overflow-wrap: anywhere; }
+.place-here-now { color: var(--success); font-weight: 600; }
+.place-spot { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 0.9rem; }
+.place-spot span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.place-here { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
+.emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-picker .emoji { font-size: 1.3rem; width: 42px; height: 42px; border-radius: 10px; border: 2px solid transparent; background: var(--surface-2); cursor: pointer; }
+.emoji-picker .emoji.active { border-color: var(--accent); background: var(--accent-soft); }
+.place-sharing { display: flex; flex-direction: column; gap: 8px; }
+.place-sharing .checkbox { align-items: flex-start; }
+.place-sharing .checkbox > span { display: flex; flex-direction: column; }
+.warning-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 0.9rem; }
+.place-prefs { display: flex; flex-direction: column; gap: 14px; }
+.place-pref-person h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.place-pref-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.place-pref-name { flex: 1 1 120px; }
+.place-pref-toggles { display: flex; align-items: center; gap: 6px; }
+.place-pref-toggles .chip { font-size: 0.85rem; padding: 3px 10px; }
+.place-pref-toggles .is-set { background: var(--accent-soft); }
+.place-pref-window { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; padding: 4px 0 2px 4px; }
+.place-pref-window input[type="time"] { width: auto; }

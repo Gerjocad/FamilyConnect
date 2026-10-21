@@ -10,6 +10,9 @@ import { WallDisplays } from '../components/WallDisplays';
 import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
 import { Icon } from '../components/Icon';
 import { WeatherPlace } from '../components/WeatherPlace';
+import { SettingsGroup } from '../components/SettingsGroup';
+import { PlaceNotifications, PlaceSharing, PlacesManager } from '../components/PlaceSettings';
+import { usePlaces } from '../places';
 import { useAsync } from '../components/useAsync';
 import { useFamily } from '../session';
 import { STATES } from '../holidays';
@@ -33,6 +36,7 @@ export function SettingsPage() {
   const profile = useAsync();
   const fam = useAsync();
   const other = useAsync();
+  const places = usePlaces();
   const [version, setVersion] = useState<AppVersion | null>(null);
   const [updateInfo, setUpdateInfo] = useState<string | null>(null);
   useEffect(() => {
@@ -71,12 +75,15 @@ export function SettingsPage() {
     }
   };
 
+  const placeCount = places.data?.places.length ?? 0;
+  const sharingOn = Boolean(places.data?.sharing.includes(user.id));
+
   return (
-    <div className="page narrow">
+    <div className="page settings-page">
       <header className="page-header"><h1>Familie & Profil</h1></header>
 
-      <section className="card">
-        <h2>Mein Profil</h2>
+      <div className="settings-grid">
+        <SettingsGroup id="profil" icon="settings" title="Mein Profil" summary={`${user.name} · ${user.email}`}>
         <form className="form" onSubmit={(e: FormEvent) => { e.preventDefault(); saveProfile({ name }); }}>
           <div className="row align-end">
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
@@ -134,13 +141,25 @@ export function SettingsPage() {
           {profile.error && <p className="error">{profile.error}</p>}
         </form>
         <p className="muted">Angemeldet als {user.email}</p>
-      </section>
+          <p className="muted">Angemeldet als {user.email}</p>
+        </SettingsGroup>
 
-      {/* Familienverwaltung nur für Admins – Eltern und Kinder sehen nur ihr Profil */}
-      {isAdmin && (
-        <>
-      <section className="card">
-        <h2>{family.name}</h2>
+        <SettingsGroup
+          id="orte"
+          icon="pin"
+          title="Orte & Ankommen"
+          summary={`${placeCount} ${placeCount === 1 ? 'Ort' : 'Orte'} · ${sharingOn ? 'du teilst deine Ankunft' : 'du teilst nicht'}`}
+        >
+          <h3>Orte der Familie</h3>
+          <PlacesManager places={places} />
+          <h3>Mein Ankommen teilen</h3>
+          <PlaceSharing places={places} />
+          <h3>Benachrichtige mich, wenn …</h3>
+          <PlaceNotifications places={places} />
+        </SettingsGroup>
+
+        {isAdmin && (
+          <SettingsGroup id="familie" icon="contacts" title={family.name} summary={`${family.members.length} Mitglieder · Code ${family.invite_code}`}>
         {isAdmin && (
           <form className="form" onSubmit={(e) => {
             e.preventDefault();
@@ -152,19 +171,6 @@ export function SettingsPage() {
             </div>
           </form>
         )}
-
-        <label>
-          Bundesland <span className="hint">(für Ferien und Feiertage im Kalender)</span>
-          <select
-            value={family.state ?? ''}
-            onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}`, { method: 'PATCH', body: { state: e.target.value || null } })))}
-          >
-            <option value="">Keins</option>
-            {Object.entries(STATES).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select>
-        </label>
-
-        {isAdmin && <WeatherPlace onSaved={setFamily} />}
 
         <div className="invite">
           <div>
@@ -267,10 +273,61 @@ export function SettingsPage() {
         >
           Familie verlassen
         </button>
-      </section>
+          </SettingsGroup>
+        )}
 
-      <section className="card">
-        <h2>Weitere Familie oder Gruppe</h2>
+        {isAdmin && (
+          <SettingsGroup
+            id="kalender"
+            icon="calendar"
+            title="Kalender & Wetter"
+            summary={[family.state ? STATES[family.state as keyof typeof STATES] : 'kein Bundesland', family.weather_place ?? 'kein Wetter-Ort'].join(' · ')}
+          >
+        <label>
+          Bundesland <span className="hint">(für Ferien und Feiertage im Kalender)</span>
+          <select
+            value={family.state ?? ''}
+            onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}`, { method: 'PATCH', body: { state: e.target.value || null } })))}
+          >
+            <option value="">Keins</option>
+            {Object.entries(STATES).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          </select>
+        </label>
+
+            <WeatherPlace onSaved={setFamily} />
+          </SettingsGroup>
+        )}
+
+        {isAdmin && (
+          <SettingsGroup id="geraete" icon="monitor" title="Geräte" summary="Thermometer · Wanddisplay">
+            <h3><Icon name="thermometer" size={16} /> Thermometer</h3>
+            <ClimateSettings />
+            <h3><Icon name="monitor" size={16} /> Wanddisplay</h3>
+            <WallDisplays />
+          </SettingsGroup>
+        )}
+
+        <SettingsGroup id="app" icon="download" title="App & Server" summary={`Version ${CURRENT_VERSION}${version ? ` · App ${version.versionName}` : ''}`}>
+          {isNativeApp && (
+            <>
+              <h3>App</h3>
+          <div className="row align-end">
+            <p className="muted spacer">App-Version {version ? `${version.versionName} (${version.versionCode})` : '…'}</p>
+            <button className="button" onClick={() => void checkUpdate()}><Icon name="download" size={18} /> Nach Updates suchen</button>
+          </div>
+          {updateInfo && <p className="muted">{updateInfo}</p>}
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <h3>Server</h3>
+              <ServerUpdateCard />
+            </>
+          )}
+        </SettingsGroup>
+
+        {isAdmin && (
+          <SettingsGroup id="gruppen" icon="plus" title="Weitere Familie oder Gruppe" summary="z. B. Großeltern, WG, Sportverein">
         <p className="muted">Zum Beispiel für die Großeltern, die WG oder den Sportverein.</p>
         <form className="form" onSubmit={(e) => {
           e.preventDefault();
@@ -291,31 +348,9 @@ export function SettingsPage() {
           </div>
         </form>
         {other.error && <p className="error">{other.error}</p>}
-      </section>
-
-        </>
-      )}
-
-      {isAdmin && (
-        <section className="card">
-          <h2><Icon name="thermometer" size={18} /> Thermometer</h2>
-          <ClimateSettings />
-        </section>
-      )}
-
-      {isAdmin && (
-        <section className="card">
-          <h2><Icon name="monitor" size={18} /> Wanddisplay</h2>
-          <WallDisplays />
-        </section>
-      )}
-
-      {isAdmin && (
-        <section className="card">
-          <h2><Icon name="repeat" size={18} /> Server</h2>
-          <ServerUpdateCard />
-        </section>
-      )}
+          </SettingsGroup>
+        )}
+      </div>
 
       <Link to="/neuigkeiten" className="card news-link">
         <Icon name="sparkle" size={22} />
@@ -325,17 +360,6 @@ export function SettingsPage() {
         </span>
         <Icon name="right" size={18} />
       </Link>
-
-      {isNativeApp && (
-        <section className="card">
-          <h2>App</h2>
-          <div className="row align-end">
-            <p className="muted spacer">App-Version {version ? `${version.versionName} (${version.versionCode})` : '…'}</p>
-            <button className="button" onClick={() => void checkUpdate()}><Icon name="download" size={18} /> Nach Updates suchen</button>
-          </div>
-          {updateInfo && <p className="muted">{updateInfo}</p>}
-        </section>
-      )}
 
       <button className="button wide" onClick={() => void signOut()}><Icon name="logout" size={18} /> Abmelden</button>
       {editingMember && <ManagedMemberDialog member={editingMember} onClose={() => setEditingMember(null)} />}

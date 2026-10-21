@@ -49,6 +49,15 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="familyconnect" />
 
+        <!-- Orte: Android meldet Betreten/Verlassen; nach Neustart/Update Orte neu anmelden -->
+        <receiver android:name=".GeofenceReceiver" android:exported="false" />
+        <receiver android:name=".GeofenceBootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -67,6 +76,12 @@
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <!-- kurzes Vibrieren nach dem Beschreiben eines NFC-Aufklebers -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Orte (angekommen/losgegangen): Standort auch im Hintergrund, nur wenn man es selbst einschaltet -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <!-- Erinnerungen pünktlich auslösen (Kalender-App) -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 </manifest>

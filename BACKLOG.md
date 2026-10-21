@@ -46,14 +46,7 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
     Push-Nachricht im Hintergrund annimmt und den Standort schickt; Kind sieht jedes Mal „Mama hat deinen
     Standort abgerufen“. Mehr Aufwand, Berechtigung „Immer erlauben“.
   - Bewusst nicht: dauerhaftes Live-Tracking wie Life360 (Akku, Privatsphäre).
-  - Orte (Schule, Arbeit, Zuhause …): Geofencing von Android (Play-Dienste) – die App fragt nicht selbst
-    regelmäßig ab, sondern meldet Kreise (Mitte + Radius, mind. ~150 m) beim System an; Android meldet
-    Betreten/Verlassen stromsparend über WLAN/Mobilfunk/GPS, typisch 1–3 Min. Verzögerung (im Tiefschlaf
-    auch länger). Verweilzeit ~2 Min. gegen Hin-und-her am Rand; gleiche Meldung frühestens nach 10 Min.
-    erneut. An den Server geht nur „Ort + angekommen/verlassen + Uhrzeit“, keine Koordinaten.
-    Pro Ort einstellbar: wer benachrichtigt wird, ob Ankommen und/oder Verlassen, Zeitfenster
-    (z. B. Schule nur Mo–Fr 7–9 und 12–16 Uhr). Anzeige „Lea: in der Schule seit 7:52“.
-    Nach Neustart des Handys Orte neu anmelden. Braucht „Standort immer erlauben“ + neue APK.
+  - Orte mit „angekommen/losgegangen“ sind umgesetzt (v1.40) – offen bleibt nur die „Wo bist du?“-Abfrage.
   - Offene Fragen: Wer darf wen fragen bzw. wessen Orte werden gemeldet (Eltern → Kinder, Erwachsene
     untereinander?), Stufe 1 oder gleich 2. Kein iPhone in der Familie (nur Android) – geklärt.
 
@@ -63,4 +56,5 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima,
   Server-Update per Knopfdruck in der App, NFC-Aufkleber direkt in der App beschreiben,
   Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand),
-  Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum)
+  Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum), Orte (angekommen/losgegangen),
+  aufgeräumte Seite Familie & Profil

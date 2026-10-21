@@ -8,6 +8,7 @@ import { Avatar } from './Avatar';
 import { CLOSE_DRAWER_EVENT } from './drawer';
 import { Icon, type IconName } from './Icon';
 import { NotificationBridge } from './NotificationBridge';
+import { GeofenceBridge } from './GeofenceBridge';
 import { UpdateBanner } from './UpdateBanner';
 import { TOPBAR_ACTIONS_ID } from './TopbarActions';
 import { ActivityBell } from './ActivityBell';
@@ -158,6 +159,7 @@ export function Layout() {
         <Outlet />
       </main>
       <NotificationBridge />
+      <GeofenceBridge />
 
       <nav className="bottombar">
         {MOBILE_LEFT.map((item) => (

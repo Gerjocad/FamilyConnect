@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.40',
+    date: '2026-10-21',
+    title: 'Orte: angekommen & losgegangen',
+    apk: true,
+    changes: [
+      'Familie & Profil → Orte & Ankommen: Eltern legen Orte an (Zuhause, Schule, Arbeit …) – Adresse suchen oder „Ich bin gerade hier“, Radius 50 m',
+      'Jeder entscheidet selbst, ob er seine Ankunft/Abfahrt teilt – geteilt wird nur „angekommen/losgegangen“, nie der genaue Standort oder Weg',
+      'Jeder wählt selbst, worüber er Bescheid bekommt: je Person und Ort Ankommen und/oder Losgehen, auf Wunsch nur Mo–Fr oder zu bestimmten Uhrzeiten',
+      'Android meldet das stromsparend selbst (meist 1–3 Minuten Verzögerung); „angekommen“ erst nach 2 Minuten vor Ort, gleiche Meldung höchstens alle 10 Minuten',
+      'Familie & Profil ist jetzt übersichtlicher: Bereiche zum Aufklappen, am Computer zweispaltig',
+    ],
+  },
+  {
     version: '1.39',
     date: '2026-10-21',
     title: 'Kontakte: Adresse öffnet Google Maps',
