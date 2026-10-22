@@ -26,6 +26,11 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
 - **ESP32-„Bitte lüften“-Lampe** (gefällt – merken, noch nicht umsetzen): WS2812B-Ring im Zimmer leuchtet
   blau, solange die Luftfeuchte des Tuya-Thermometers über dem Grenzwert liegt (Werte/Grenzen kommen aus
   dem Raumklima der App), geht nach dem Lüften wieder aus.
+- **Einkaufsliste für die drei ESP32-Geräte** (Stand 22.10.): vorhanden reicht für die Station (ESP32-S3,
+  GC9A01, 16er-Ring, RC522, LD2402, BH1750, Omron, EC11). Dazu kaufen: RFID-Anhänger 13,56 MHz (MIFARE
+  Classic 1K, je Person + Reserve), 2× ESP32-C3 SuperMini (Ampel + Lüften), 1× WS2812B-Ring 16 (Lüften),
+  3× USB-Netzteil 5 V/2 A + Kabel, 3× 1000 µF Elko, 3× 330 Ω Widerstand, Jumperkabel/Lochraster, Gehäuse
+  bzw. Milchglas-Streuscheibe. Ampel nutzt die vorhandene 8×8-Matrix + 2. BH1750.
 
 - **Punkte & Belohnungen** – „klingt gut, aber noch nicht“: Punkte für Aufgaben/Gewohnheiten/Dienste,
   Belohnungen einlösen über Anfragen, Wochen-Rangliste
