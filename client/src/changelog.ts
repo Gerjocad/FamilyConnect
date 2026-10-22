@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.46',
+    date: '2026-10-22',
+    title: 'Ein NFC-Aufkleber für alle',
+    changes: [
+      'Haben mehrere Personen eine Gewohnheit mit gleichem Namen (z. B. „Duschen“), reicht ein Aufkleber: jeder hakt damit seine eigene ab',
+      'Groß-/Kleinschreibung und Emojis im Namen sind dabei egal; in der Gewohnheit steht, für wen der Aufkleber noch gilt',
+    ],
+  },
+  {
     version: '1.45',
     date: '2026-10-22',
     title: 'Pinnwand: Kommentare und Reaktionen',

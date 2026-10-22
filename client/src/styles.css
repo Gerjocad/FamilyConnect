@@ -1028,3 +1028,5 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .post-comment-bubble { flex: 1; min-width: 0; background: var(--surface-2); border-radius: 4px 12px 12px 12px; padding: 6px 10px; }
 .post-comment-bubble p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .post-comment-form input { font-size: 0.92rem; }
+
+.nfc-shared { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 0.88rem; }

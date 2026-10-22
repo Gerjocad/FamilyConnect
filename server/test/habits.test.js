@@ -136,4 +136,21 @@ describe('Gewohnheiten', () => {
     await api(`/families/${fid}/habits/${habit.id}`, { token: mama, method: 'DELETE' });
     assert.deepEqual((await api(`/families/${fid}/checkins`, { token: mama })).data, []);
   });
+
+  test('gleichnamige Gewohnheiten teilen sich einen Aufkleber', async () => {
+    const { mama, kind, fid, kindId, mamaId } = await family();
+    const create = async (title, ids) => (await api(`/families/${fid}/habits`, { token: mama, method: 'POST', body: { title, emoji: '🚿', interval_days: 1, member_ids: ids } })).data;
+    const forKid = await create('Duschen', [kindId]);
+    const forMama = await create('duschen 🚿', [mamaId]);
+    const other = await create('Zähne putzen', [kindId]);
+    // Mama hält Leas Aufkleber dran → zählt für Mamas „duschen“
+    const res = await api(`/habits/by-token/${forKid.nfc_token}/checkin`, { token: mama, method: 'POST', body: { date: '2026-10-22' } });
+    assert.equal(res.status, 201);
+    assert.equal(res.data.habit.id, forMama.id);
+    assert.equal(res.data.checkin.user_id, mamaId);
+    // das Kind mit demselben Aufkleber → seine eigene Gewohnheit
+    assert.equal((await api(`/habits/by-token/${forKid.nfc_token}/checkin`, { token: kind, method: 'POST', body: { date: '2026-10-22' } })).data.habit.id, forKid.id);
+    // anderer Name → kein Ersatz
+    assert.equal((await api(`/habits/by-token/${other.nfc_token}/checkin`, { token: mama, method: 'POST', body: { date: '2026-10-22' } })).status, 403);
+  });
 });

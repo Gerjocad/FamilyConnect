@@ -19,13 +19,21 @@ import { useResource } from '../useResource';
 const EMOJIS = ['🚿', '🦷', '🛏️', '💊', '🏃', '📚', '🧹', '🐶', '💧', '🥦', '🎹', '🧺'];
 const INTERVALS = [1, 2, 3, 4, 5, 7, 14, 30];
 
-function HabitForm({ habit, onSave, onDelete, onClose }: {
+/** Gleicher Name? Groß/klein, Leerzeichen und Emojis egal – wie auf dem Server */
+const sameTitle = (a: string, b: string) => {
+  const norm = (t: string) => t.toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return norm(a) !== '' && norm(a) === norm(b);
+};
+
+function HabitForm({ habit, others = [], onSave, onDelete, onClose }: {
   habit?: Habit;
+  /** alle anderen Gewohnheiten (für „gilt auch für …“ beim Aufkleber) */
+  others?: Habit[];
   onSave(data: Partial<Habit>): Promise<unknown>;
   onDelete?(): Promise<unknown>;
   onClose(): void;
 }) {
-  const { family } = useFamily();
+  const { family, member } = useFamily();
   const [title, setTitle] = useState(habit?.title ?? '');
   const [emoji, setEmoji] = useState(habit?.emoji ?? '🚿');
   const [interval, setInterval] = useState(habit?.interval_days ?? 1);
@@ -107,6 +115,17 @@ function HabitForm({ habit, onSave, onDelete, onClose }: {
               </p>
             )}
             <code className="nfc-url">{nfcUrl({ nfc_token: token })}</code>
+            {(() => {
+              const shared = others.filter((o) => sameTitle(o.title, title));
+              if (!shared.length) return null;
+              const who = (h: Habit) => (h.member_ids.length ? h.member_ids.map((id) => member(id)?.name.split(' ')[0]).filter(Boolean).join(', ') : 'alle');
+              return (
+                <p className="nfc-shared">
+                  🔗 Ein Aufkleber reicht: Er gilt auch für {shared.map((h) => `${h.emoji ?? ''} ${h.title} (${who(h)})`.trim()).join(', ')} –
+                  jeder hakt damit seine eigene Gewohnheit ab.
+                </p>
+              );
+            })()}
             <label className="checkbox">
               <input type="checkbox" checked={nfcLinked} onChange={(e) => setNfcLinked(e.target.checked)} />
               Kinder haken nur per Aufkleber ab
@@ -254,6 +273,7 @@ export function HabitsPage() {
       {editing && (
         <HabitForm
           habit={editing === 'new' ? undefined : editing}
+          others={habits.items.filter((h) => editing === 'new' || h.id !== editing.id)}
           onClose={() => setEditing(null)}
           onSave={(data) => (editing === 'new' ? habits.create(data) : habits.update(editing.id, data))}
           onDelete={editing === 'new' ? undefined : () => habits.remove(editing.id)}

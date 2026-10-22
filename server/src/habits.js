@@ -6,6 +6,12 @@ import { isManager } from './permissions.js';
 
 const SOURCES = ['app', 'nfc', 'button'];
 
+/** Gleicher Name? Groß/klein, Leerzeichen und Emojis egal („Duschen“ = „duschen 🚿“) */
+export const sameTitle = (a, b) => {
+  const norm = (t) => t.toLocaleLowerCase('de').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return norm(a) !== '' && norm(a) === norm(b);
+};
+
 export function habitsRouter(db, { auth, member, publish }) {
   const router = Router();
 
@@ -86,12 +92,18 @@ export function habitsRouter(db, { auth, member, publish }) {
     const habit = db.prepare('SELECT * FROM habits WHERE nfc_token = ?').get(String(req.params.token).toLowerCase());
     const isMember = habit && db.prepare('SELECT 1 FROM memberships WHERE family_id = ? AND user_id = ?').get(habit.family_id, req.user.id);
     if (!habit || !isMember) return res.status(404).json({ error: 'Dieser Aufkleber gehört zu keiner Gewohnheit deiner Familie' });
-    // Der Aufkleber funktioniert – ab jetzt ist die Gewohnheit mit ihm verknüpft
-    if (!habit.nfc_linked) {
-      db.prepare('UPDATE habits SET nfc_linked = 1 WHERE id = ?').run(habit.id);
-      publish(habit.family_id, 'habits');
+    // Gilt die Gewohnheit nicht für mich, aber es gibt eine gleichnamige für mich (z. B. „Duschen“ für Lea
+    // und für Tom)? Dann zählt derselbe Aufkleber dafür – ein Aufkleber im Bad reicht für alle.
+    let target = habit;
+    if (!participants(habit).includes(req.user.id)) {
+      target = db.prepare('SELECT * FROM habits WHERE family_id = ? AND id != ?').all(habit.family_id, habit.id)
+        .find((h) => sameTitle(h.title, habit.title) && participants(h).includes(req.user.id)) ?? habit;
     }
-    checkIn(habit, req, res, { userId: req.user.id, date: req.body?.date ?? todayKey(), source: 'nfc' });
+    // Der Aufkleber funktioniert – ab jetzt ist die Gewohnheit mit ihm verknüpft
+    const unlinked = [...new Set([habit, target])].filter((h) => !h.nfc_linked);
+    for (const h of unlinked) db.prepare('UPDATE habits SET nfc_linked = 1 WHERE id = ?').run(h.id);
+    if (unlinked.length) publish(habit.family_id, 'habits');
+    checkIn(target, req, res, { userId: req.user.id, date: req.body?.date ?? todayKey(), source: 'nfc' });
   });
 
   // Aufkleber lösen (oder verloren): neuer Code, der alte Aufkleber funktioniert nicht mehr
