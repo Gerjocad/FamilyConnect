@@ -16,6 +16,8 @@ function describe(item: ActivityItem, name: string): { title: string; text: stri
       const when = `${formatShortDay(start)}${item.text.length > 10 && !item.text.endsWith('T00:00') ? `, ${formatTime(start)}` : ''}`;
       return { title: `${name} hat dich bei „${item.subject}“ eingetragen`, text: when };
     }
+    case 'post-comment': return { title: `${name} hat auf der Pinnwand kommentiert`, text: item.text };
+    case 'post-reaction': return { title: `${name} hat mit ${item.text} reagiert`, text: item.subject };
     case 'post': return { title: `${name} auf der Pinnwand`, text: item.text };
     case 'complaint': return { title: `Beschwerde von ${name}`, text: item.text };
     case 'complaint-comment': return { title: `${name} hat eine Beschwerde kommentiert`, text: item.text };

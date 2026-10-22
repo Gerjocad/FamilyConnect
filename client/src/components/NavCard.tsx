@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 export function NavCard({ to, className = '', children }: { to: string; className?: string; children: ReactNode }) {
   const navigate = useNavigate();
   const onClick = (e: MouseEvent) => {
-    if ((e.target as HTMLElement).closest('input, label, .check-button, .poll, a')) return;
+    if ((e.target as HTMLElement).closest('input, label, button, .check-button, .poll, .post-interactions, a')) return;
     navigate(to);
   };
   const onKeyDown = (e: KeyboardEvent) => {

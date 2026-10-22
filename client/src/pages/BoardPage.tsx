@@ -10,6 +10,8 @@ import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import type { Post } from '../types';
 import { useResource } from '../useResource';
+import { PostInteractions } from '../components/PostInteractions';
+import { usePostExtras, type PostExtras } from '../postExtras';
 
 export interface Poll {
   post_id: number;
@@ -79,7 +81,15 @@ function PollView({ poll, onVote }: { poll: Poll; onVote(optionId: number | null
   );
 }
 
-export function PostCard({ post, poll, onVote, onDelete }: { post: Post; poll?: Poll; onVote?(optionId: number | null): void; onDelete?(): void }) {
+export function PostCard({ post, poll, onVote, onDelete, extras, compact }: {
+  post: Post;
+  poll?: Poll;
+  onVote?(optionId: number | null): void;
+  onDelete?(): void;
+  extras?: PostExtras;
+  /** Übersicht: Kommentare erst auf Antippen */
+  compact?: boolean;
+}) {
   const { member } = useFamily();
   const author = member(post.created_by) ?? { name: 'Ehemaliges Mitglied', color: '#868e96' };
   return (
@@ -98,6 +108,7 @@ export function PostCard({ post, poll, onVote, onDelete }: { post: Post; poll?: 
         </header>
         <p>{poll && '📊 '}{post.text}</p>
         {poll && onVote && <PollView poll={poll} onVote={onVote} />}
+        {extras && <PostInteractions postId={post.id} extras={extras} compact={compact} />}
       </div>
     </article>
   );
@@ -107,6 +118,7 @@ export function BoardPage() {
   const { user } = useFamily();
   const posts = useResource<Post>('posts');
   const polls = usePolls();
+  const extras = usePostExtras();
   const [text, setText] = useState('');
   // Abstimmung: Antwortfelder (leere werden ignoriert)
   const [options, setOptions] = useState<string[] | null>(null);
@@ -182,6 +194,7 @@ export function BoardPage() {
               key={p.id}
               post={p}
               poll={polls.forPost(p.id)}
+              extras={extras}
               onVote={(optionId) => {
                 const poll = polls.forPost(p.id);
                 if (poll) void run(() => polls.vote(poll, optionId));

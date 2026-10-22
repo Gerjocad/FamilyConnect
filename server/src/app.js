@@ -17,6 +17,7 @@ import { activityRouter, recordMentions } from './activity.js';
 import { WeatherService, weatherRouter } from './weather.js';
 import { wishesRouter } from './wishes.js';
 import { wallRouter } from './wall.js';
+import { postExtrasRouter } from './postExtras.js';
 import { Geocoder, placesRouter } from './places.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
@@ -366,6 +367,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   app.use(serverUpdateRouter({ auth, member, updater }));
   app.use(activityRouter(db, { auth, member }));
+  app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));

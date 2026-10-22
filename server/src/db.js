@@ -384,6 +384,24 @@ CREATE TABLE IF NOT EXISTS place_presence (
   PRIMARY KEY (user_id, place_id)
 );
 
+-- Pinnwand: Kommentare und Reaktionen (eine je Person und Beitrag)
+CREATE TABLE IF NOT EXISTS post_comments (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS post_comments_post ON post_comments(post_id);
+CREATE TABLE IF NOT EXISTS post_reactions (
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  emoji TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (post_id, user_id)
+);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

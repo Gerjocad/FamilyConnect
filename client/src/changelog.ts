@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.45',
+    date: '2026-10-22',
+    title: 'Pinnwand: Kommentare und Reaktionen',
+    changes: [
+      'Unter jedem Beitrag reagieren mit 8 Smileys: 👍 ❤️ 😂 😮 😢 😡 🎉 🙏 – nochmal tippen nimmt die Reaktion zurück',
+      'Beiträge kommentieren; wer den Beitrag geschrieben oder schon kommentiert hat, bekommt Bescheid',
+      'Neue Kommentare und Reaktionen auf deine Beiträge erscheinen auch in der 🔔-Glocke',
+    ],
+  },
+  {
     version: '1.44',
     date: '2026-10-21',
     title: 'Erledigte Erinnerungen verschwinden',

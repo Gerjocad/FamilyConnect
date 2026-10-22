@@ -44,6 +44,19 @@ export function activityRouter(db, { auth, member }) {
         `SELECT 'post' AS kind, id, created_at AS at, created_by AS user_id, '' AS subject, text, '/pinnwand' AS path
          FROM posts WHERE family_id = ? AND created_by != ? AND created_at >= ${since}`
       ).all(familyId, userId),
+      // Kommentare zu meinen Beiträgen oder zu Beiträgen, die ich kommentiert habe
+      ...db.prepare(
+        `SELECT 'post-comment' AS kind, c.id, c.created_at AS at, c.user_id, p.text AS subject, c.text, '/pinnwand' AS path
+         FROM post_comments c JOIN posts p ON p.id = c.post_id
+         WHERE c.family_id = ? AND c.user_id != ? AND c.created_at >= ${since}
+           AND (p.created_by = ? OR EXISTS (SELECT 1 FROM post_comments o WHERE o.post_id = p.id AND o.user_id = ?))`
+      ).all(familyId, userId, userId, userId),
+      // Reaktionen auf meine Beiträge
+      ...db.prepare(
+        `SELECT 'post-reaction' AS kind, p.id * 100000 + r.user_id AS id, r.created_at AS at, r.user_id, p.text AS subject, r.emoji AS text, '/pinnwand' AS path
+         FROM post_reactions r JOIN posts p ON p.id = r.post_id
+         WHERE p.family_id = ? AND p.created_by = ? AND r.user_id != ? AND r.created_at >= ${since}`
+      ).all(familyId, userId, userId),
       ...db.prepare(
         `SELECT 'complaint' AS kind, id, created_at AS at, created_by AS user_id, '' AS subject, text, '/beschwerden' AS path
          FROM complaints WHERE family_id = ? AND recipient_id = ? AND created_by != ? AND created_at >= ${since}`

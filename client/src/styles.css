@@ -1009,3 +1009,22 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .where-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .where-text small { color: var(--muted); overflow-wrap: anywhere; }
 .where-badge { font-size: 1.4rem; }
+
+/* Pinnwand: Reaktionen und Kommentare */
+.post-interactions { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.reaction-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.reaction-chip, .reaction-add { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 0.95rem; cursor: pointer; color: var(--text); line-height: 1.5; }
+.reaction-chip small, .reaction-add small { font-size: 0.75rem; color: var(--muted); font-weight: 700; }
+.reaction-chip.mine { border-color: var(--accent); background: var(--accent-soft); }
+.reaction-add { color: var(--muted); }
+.reaction-add.active { border-color: var(--accent); }
+.comment-toggle { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; background: none; border: 0; padding: 2px 4px; font: inherit; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+.reaction-picker { display: inline-flex; flex-wrap: wrap; gap: 2px; align-self: flex-start; padding: 4px 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(0,0,0,0.12); animation: pop 0.18s ease-out; }
+.reaction-picker button { font-size: 1.45rem; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; cursor: pointer; transition: transform 0.1s; }
+.reaction-picker button:hover, .reaction-picker button:active { transform: scale(1.25); }
+.reaction-picker button.active { background: var(--accent-soft); }
+.post-comments { display: flex; flex-direction: column; gap: 6px; }
+.post-comment { display: flex; align-items: flex-start; gap: 8px; }
+.post-comment-bubble { flex: 1; min-width: 0; background: var(--surface-2); border-radius: 4px 12px 12px 12px; padding: 6px 10px; }
+.post-comment-bubble p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.post-comment-form input { font-size: 0.92rem; }

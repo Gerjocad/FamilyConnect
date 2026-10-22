@@ -13,6 +13,7 @@ import { daysUntil, dueLabel } from '../loans';
 import { useCheckins } from '../useCheckins';
 import { useResource } from '../useResource';
 import { PostCard, usePolls } from './BoardPage';
+import { usePostExtras } from '../postExtras';
 import { untilLabel, upcomingBirthdays } from '../birthdays';
 import { useHolidays } from '../holidays';
 import { allOccurrences, useChores } from '../chores';
@@ -58,6 +59,7 @@ export function DashboardPage() {
   const requests = useRequests();
   const chores = useChores();
   const polls = usePolls();
+  const postExtras = usePostExtras();
   const climate = useClimate();
   const contacts = useResource<Contact>('contacts');
   const loans = useResource<Loan>('loans');
@@ -292,7 +294,7 @@ export function DashboardPage() {
             <EmptyState icon="chat" title="Noch keine Beiträge" />
           ) : (
             latestPosts.map((p) => (
-              <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} onVote={(optionId) => {
+              <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} extras={postExtras} compact onVote={(optionId) => {
                 const poll = polls.forPost(p.id);
                 if (poll) void polls.vote(poll, optionId);
               }} />
