@@ -402,6 +402,34 @@ CREATE TABLE IF NOT EXISTS post_reactions (
   PRIMARY KEY (post_id, user_id)
 );
 
+-- Musik: Spotify-Verbindung je Familie (nur Tokens) und Karten/Aufkleber mit Playlists
+CREATE TABLE IF NOT EXISTS spotify_accounts (
+  family_id INTEGER PRIMARY KEY REFERENCES families(id) ON DELETE CASCADE,
+  refresh_token TEXT NOT NULL,
+  access_token TEXT,
+  expires_at INTEGER NOT NULL DEFAULT 0,
+  display_name TEXT NOT NULL DEFAULT '',
+  product TEXT NOT NULL DEFAULT '',
+  -- fester Lautsprecher (z. B. Google Home); leer = der gerade aktive
+  device_id TEXT,
+  device_name TEXT,
+  connected_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS music_cards (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  uri TEXT NOT NULL,
+  image TEXT,
+  emoji TEXT NOT NULL DEFAULT '🎵',
+  shuffle INTEGER NOT NULL DEFAULT 0,
+  -- für NFC-Aufkleber/RFID-Karten: familyconnect://h/m/<token>
+  token TEXT NOT NULL UNIQUE,
+  played_at TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

@@ -18,6 +18,7 @@ import { WeatherService, weatherRouter } from './weather.js';
 import { wishesRouter } from './wishes.js';
 import { wallRouter } from './wall.js';
 import { postExtrasRouter } from './postExtras.js';
+import { SpotifyClient, spotifyRouter } from './spotify.js';
 import { Geocoder, placesRouter } from './places.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
@@ -40,7 +41,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder() } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), publicUrl = process.env.PUBLIC_URL } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -367,6 +368,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   app.use(serverUpdateRouter({ auth, member, updater }));
   app.use(activityRouter(db, { auth, member }));
+  app.use(spotifyRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), spotify, publicUrl }));
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));

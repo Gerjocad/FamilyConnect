@@ -7,6 +7,9 @@ const listeners = new Set<Listener>();
 let pending: string | null = null;
 
 export function pathFromUrl(url: string): string | null {
+  // Musik-Karte: familyconnect://h/m/<token> → Playlist abspielen
+  const music = /^familyconnect:\/\/h\/m\/([0-9a-f]{8,64})\/?$/i.exec(url.trim());
+  if (music) return `/musik/spielen/${music[1].toLowerCase()}`;
   const match = /^familyconnect:\/\/h\/([0-9a-f]{8,64})\/?$/i.exec(url.trim());
   return match ? `/h/${match[1].toLowerCase()}` : null;
 }

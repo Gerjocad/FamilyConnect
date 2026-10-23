@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.47',
+    date: '2026-10-23',
+    title: 'Musik mit Spotify',
+    changes: [
+      'Neu im Menü: Musik – ein Admin verbindet einmal Spotify (Premium), Eltern legen Musik-Karten für Playlists an',
+      'Antippen einer Karte startet die Playlist auf dem Lautsprecher, z. B. dem Google Home; Pause, Weiter und Lautstärke direkt in der App',
+      'Jede Karte lässt sich auf einen NFC-Aufkleber schreiben: Handy dranhalten → die Musik läuft',
+      'Lautsprecher automatisch (das zuletzt aktive Gerät) oder fest wählbar',
+    ],
+  },
+  {
     version: '1.46',
     date: '2026-10-22',
     title: 'Ein NFC-Aufkleber für alle',

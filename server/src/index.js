@@ -8,6 +8,7 @@ import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
 import { checkClimateAlerts } from './climate.js';
 import { checkLoanReminders } from './loans.js';
+import { SpotifyClient } from './spotify.js';
 import { TuyaClient } from './tuya.js';
 import { readInstalled, ServerUpdate } from './serverUpdate.js';
 
@@ -34,7 +35,9 @@ const recipeImporter = new RecipeImporter({
 const tuya = new TuyaClient({ configFile: process.env.TUYA_CONFIG ?? '/etc/familyconnect/tuya.json' });
 // Update aus der App: Anforderungsdatei für familyconnect-update.path (nur auf dem Server gesetzt, siehe deploy/install.sh)
 const updater = new ServerUpdate({ requestFile: process.env.UPDATE_REQUEST_FILE, installed: readInstalled(root) });
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater });
+// Musik über Spotify (optional, siehe deploy/SPOTIFY.md)
+const spotify = new SpotifyClient({ configFile: process.env.SPOTIFY_CONFIG ?? '/etc/familyconnect/spotify.json' });
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater, spotify });
 // Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
 setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
 // Rückgabe-Erinnerungen für Ausgeliehenes (Vortag 17 Uhr, Tag selbst 7 Uhr)
@@ -49,6 +52,7 @@ setInterval(() => {
 app.listen(port, host, () => {
   console.log(`FamilyConnect läuft auf http://localhost:${port}`);
   console.log(recipeImporter.aiEnabled ? '  Rezept-Import per KI: aktiv' : '  Rezept-Import per KI: aus (nur Seiten mit Rezept-Daten)');
+  console.log(spotify.enabled ? '  Spotify: eingerichtet' : '  Spotify: aus (keine /etc/familyconnect/spotify.json)');
   console.log(tuya.enabled ? '  Tuya-Thermometer: aktiv' : '  Tuya-Thermometer: aus (keine /etc/familyconnect/tuya.json)');
   console.log(push.enabled ? '  Push-Benachrichtigungen: aktiv' : '  Push-Benachrichtigungen: aus (FIREBASE_SERVICE_ACCOUNT nicht gesetzt)');
   // Adressen anzeigen, die man in der Android-App eintragen kann
