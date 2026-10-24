@@ -430,6 +430,19 @@ CREATE TABLE IF NOT EXISTS music_cards (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Musik-Box (ESP32 mit Kartenleser): Code statt Anmeldung, merkt sich die zuletzt gesteckte Karte
+CREATE TABLE IF NOT EXISTS music_boxes (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  last_card_id INTEGER REFERENCES music_cards(id) ON DELETE SET NULL,
+  removed_at INTEGER,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_seen_at TEXT
+);
+
 -- Logos/Symbole im Kalender: Termine mit dem Stichwort im Titel zeigen das Bild
 CREATE TABLE IF NOT EXISTS event_icons (
   id INTEGER PRIMARY KEY,

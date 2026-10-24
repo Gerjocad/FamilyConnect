@@ -6,11 +6,14 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { Router } from 'express';
 import { isManager } from './permissions.js';
+import { cleanCode, newCode } from './wall.js';
 
 const ACCOUNTS = 'https://accounts.spotify.com';
 const API = 'https://api.spotify.com/v1';
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private user-read-private';
 const STATE_TTL_MS = 10 * 60 * 1000;
+// Karte wieder eingesteckt innerhalb dieser Zeit → an der Stelle weiterspielen statt neu starten
+const RESUME_MS = 30 * 60 * 1000;
 const URI_RE = /^spotify:(playlist|album|artist|show):[A-Za-z0-9]{10,40}$/;
 
 export class SpotifyError extends Error {
@@ -360,6 +363,90 @@ export function spotifyRouter(db, { auth, member, publish, spotify, publicUrl })
     } catch (err) {
       fail(res, err);
     }
+  });
+
+  // --- Musik-Box (ESP32 mit Kartenleser) ------------------------------------------------
+  const boxes = `${base}/music-boxes`;
+  const boxRow = (id) => db.prepare('SELECT id, name, token, created_at, last_seen_at FROM music_boxes WHERE id = ?').get(id);
+  router.get(boxes, auth, member, admin, (req, res) => {
+    res.json(db.prepare('SELECT id, name, token, created_at, last_seen_at FROM music_boxes WHERE family_id = ? ORDER BY id').all(req.familyId));
+  });
+  router.post(boxes, auth, member, admin, (req, res) => {
+    const name = typeof req.body?.name === 'string' && req.body.name.trim() ? req.body.name.trim().slice(0, 50) : 'Musik-Box';
+    const { lastInsertRowid } = db.prepare('INSERT INTO music_boxes (family_id, name, token, created_by) VALUES (?, ?, ?, ?)')
+      .run(req.familyId, name, newCode(), req.user.id);
+    res.status(201).json(boxRow(lastInsertRowid));
+  });
+  router.delete(`${boxes}/:id`, auth, member, admin, (req, res) => {
+    const { changes } = db.prepare('DELETE FROM music_boxes WHERE family_id = ? AND id = ?').run(req.familyId, Number(req.params.id));
+    res.status(changes ? 204 : 404).end();
+  });
+
+  // Anfragen der Box: /api/music-box/<code>/…  (der Code ersetzt die Anmeldung)
+  const box = (req, res, next) => {
+    const row = db.prepare('SELECT * FROM music_boxes WHERE token = ?').get(cleanCode(req.params.code));
+    if (!row) return res.status(404).json({ error: 'Unbekannte Musik-Box' });
+    db.prepare("UPDATE music_boxes SET last_seen_at = datetime('now') WHERE id = ?").run(row.id);
+    req.box = row;
+    next();
+  };
+  const deviceRoute = (path, handler) =>
+    router.post(`/api/music-box/:code/${path}`, box, async (req, res) => {
+      try {
+        res.json((await handler(req)) ?? { ok: true });
+      } catch (err) {
+        fail(res, err);
+      }
+    });
+
+  // Karte eingesteckt: { token } (aus dem NFC-Aufkleber familyconnect://h/m/<token>)
+  deviceRoute('card', async (req) => {
+    const familyId = req.box.family_id;
+    const card = db.prepare('SELECT * FROM music_cards WHERE family_id = ? AND token = ?').get(familyId, String(req.body?.token ?? '').toLowerCase());
+    if (!card) throw new SpotifyError('Diese Karte kennt FamilyConnect nicht – in der App unter Musik anlegen', 404);
+    const resume = req.box.last_card_id === card.id && req.box.removed_at && Date.now() - req.box.removed_at < RESUME_MS;
+    db.prepare('UPDATE music_boxes SET last_card_id = ?, removed_at = NULL WHERE id = ?').run(card.id, req.box.id);
+    if (resume) {
+      try {
+        await api(familyId, 'PUT', '/me/player/play');
+        return { resumed: true, card: card.name };
+      } catch {
+        // Lautsprecher inzwischen eingeschlafen → neu starten
+      }
+    }
+    const result = await play(familyId, card);
+    return { resumed: false, card: card.name, device: result.device };
+  });
+
+  // Karte herausgezogen → Pause (wieder einstecken spielt weiter)
+  deviceRoute('removed', async (req) => {
+    db.prepare('UPDATE music_boxes SET removed_at = ? WHERE id = ?').run(Date.now(), req.box.id);
+    await api(req.box.family_id, 'PUT', '/me/player/pause').catch((err) => {
+      // schon pausiert / kein Gerät aktiv ist kein Fehler
+      if (err.httpStatus !== 403 && err.httpStatus !== 404) throw err;
+    });
+    return { paused: true };
+  });
+
+  // Tasten und Drehknopf: { action: next | previous | toggle | volume, delta }
+  deviceRoute('control', async (req) => {
+    const familyId = req.box.family_id;
+    const action = req.body?.action;
+    if (action === 'next') await api(familyId, 'POST', '/me/player/next');
+    else if (action === 'previous') await api(familyId, 'POST', '/me/player/previous');
+    else if (action === 'toggle' || action === 'volume') {
+      const p = await api(familyId, 'GET', '/me/player');
+      if (!p) throw new SpotifyError('Gerade läuft nichts', 409);
+      if (action === 'toggle') {
+        await api(familyId, 'PUT', p.is_playing ? '/me/player/pause' : '/me/player/play');
+        return { playing: !p.is_playing };
+      }
+      const delta = Math.max(-50, Math.min(50, Math.round(Number(req.body?.delta) || 0)));
+      const volume = Math.max(0, Math.min(100, (p.device?.volume_percent ?? 50) + delta));
+      await api(familyId, 'PUT', `/me/player/volume?volume_percent=${volume}`);
+      return { volume };
+    } else throw new SpotifyError('Unbekannte Aktion', 400);
+    return { ok: true };
   });
 
   return router;

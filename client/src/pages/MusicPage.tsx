@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { NfcWriteButton } from '../components/NfcWriteButton';
 import { useAsync } from '../components/useAsync';
+import { MusicBoxes } from '../components/MusicBoxes';
 import { musicUrl, useMusic, type MusicCard, type PlaylistHit, type Player, type SpotifyDevice } from '../music';
 import { canWriteNfc } from '../nfcWriter';
 import { usePermissions } from '../permissions';
@@ -293,6 +295,10 @@ export function MusicPage() {
               ))}
             </ul>
           )}
+          {music.cards.length > 0 && (
+            <Link to="/musik/cover" className="link-button music-covers-link">🖨 Cover für die Karten ausdrucken</Link>
+          )}
+          {isAdmin && <MusicBoxes />}
           {isAdmin && (
             <button className="link-button danger-link music-disconnect" onClick={() => confirm('Spotify-Verbindung trennen? Die Karten bleiben erhalten.') && void music.disconnect()}>
               Spotify-Verbindung trennen

@@ -22,7 +22,8 @@ async function fakeSpotify(url, options = {}) {
   assert.match(options.headers.Authorization, /^Bearer at[12]$/);
   if (u.pathname === '/v1/me') return Response.json({ id: 'u1', display_name: 'Mama', product: 'premium' });
   if (u.pathname === '/v1/me/player/devices') return Response.json({ devices });
-  if (u.pathname === '/v1/me/player/play') return new Response(null, { status: 204 });
+  if (u.pathname === '/v1/me/player/play' || u.pathname === '/v1/me/player/pause' || u.pathname === '/v1/me/player/volume' || u.pathname === '/v1/me/player/next') return new Response(null, { status: 204 });
+  if (u.pathname === '/v1/me/player') return Response.json({ is_playing: true, device: { name: 'Wohnzimmer', volume_percent: 30 } });
   if (u.pathname === '/v1/me/playlists') return Response.json({ items: [{ uri: 'spotify:playlist:aaaaaaaaaaaaaaaaaaaaaa', name: 'Kinderlieder', images: [{ url: 'https://i.scdn.co/x.jpg' }], owner: { display_name: 'Mama' } }] });
   if (u.pathname === '/v1/search') return Response.json({ playlists: { items: [null, { uri: 'spotify:playlist:bbbbbbbbbbbbbbbbbbbbbb', name: 'Kinder Disco', images: [], owner: { display_name: 'X' } }] } });
   return Response.json({ error: { message: 'not found' } }, { status: 404 });
@@ -101,6 +102,25 @@ describe('Musik (Spotify)', () => {
     assert.equal(byTag.data.family_id, fam.id);
 
     assert.equal((await api(`${f}/spotify/player`, { token: lea, method: 'POST', body: { action: 'volume', value: 150 } })).status, 400);
+
+    // Musik-Box: Code anlegen (nur Admins), Karte rein/raus, Tasten
+    assert.equal((await api(`${f}/music-boxes`, { token: lea, method: 'POST', body: {} })).status, 403);
+    const { data: musicBox } = await api(`${f}/music-boxes`, { token: mama, method: 'POST', body: { name: 'Kinderzimmer' } });
+    const dev = (path, body) => api(`/music-box/${musicBox.token.toLowerCase()}/${path}`, { method: 'POST', body });
+    assert.equal((await dev('card', { token: 'ffffffffffffffffffffffffffffffff' })).status, 404, 'unbekannte Karte');
+    let r = await dev('card', { token: card.token });
+    assert.deepEqual([r.status, r.data.resumed, r.data.card], [200, false, 'Kinderlieder']);
+    calls.length = 0;
+    assert.equal((await dev('removed')).data.paused, true);
+    assert.ok(calls.includes('PUT /v1/me/player/pause'));
+    r = await dev('card', { token: card.token });
+    assert.equal(r.data.resumed, true, 'gleiche Karte wieder rein → weiter');
+    assert.ok(calls.includes('PUT /v1/me/player/play'), 'ohne neue Playlist');
+    assert.equal((await dev('control', { action: 'volume', delta: 10 })).data.volume, 40);
+    assert.equal((await dev('control', { action: 'toggle' })).data.playing, false);
+    assert.equal((await dev('control', { action: 'next' })).status, 200);
+    assert.equal((await api('/music-box/AAAA-BBBB-CCCC/card', { method: 'POST', body: {} })).status, 404);
+    assert.ok((await api(`${f}/music-boxes`, { token: mama })).data[0].last_seen_at);
     assert.equal((await api(`${f}/spotify`, { token: mama, method: 'DELETE' })).status, 204);
     assert.equal((await api(`${f}/music/${card.id}/play`, { token: lea, method: 'POST' })).status, 409, 'nicht mehr verbunden');
   });

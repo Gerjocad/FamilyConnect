@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.48',
+    date: '2026-10-24',
+    title: 'Musik-Box zum Selberbauen',
+    changes: [
+      'Musik → Musik-Box: Code für die selbstgebaute Box mit Kartenleser (ESP32) – Karte rein = Playlist läuft, Karte raus = Pause, wieder rein = weiter',
+      'Drehknopf an der Box für die Lautstärke, Tasten für Titel vor/zurück',
+      'Musik → „Cover für die Karten ausdrucken“: Spotify-Cover in Originalgröße (62 × 62 mm) zum Aufkleben',
+      'Bauanleitung, 3D-Druckdateien und Software liegen im Ordner hardware/musikbox',
+    ],
+  },
+  {
     version: '1.47',
     date: '2026-10-23',
     title: 'Musik mit Spotify',

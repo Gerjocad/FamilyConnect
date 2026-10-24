@@ -13,9 +13,9 @@ const EVENTS = RESOURCES.find((r) => r.path === 'events');
 const VACATIONS = RESOURCES.find((r) => r.path === 'vacations');
 const RAINY = 50;
 // Code zum Eintippen am Tablet: 12 Zeichen ohne verwechselbare (0/O, 1/I) – 60 Bit Zufall
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const newCode = () => [...randomBytes(12)].map((b) => CODE_CHARS[b % 32]).join('');
-const cleanCode = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]/g, '');
+export const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const newCode = () => [...randomBytes(12)].map((b) => CODE_CHARS[b % 32]).join('');
+export const cleanCode = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 const normalize = (s) => s.toLocaleLowerCase('de').replace(/ı/g, 'i').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
