@@ -118,6 +118,8 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 // Spalten, die nach der ersten Version dazugekommen sind. Bestehende Datenbanken werden beim Start ergänzt.
 const ADDED_COLUMNS = [
+  ['wall_displays', 'sleep_after', 'INTEGER NOT NULL DEFAULT 60'],
+  ['wall_displays', 'dark_lux', 'INTEGER NOT NULL DEFAULT 15'],
   ['events', 'exdates', "TEXT NOT NULL DEFAULT '[]'"],
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],

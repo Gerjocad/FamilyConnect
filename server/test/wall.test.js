@@ -61,6 +61,74 @@ describe('Wanddisplay', () => {
     assert.equal((await api(`/wall/${wall.token}`)).status, 404);
   });
 
+  test('Näherungs-/Lichtsensor: Anwesenheit, Dunkel mit Hysterese, Live-Ereignis', async () => {
+    const mama = (await api('/auth/register', { method: 'POST', body: { name: 'Mama', email: 'sensor@wand.test', password: 'geheim123' } })).data.token;
+    const { data: fam } = await api('/families', { token: mama, method: 'POST', body: { name: 'Yumruk' } });
+    const f = `/families/${fam.id}`;
+    const { data: wall } = await api(`${f}/wall-displays`, { token: mama, method: 'POST', body: { name: 'Flur' } });
+    assert.equal(wall.sleep_after, 60);
+    assert.equal(wall.dark_lux, 15);
+    assert.equal(wall.sensor, null);
+
+    // Live-Kanal des Displays mitlesen
+    const events = [];
+    const ctrl = new AbortController();
+    const stream = await fetch(`${base}/wall/${wall.token}/live`, { signal: ctrl.signal });
+    const reader = stream.body.getReader();
+    const decoder = new TextDecoder();
+    void (async () => {
+      let buf = '';
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value);
+          let i;
+          while ((i = buf.indexOf('\n\n')) >= 0) {
+            const chunk = buf.slice(0, i);
+            buf = buf.slice(i + 2);
+            if (chunk.startsWith('data: ')) events.push(JSON.parse(chunk.slice(6)));
+          }
+        }
+      } catch { /* abgebrochen */ }
+    })();
+    const tick = () => new Promise((r) => setTimeout(r, 50));
+
+    const sensor = (body) => api(`/wall/${wall.token}/sensor`, { method: 'POST', body });
+    assert.equal((await sensor({ present: 'ja' })).status, 400);
+    assert.equal((await sensor({ lux: -1 })).status, 400);
+    assert.equal((await api('/wall/AAAABBBBCCCC/sensor', { method: 'POST', body: { present: true } })).status, 404);
+
+    assert.deepEqual((await sensor({ present: true, lux: 120 })).data, { present: true, lux: 120, dark: false, sleep_after: 60 });
+    await tick();
+    assert.deepEqual(events.at(-1), { resource: 'wall-sensor', display: wall.id, sleep_after: 60, sensor: { ...events.at(-1).sensor, present: true, lux: 120, dark: false } });
+    const count = events.length;
+    await sensor({ lux: 100 });
+    await tick();
+    assert.equal(events.length, count, 'nur Lux geändert → kein Ereignis');
+
+    assert.equal((await sensor({ lux: 10 })).data.dark, true);
+    assert.equal((await sensor({ lux: 20 })).data.dark, true, 'knapp über der Schwelle bleibt dunkel');
+    assert.equal((await sensor({ lux: 30 })).data.dark, false);
+    await sensor({ present: false });
+    await tick();
+    assert.equal(events.at(-1).sensor.present, false);
+
+    // Einstellungen
+    assert.equal((await api(`${f}/wall-displays/${wall.id}`, { token: mama, method: 'PATCH', body: { sleep_after: 7 } })).status, 400);
+    const { data: changed } = await api(`${f}/wall-displays/${wall.id}`, { token: mama, method: 'PATCH', body: { sleep_after: 300, dark_lux: 50 } });
+    assert.equal(changed.sleep_after, 300);
+    assert.equal(changed.sensor.dark, true, 'neue Schwelle gilt sofort');
+    await tick();
+    assert.equal(events.at(-1).sleep_after, 300);
+
+    const { data: view } = await api(`/wall/${wall.token}`);
+    assert.deepEqual(view.display, { id: wall.id, sleep_after: 300, sensor: view.display.sensor });
+    assert.equal(view.display.sensor.present, false);
+    assert.equal((await api(`${f}/wall-displays`, { token: mama })).data[0].sensor.lux, 30);
+    ctrl.abort();
+  });
+
   test('Wetter-Hinweise', () => {
     const now = new Date(2026, 9, 21, 12, 0);
     const hours = [12, 13, 14, 15, 16].map((h) => ({ time: `2026-10-21T${h}:00`, temp: 10, rain: h >= 15 ? 80 : 10, code: h >= 15 ? 61 : 2 }));

@@ -12,6 +12,13 @@ import { TuyaError } from './tuya.js';
 const EVENTS = RESOURCES.find((r) => r.path === 'events');
 const VACATIONS = RESOURCES.find((r) => r.path === 'vacations');
 const RAINY = 50;
+// Näherungs-/Lichtsensor am Display: auswählbare Werte in der App
+export const SLEEP_OPTIONS = [0, 30, 60, 120, 300, 600];
+export const DARK_LUX_OPTIONS = [5, 10, 15, 30, 50];
+// Hell erst deutlich über der Dunkel-Schwelle – sonst flackert es in der Dämmerung hin und her
+const LIGHT_FACTOR = 1.6;
+// Ohne Meldung so lange gilt der Sensor als weg (Display schläft dann nicht mehr ein)
+const SENSOR_STALE_MS = 10 * 60_000;
 // Code zum Eintippen am Tablet: 12 Zeichen ohne verwechselbare (0/O, 1/I) – 60 Bit Zufall
 export const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const newCode = () => [...randomBytes(12)].map((b) => CODE_CHARS[b % 32]).join('');
@@ -54,20 +61,52 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
   const router = Router();
   const admin = (req, res, next) => (req.role === 'admin' ? next() : res.status(403).json({ error: 'Nur Admins' }));
   const base = '/api/families/:familyId/wall-displays';
+  const COLUMNS = 'id, name, token, created_at, last_seen_at, sleep_after, dark_lux';
+
+  // Letzter Sensorstand je Display – nur im Speicher, nach einem Neustart meldet sich der Sensor von selbst wieder
+  const sensors = new Map();
+  const sensorOf = (id) => {
+    const s = sensors.get(id);
+    if (!s || Date.now() - s.at > SENSOR_STALE_MS) return null;
+    return { present: s.present, lux: s.lux, dark: s.dark, at: new Date(s.at).toISOString() };
+  };
+  const withSensor = (row) => ({ ...row, sensor: sensorOf(row.id) });
+  const sensorEvent = (row) => ({ display: row.id, sleep_after: row.sleep_after, sensor: sensorOf(row.id) });
 
   // --- Verwaltung (Familie & Profil) -------------------------------------------------
   router.get(base, auth, member, admin, (req, res) => {
-    res.json(db.prepare('SELECT id, name, token, created_at, last_seen_at FROM wall_displays WHERE family_id = ? ORDER BY id').all(req.familyId));
+    res.json(db.prepare(`SELECT ${COLUMNS} FROM wall_displays WHERE family_id = ? ORDER BY id`).all(req.familyId).map(withSensor));
   });
   router.post(base, auth, member, admin, (req, res) => {
     const name = typeof req.body?.name === 'string' && req.body.name.trim() ? req.body.name.trim().slice(0, 50) : 'Wanddisplay';
     const token = newCode();
     const { lastInsertRowid } = db.prepare('INSERT INTO wall_displays (family_id, name, token, created_by) VALUES (?, ?, ?, ?)')
       .run(req.familyId, name, token, req.user.id);
-    res.status(201).json(db.prepare('SELECT id, name, token, created_at, last_seen_at FROM wall_displays WHERE id = ?').get(lastInsertRowid));
+    res.status(201).json(withSensor(db.prepare(`SELECT ${COLUMNS} FROM wall_displays WHERE id = ?`).get(lastInsertRowid)));
+  });
+  router.patch(`${base}/:id`, auth, member, admin, (req, res) => {
+    const row = db.prepare(`SELECT ${COLUMNS} FROM wall_displays WHERE family_id = ? AND id = ?`).get(req.familyId, Number(req.params.id));
+    if (!row) return res.status(404).json({ error: 'Wanddisplay nicht gefunden' });
+    const { name, sleep_after: sleepAfter, dark_lux: darkLux } = req.body ?? {};
+    if (sleepAfter !== undefined && !SLEEP_OPTIONS.includes(sleepAfter)) return res.status(400).json({ error: 'Ungültige Ruhezeit' });
+    if (darkLux !== undefined && !DARK_LUX_OPTIONS.includes(darkLux)) return res.status(400).json({ error: 'Ungültige Helligkeit' });
+    if (name !== undefined && (typeof name !== 'string' || !name.trim())) return res.status(400).json({ error: 'Name fehlt' });
+    const next = {
+      ...row,
+      ...(name !== undefined && { name: name.trim().slice(0, 50) }),
+      ...(sleepAfter !== undefined && { sleep_after: sleepAfter }),
+      ...(darkLux !== undefined && { dark_lux: darkLux }),
+    };
+    db.prepare('UPDATE wall_displays SET name = ?, sleep_after = ?, dark_lux = ? WHERE id = ?').run(next.name, next.sleep_after, next.dark_lux, row.id);
+    // neue Schwelle gleich anwenden
+    const s = sensors.get(row.id);
+    if (s && s.lux !== null) s.dark = s.lux < next.dark_lux;
+    hub.publish(req.familyId, 'wall-sensor', sensorEvent(next));
+    res.json(withSensor(next));
   });
   router.delete(`${base}/:id`, auth, member, admin, (req, res) => {
     const { changes } = db.prepare('DELETE FROM wall_displays WHERE family_id = ? AND id = ?').run(req.familyId, Number(req.params.id));
+    sensors.delete(Number(req.params.id));
     res.status(changes ? 204 : 404).end();
   });
 
@@ -190,7 +229,30 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
       weather: forecast,
       climate,
       posts,
+      display: { id: req.display.id, sleep_after: req.display.sleep_after, sensor: sensorOf(req.display.id) },
     });
+  });
+
+  // Näherungs-/Lichtsensor (ESP32 neben dem Tablet) meldet sich mit dem Code des Displays.
+  // Die Anzeige bekommt Änderungen sofort über den Live-Kanal – nur bei Anwesenheit/hell-dunkel, nicht bei jedem Lux-Wert.
+  router.post('/api/wall/:token/sensor', display, (req, res) => {
+    const { present, lux } = req.body ?? {};
+    if (present !== undefined && typeof present !== 'boolean') return res.status(400).json({ error: 'present muss true/false sein' });
+    if (lux !== undefined && (typeof lux !== 'number' || !Number.isFinite(lux) || lux < 0)) return res.status(400).json({ error: 'lux muss eine Zahl sein' });
+    const row = req.display;
+    const before = sensorOf(row.id);
+    const s = sensors.get(row.id) ?? { present: null, lux: null, dark: null, at: 0 };
+    if (present !== undefined) s.present = present;
+    if (lux !== undefined) {
+      s.lux = Math.round(lux * 10) / 10;
+      if (s.dark === null) s.dark = s.lux < row.dark_lux;
+      else if (s.dark && s.lux > row.dark_lux * LIGHT_FACTOR) s.dark = false;
+      else if (!s.dark && s.lux < row.dark_lux) s.dark = true;
+    }
+    s.at = Date.now();
+    sensors.set(row.id, s);
+    if (!before || before.present !== s.present || before.dark !== s.dark) hub.publish(row.family_id, 'wall-sensor', sensorEvent(row));
+    res.json({ present: s.present, lux: s.lux, dark: s.dark, sleep_after: row.sleep_after });
   });
 
   // Live-Hinweis bei Änderungen (wie /api/live, aber über den Link)

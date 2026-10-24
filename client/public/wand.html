@@ -56,6 +56,10 @@
   .post b { color: var(--accent); }
   .fullscreen-hint { position: fixed; left: 14px; bottom: 10px; font-size: 14px; font-weight: 700; color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
   .is-fullscreen .fullscreen-hint { display: none; }
+  /* Ruhemodus (Näherungssensor): schwarz mit ganz schwacher Uhr, die langsam wandert (kein Einbrennen) */
+  #sleep { display: none; position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; z-index: 10; }
+  .sleeping #sleep { display: block; }
+  #sleep div { position: absolute; color: #fff; opacity: 0.12; font-size: 56px; font-weight: 300; }
   .status { position: fixed; right: 10px; bottom: 6px; font-size: 11px; color: var(--muted); }
   /* Einrichtung */
   .setup { max-width: 460px; margin: 60px auto; text-align: center; }
@@ -75,6 +79,7 @@
 <div id="app"></div>
 <button class="fullscreen-hint" id="fullscreen" type="button">⛶ Vollbild – antippen</button>
 <div class="status" id="status"></div>
+<div id="sleep"><div id="sleep-clock"></div></div>
 <script>
 // Wanddisplay: altes JavaScript (ES5) ohne Bibliotheken, damit es auf Fire OS 5 läuft.
 (function () {
@@ -86,6 +91,12 @@
   var code = null;
   var data = null;
   var lastOk = null;
+  // Näherungs-/Lichtsensor (optional): null = kein Sensor → nie schlafen, Nachtfarben 22–6 Uhr
+  var sensor = null;
+  var sleepAfter = 0;
+  var absentSince = null;
+  var awakeUntil = 0;
+  var asleep = false;
 
   function store(name, value) {
     try { if (value === null) localStorage.removeItem(name); else localStorage.setItem(name, value); } catch (e) { /* egal */ }
@@ -212,7 +223,8 @@
     var now = new Date();
     var nowStamp = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
     var hour = now.getHours();
-    document.documentElement.className = hour >= 22 || hour < 6 ? 'night' : '';
+    var night = sensor && sensor.dark !== null ? sensor.dark : hour >= 22 || hour < 6;
+    document.documentElement.className = (night ? 'night' : '') + (asleep ? ' sleeping' : '');
 
     var left = '<div class="card"><div class="clock">' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + '</div>' +
       '<div class="date">' + DAYS[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()] + '</div>' +
@@ -286,12 +298,56 @@
     }
   }
 
+  // --- Ruhemodus -----------------------------------------------------------------------
+  function applySensor(display) {
+    var wasPresent = sensor ? sensor.present : null;
+    sensor = display ? display.sensor : null;
+    sleepAfter = display ? display.sleep_after : 0;
+    if (!sensor || sensor.present !== false) absentSince = null;
+    else if (wasPresent !== false || absentSince === null) absentSince = new Date().getTime();
+    checkSleep();
+    render();
+  }
+  function setAsleep(value) {
+    if (asleep === value) return;
+    asleep = value;
+    // Fully Kiosk Browser kann den Bildschirm wirklich ausschalten – sonst schwarzes Bild
+    try {
+      if (window.fully && value && fully.turnScreenOff) fully.turnScreenOff(true);
+      if (window.fully && !value && fully.turnScreenOn) fully.turnScreenOn();
+    } catch (e) { /* ältere Fully-Version */ }
+    if (!value) keepAwake();
+    render();
+    sleepClock();
+  }
+  function checkSleep() {
+    var now = new Date().getTime();
+    var shouldSleep = Boolean(sensor && sensor.present === false && sleepAfter > 0 && absentSince !== null &&
+      now - absentSince >= sleepAfter * 1000 && now >= awakeUntil);
+    setAsleep(shouldSleep);
+  }
+  function sleepClock() {
+    if (!asleep) return;
+    var now = new Date();
+    var el = document.getElementById('sleep-clock');
+    el.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    // jede Minute an eine andere Stelle
+    el.style.left = Math.round(Math.random() * Math.max(0, window.innerWidth - 170)) + 'px';
+    el.style.top = Math.round(Math.random() * Math.max(0, window.innerHeight - 70)) + 'px';
+  }
+  // Antippen weckt auch ohne Sensor-Meldung – für die eingestellte Ruhezeit
+  document.addEventListener('click', function () {
+    if (!asleep) return;
+    awakeUntil = new Date().getTime() + Math.max(sleepAfter, 30) * 1000;
+    setAsleep(false);
+  }, true);
+
   function load() {
     get('/api/wall/' + code, function (status, body) {
       if (status === 200) {
         data = body;
         lastOk = new Date();
-        render();
+        applySensor(body.display);
       } else if (status === 404) {
         store(KEY, null);
         data = null;
@@ -311,7 +367,16 @@
   function live() {
     if (typeof EventSource !== 'function') return;
     var source = new EventSource('/api/wall/' + code + '/live');
-    source.onmessage = soon;
+    source.onmessage = function (e) {
+      var msg = null;
+      try { msg = JSON.parse(e.data); } catch (err) { /* egal */ }
+      // Sensor dieses Displays: sofort umschalten, ohne alles neu zu laden
+      if (msg && msg.resource === 'wall-sensor') {
+        if (data && data.display && msg.display === data.display.id) applySensor(msg);
+        return;
+      }
+      soon();
+    };
     source.onerror = function () {
       // nach Verbindungsabbruch neu verbinden; EventSource versucht es selbst, bei 404 aber nicht
       if (source.readyState === 2) setTimeout(live, 30000);
@@ -372,9 +437,11 @@
     keepAwake();
     data = body;
     lastOk = new Date();
-    render();
+    applySensor(body.display);
     live();
     setInterval(render, 15000); // Uhr
+    setInterval(checkSleep, 5000);
+    setInterval(sleepClock, 60000);
     setInterval(load, 5 * 60 * 1000); // Wetter, Raumklima, Sicherheitsnetz
     // Neue Version der Seite (nach einem Server-Update) erkennen und nur dann neu laden –
     // ein Neuladen beendet das Vollbild, das erst nach erneutem Antippen zurückkommt

@@ -12,10 +12,11 @@ export class LiveHub {
     };
   }
 
-  publish(familyId, resource) {
+  /** extra: zusätzliche Felder fürs Ereignis (z. B. Sensordaten fürs Wanddisplay) */
+  publish(familyId, resource, extra = {}) {
     const set = this.#clients.get(familyId);
     if (!set) return;
-    const payload = `data: ${JSON.stringify({ resource })}\n\n`;
+    const payload = `data: ${JSON.stringify({ ...extra, resource })}\n\n`;
     for (const res of set) res.write(payload);
   }
 }
