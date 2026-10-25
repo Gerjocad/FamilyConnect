@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.50',
+    date: '2026-10-25',
+    title: 'Orte: keine falschen „losgegangen“-Meldungen mehr',
+    changes: [
+      '„Losgegangen“ kommt erst, wenn man 5 Minuten wirklich weg ist – springt das GPS im Haus kurz aus dem Kreis und zurück, gibt es weder „losgegangen“ noch „angekommen“',
+      'Die Meldung zeigt trotzdem die Uhrzeit, zu der man tatsächlich losgegangen ist',
+      'Auf dem Handy gilt jetzt für jeden Ort mindestens ein Radius von 100 m (darunter meldet Android unzuverlässig)',
+    ],
+  },
+  {
     version: '1.49',
     date: '2026-10-24',
     title: 'Wanddisplay mit Näherungs- und Lichtsensor',

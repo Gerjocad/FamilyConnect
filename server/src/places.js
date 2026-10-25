@@ -10,6 +10,9 @@ const MIN_RADIUS = 30;
 const MAX_RADIUS = 2000;
 // gleiche Meldung (Person, Ort, angekommen/verlassen) frühestens nach so vielen Minuten erneut
 const REPEAT_MINUTES = 10;
+// „Verlassen“ erst melden, wenn man so lange wirklich draußen bleibt: Im Haus springt der GPS-Standort manchmal
+// kurz aus dem Kreis und wieder hinein – das soll weder „losgegangen“ noch „angekommen“ auslösen
+export const EXIT_CONFIRM_MINUTES = 5;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Adresssuche über OpenStreetMap (Nominatim, kostenlos; höchstens 1 Anfrage/Sekunde) */
@@ -50,6 +53,51 @@ export function inWindow(pref, now = new Date()) {
   return pref.from_time <= pref.to_time ? t >= pref.from_time && t <= pref.to_time : t >= pref.from_time || t <= pref.to_time;
 }
 
+/** Benachrichtigt alle, die über diesen Wechsel Bescheid wollen; liefert die Empfänger */
+function notifyTransition(db, push, { familyId, userId, place, enter, at, now }) {
+  const recipients = db.prepare(
+    `SELECT pp.* FROM place_prefs pp JOIN memberships m ON m.user_id = pp.user_id AND m.family_id = pp.family_id
+     WHERE pp.family_id = ? AND pp.member_id = ? AND pp.place_id = ? AND ${enter ? 'pp.arrive' : 'pp.leave'} = 1`
+  ).all(familyId, userId, place.id).filter((p) => inWindow(p, now)).map((p) => p.user_id);
+  const who = db.prepare('SELECT name FROM users WHERE id = ?').get(userId).name.split(' ')[0];
+  const time = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+  push?.notify?.(recipients, {
+    title: enter ? `${place.icon} ${who} ist angekommen` : `${place.icon} ${who} ist losgegangen`,
+    body: enter ? `${place.name} · ${time}` : `${place.name} verlassen · ${time}`,
+    path: '/einstellungen#orte',
+  });
+  return recipients;
+}
+
+/**
+ * Vorgemerkte „Verlassen“-Meldungen bestätigen, wenn niemand zurückgekommen ist (läuft jede Minute).
+ * Gemeldet wird mit der Uhrzeit des tatsächlichen Losgehens.
+ */
+export function checkPendingExits(db, { push, publish }, now = new Date()) {
+  const due = db.prepare(
+    `SELECT pp.*, p.family_id FROM place_presence pp JOIN places p ON p.id = pp.place_id
+     WHERE pp.pending_exit_at IS NOT NULL AND pp.pending_exit_at <= ?`
+  ).all(sqlNow(new Date(now.getTime() - EXIT_CONFIRM_MINUTES * 60_000)));
+  const families = new Set();
+  for (const row of due) {
+    const place = db.prepare('SELECT * FROM places WHERE id = ?').get(row.place_id);
+    const sharing = db.prepare('SELECT share_places FROM memberships WHERE family_id = ? AND user_id = ?').get(row.family_id, row.user_id)?.share_places;
+    const tooSoon = row.notified_exit_at && minutesSince(row.notified_exit_at, now) < REPEAT_MINUTES;
+    const notify = Boolean(sharing) && !tooSoon;
+    db.prepare(
+      `UPDATE place_presence SET inside = 0, changed_at = pending_exit_at, pending_exit_at = NULL,
+         notified_exit_at = CASE WHEN ? THEN ? ELSE notified_exit_at END WHERE user_id = ? AND place_id = ?`
+    ).run(notify ? 1 : 0, sqlNow(now), row.user_id, row.place_id);
+    if (notify) {
+      const at = new Date(`${row.pending_exit_at.replace(' ', 'T')}Z`);
+      notifyTransition(db, push, { familyId: row.family_id, userId: row.user_id, place, enter: false, at, now });
+    }
+    families.add(row.family_id);
+  }
+  for (const f of families) publish?.(f, 'places');
+  return due.length;
+}
+
 export function placesRouter(db, { auth, member, publish, push, geocoder = new Geocoder() }) {
   const router = Router();
   const base = '/api/families/:familyId/places';
@@ -76,6 +124,7 @@ export function placesRouter(db, { auth, member, publish, push, geocoder = new G
 
   // Alles für die Einstellungen: Orte, wer teilt, wer gerade wo ist, meine Benachrichtigungen
   router.get(base, auth, member, (req, res) => {
+    checkPendingExits(db, { push, publish });
     const places = db.prepare('SELECT * FROM places WHERE family_id = ? ORDER BY name COLLATE NOCASE').all(req.familyId);
     const sharing = db.prepare('SELECT user_id FROM memberships WHERE family_id = ? AND share_places = 1').all(req.familyId).map((r) => r.user_id);
     const presence = db.prepare(
@@ -185,38 +234,50 @@ export function placesRouter(db, { auth, member, publish, push, geocoder = new G
 
     const now = new Date();
     const enter = transition === 'enter';
+    const initial = Boolean(req.body?.initial);
     const before = db.prepare('SELECT * FROM place_presence WHERE user_id = ? AND place_id = ?').get(req.user.id, place.id);
+    let sent = [];
+
+    if (!enter && before?.inside && !initial) {
+      // Verlassen nur vormerken – bestätigt wird es erst nach EXIT_CONFIRM_MINUTES (checkPendingExits)
+      if (!before.pending_exit_at) {
+        db.prepare('UPDATE place_presence SET pending_exit_at = ? WHERE user_id = ? AND place_id = ?').run(sqlNow(now), req.user.id, place.id);
+      }
+      return res.json({ notified: 0, pending: true });
+    }
+    if (enter && before?.pending_exit_at) {
+      // war gar nicht weg (GPS-Sprung): Vormerkung verwerfen, nichts melden
+      db.prepare('UPDATE place_presence SET pending_exit_at = NULL WHERE user_id = ? AND place_id = ?').run(req.user.id, place.id);
+      return res.json({ notified: 0 });
+    }
+
     const lastNotified = enter ? before?.notified_enter_at : before?.notified_exit_at;
     // doppelte Meldung (schon drin/draußen) oder dieselbe Meldung vor kurzem → nichts schicken
     const duplicate = before && Boolean(before.inside) === enter;
     const tooSoon = lastNotified && minutesSince(lastNotified, now) < REPEAT_MINUTES;
-    const notify = !req.body?.initial && !duplicate && !tooSoon;
+    const notify = !initial && !duplicate && !tooSoon;
 
     db.prepare(
       `INSERT INTO place_presence (user_id, place_id, inside, changed_at, notified_enter_at, notified_exit_at) VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT (user_id, place_id) DO UPDATE SET inside = excluded.inside,
+       ON CONFLICT (user_id, place_id) DO UPDATE SET inside = excluded.inside, pending_exit_at = NULL,
          changed_at = CASE WHEN place_presence.inside = excluded.inside THEN place_presence.changed_at ELSE excluded.changed_at END,
          notified_enter_at = COALESCE(excluded.notified_enter_at, place_presence.notified_enter_at),
          notified_exit_at = COALESCE(excluded.notified_exit_at, place_presence.notified_exit_at)`
     ).run(req.user.id, place.id, enter ? 1 : 0, sqlNow(now), notify && enter ? sqlNow(now) : null, notify && !enter ? sqlNow(now) : null);
     publish(req.familyId, 'places');
 
-    let sent = [];
-    if (notify) {
-      sent = db.prepare(
-        `SELECT pp.* FROM place_prefs pp JOIN memberships m ON m.user_id = pp.user_id AND m.family_id = pp.family_id
-         WHERE pp.family_id = ? AND pp.member_id = ? AND pp.place_id = ? AND ${enter ? 'pp.arrive' : 'pp.leave'} = 1`
-      ).all(req.familyId, req.user.id, place.id).filter((p) => inWindow(p, now)).map((p) => p.user_id);
-      const who = req.user.name.split(' ')[0];
-      const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      push?.notify?.(sent, {
-        title: enter ? `${place.icon} ${who} ist angekommen` : `${place.icon} ${who} ist losgegangen`,
-        body: enter ? `${place.name} · ${time}` : `${place.name} verlassen · ${time}`,
-        path: '/einstellungen#orte',
-      });
-    }
+    if (notify) sent = notifyTransition(db, push, { familyId: req.familyId, userId: req.user.id, place, enter, at: now, now });
     res.json({ notified: sent.length });
   });
+
+  // jede Minute vorgemerkte „Verlassen“ bestätigen
+  setInterval(() => {
+    try {
+      checkPendingExits(db, { push, publish });
+    } catch (err) {
+      console.error('Orte:', err.message);
+    }
+  }, 60_000).unref();
 
   return router;
 }

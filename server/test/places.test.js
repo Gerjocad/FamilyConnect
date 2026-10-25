@@ -2,9 +2,11 @@ import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
 import { openDatabase } from '../src/db.js';
-import { Geocoder, inWindow } from '../src/places.js';
+import { checkPendingExits, Geocoder, inWindow } from '../src/places.js';
 
 const sent = [];
+let push;
+const inMinutes = (m) => new Date(Date.now() + m * 60_000);
 let server;
 let base;
 let db;
@@ -16,7 +18,7 @@ before(async () => {
       return Response.json([{ display_name: 'Grundschule am Park, Parkstraße 3, 40210 Düsseldorf', lat: '51.2212345', lon: '6.7801234' }]);
     },
   });
-  const push = { notify: (ids, m) => sent.push([ids, m]), handleChange() {} };
+  push = { notify: (ids, m) => sent.push([ids, m]), handleChange() {} };
   const app = createApp(db, { geocoder, push });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   base = `http://127.0.0.1:${server.address().port}/api`;
@@ -69,9 +71,22 @@ describe('Orte', () => {
     assert.deepEqual(overview.sharing, [ids.Lea]);
     assert.deepEqual(overview.prefs, [{ member_id: ids.Lea, place_id: school.id, arrive: true, leave: false, weekdays_only: false, from_time: null, to_time: null }]);
 
-    assert.equal((await event({ transition: 'exit' })).data.notified, 1, 'nur Papa will Losgehen wissen');
+    // GPS springt kurz aus dem Kreis und zurück → weder „losgegangen“ noch „angekommen“
+    const count = sent.length;
+    assert.deepEqual((await event({ transition: 'exit' })).data, { notified: 0, pending: true });
+    assert.equal((await event({ transition: 'enter' })).data.notified, 0);
+    assert.equal(checkPendingExits(db, { push }, inMinutes(10)), 0);
+    assert.equal(sent.length, count, 'keine Meldung bei GPS-Sprung');
+    assert.equal((await api(path, { token: mama })).data.presence.length, 1, 'gilt weiter als da');
+
+    // wirklich losgegangen: erst nach ein paar Minuten bestätigt, mit der Uhrzeit des Losgehens
+    assert.equal((await event({ transition: 'exit' })).data.pending, true);
+    assert.equal((await event({ transition: 'exit' })).data.pending, true, 'doppelt – bleibt vorgemerkt');
+    assert.equal(checkPendingExits(db, { push }, inMinutes(2)), 0, 'noch zu früh');
+    assert.equal(sent.length, count);
+    assert.equal(checkPendingExits(db, { push }, inMinutes(6)), 1);
     assert.equal(sent.at(-1)[1].title, '🏫 Lea ist losgegangen');
-    assert.deepEqual(sent.at(-1)[0], [ids.Papa]);
+    assert.deepEqual(sent.at(-1)[0], [ids.Papa], 'nur Papa will Losgehen wissen');
     assert.equal((await event({ transition: 'exit' })).data.notified, 0, 'doppelt');
     overview = (await api(path, { token: mama })).data;
     assert.deepEqual(overview.presence, []);

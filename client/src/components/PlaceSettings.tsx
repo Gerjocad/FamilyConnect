@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { api } from '../api';
 import { formatTimestamp } from '../dates';
-import { Geofence, canUseGeofence, syncGeofences, type GeofenceState } from '../geofence';
+import { Geofence, MIN_GEOFENCE_RADIUS, canUseGeofence, syncGeofences, type GeofenceState } from '../geofence';
 import { DEFAULT_RADIUS, PLACE_ICONS, usePlaces, type Place, type PlacePref } from '../places';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -105,7 +105,12 @@ function PlaceForm({ place, places, onClose }: { place?: Place; places: Places; 
               </button>
             ))}
           </div>
-          {radius < 100 && <small className="hint">Klein = genau, aber Android meldet erst ab ca. 100 m wirklich zuverlässig. Bleibt eine Meldung aus, den Radius etwas vergrößern.</small>}
+          {radius < MIN_GEOFENCE_RADIUS && (
+            <small className="hint">
+              Auf dem Handy gilt mindestens {MIN_GEOFENCE_RADIUS} m – darunter springt der Standort im Haus zu leicht aus dem Kreis
+              und es käme „losgegangen“, obwohl niemand weg ist.
+            </small>
+          )}
         </div>
         {error && <p className="error">{error}</p>}
         <div className="form-actions">

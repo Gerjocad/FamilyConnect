@@ -27,6 +27,10 @@ export const Geofence = registerPlugin<GeofencePlugin>('Geofence');
 /** Nur in der Android-App ab der Version mit Orten */
 export const canUseGeofence = () => Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Geofence');
 
+// Kleinere Kreise meldet Android unzuverlässig: Im Haus springt der Standort schnell mal 50 m daneben
+// und es kommt „verlassen“, obwohl man drin ist. Beim Handy gilt daher mindestens dieser Radius.
+export const MIN_GEOFENCE_RADIUS = 100;
+
 /** Orte der Familie bei Android anmelden (unveränderte Orte werden nicht neu angemeldet) */
 export async function syncGeofences(familyId: number, places: Place[]) {
   const token = getToken();
@@ -35,6 +39,6 @@ export async function syncGeofences(familyId: number, places: Place[]) {
     server: getServerUrl() || location.origin,
     token,
     familyId,
-    places: places.map(({ id, lat, lon, radius }) => ({ id, lat, lon, radius })),
+    places: places.map(({ id, lat, lon, radius }) => ({ id, lat, lon, radius: Math.max(radius, MIN_GEOFENCE_RADIUS) })),
   });
 }
