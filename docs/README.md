@@ -17,6 +17,31 @@ Alles Wichtige zu FamilyConnect auf einen Blick. Neue Anleitungen und Bastelproj
 | [hardware/musikbox](../hardware/musikbox/) | Anleitung, STL-Dateien (Gehäuse im Lautsprecher-Look oder schlicht, Boden, Karten, Knopf, Tastenkappe), OpenSCAD-Modell, Firmware |
 | [hardware/wandsensor](../hardware/wandsensor/) | Anleitung, STL-Dateien (Gehäuse + Rückwand für ESP32-C3 oder -S3), OpenSCAD-Modell, Firmware |
 
+## 🧊 3D-Druck-Dateien (STL)
+
+**Musik-Box** – Ordner [hardware/musikbox/3d](../hardware/musikbox/3d/), Modell zum Anpassen: [musikbox.scad](../hardware/musikbox/3d/musikbox.scad)
+
+| Datei | Teil | Anzahl |
+| --- | --- | --- |
+| [gehaeuse.stl](../hardware/musikbox/3d/gehaeuse.stl) | Gehäuse im Lautsprecher-Look (kopfüber drucken) | 1 |
+| [gehaeuse_schlicht.stl](../hardware/musikbox/3d/gehaeuse_schlicht.stl) | … oder schlicht ohne Verzierung | (1) |
+| [boden.stl](../hardware/musikbox/3d/boden.stl) | Boden mit ESP32-Halter | 1 |
+| [karte_vorne.stl](../hardware/musikbox/3d/karte_vorne.stl) | Karte, vordere Hälfte | 1 pro Karte |
+| [karte_hinten.stl](../hardware/musikbox/3d/karte_hinten.stl) | Karte, hintere Hälfte (Mulde für den NFC-Aufkleber) | 1 pro Karte |
+| [drehknopf.stl](../hardware/musikbox/3d/drehknopf.stl) | Lautstärke-Knopf | 1 |
+| [tastenkappe.stl](../hardware/musikbox/3d/tastenkappe.stl) | Tastenkappe vor/zurück | 2 |
+
+**Wandsensor** – Ordner [hardware/wandsensor/3d/stl](../hardware/wandsensor/3d/stl/), Modell zum Anpassen: [wandsensor.scad](../hardware/wandsensor/3d/wandsensor.scad)
+
+| Datei | Teil |
+| --- | --- |
+| [gehaeuse_c3.stl](../hardware/wandsensor/3d/stl/gehaeuse_c3.stl) | Gehäuse für ESP32-C3 SuperMini (Vorderseite nach unten drucken) |
+| [rueckwand_c3.stl](../hardware/wandsensor/3d/stl/rueckwand_c3.stl) | Rückwand mit C3-Halter und Schlüssellöchern |
+| [gehaeuse_s3.stl](../hardware/wandsensor/3d/stl/gehaeuse_s3.stl) | Gehäuse für ESP32-S3-DevKitC-1 (größer) |
+| [rueckwand_s3.stl](../hardware/wandsensor/3d/stl/rueckwand_s3.stl) | Rückwand für den S3 |
+
+Auf GitHub eine STL anklicken zeigt sie in 3D; rechts oben „Download“ lädt sie für den Slicer herunter.
+
 ## ⚙️ Server einrichten (Schritt für Schritt)
 
 | Thema | Datei |
