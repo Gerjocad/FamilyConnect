@@ -7,7 +7,7 @@ Karte heraus → Pause, wieder hinein → weiter. Drehknopf = Lautstärke (drüc
 
 | Ordner | Inhalt |
 | --- | --- |
-| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse, Boden, Karte vorne/hinten, Tastenkappe, Drehknopf |
+| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, Drehknopf |
 | `firmware/` | PlatformIO-Projekt für den ESP32-S3-DevKitC-1 (RC522, EC11, 2 Tasten). `include/config.example.h` → `include/config.h` kopieren und ausfüllen |
 
 ## Kurz: Verkabelung

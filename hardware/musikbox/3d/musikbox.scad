@@ -6,6 +6,7 @@
 // (Schieblehre) – besonders Taster und Drehgeber gibt es in leicht unterschiedlichen Größen.
 
 part = "alles";
+stil = "lautsprecher";   // lautsprecher = Box-Look (Tieftöner vorn, Passivmembranen an den Seiten, Gitter oben) · schlicht
 $fn = 64;
 
 // ---------------- Karte ----------------
@@ -51,6 +52,60 @@ module rbox(size, rad, h) {  // abgerundeter Quader, unten auf z = 0
   linear_extrude(h) offset(r = rad) square([size[0] - 2 * rad, size[1] - 2 * rad], center = true);
 }
 
+// ================== Lautsprecher-Look (nur außen, innen bleibt alles gleich) ==================
+// Alles mit 45°-Schrägen, damit es kopfüber ohne Stützen druckt. Lokale Achse +z zeigt aus der Wand heraus.
+module ring(r1, r2, h) {   // Wulst mit schrägen Flanken
+  rotate_extrude() polygon([[r1, 0], [r1 + h, h], [r2 - h, h], [r2, 0]]);
+}
+// Tieftöner bzw. Passivmembran: Korb, Sicke, Membran/Platte
+module speaker_add(R, woofer = true) {
+  ring(R - 5, R, 1.5);                               // Korb mit Schraubenrand
+  ring(R - 10, R - 5, 2);                            // Sicke
+  if (woofer) {
+    // Staubkappe: flache Kuppel (Flanke < 45°)
+    intersection() {
+      translate([0, 0, 3 - 73 / 6]) sphere(r = 73 / 6, $fn = 96);
+      cylinder(r = 8, h = 3);
+    }
+  } else {
+    rotate_extrude() polygon([[0, 0], [R - 10, 0], [R - 11, 1], [0, 1]]);  // Membranplatte
+  }
+}
+module speaker_cut(R, woofer = true) {
+  // Membran: kegelförmig vertieft (zur Mitte hin tiefer)
+  if (woofer) rotate_extrude() polygon([[8, -0.9], [R - 10, 0], [R - 10, 0.5], [8, 0.5]]);
+  else translate([0, 0, 0.6]) cylinder(r = 4, h = 1);  // kleine Mulde in der Platte
+  // Schraubenköpfe im Korb
+  for (a = [45 : 90 : 359]) rotate(a) translate([R - 2.5, 0, 0.7]) cylinder(d = 1.6, h = 1, $fn = 16);
+}
+module bassport_add() { ring(5.5, 9, 1.5); }
+module bassport_cut() { translate([0, 0, -1.2]) cylinder(r = 5.5, h = 3); }
+
+woofer_R = 24;   woofer_z = 58;   // vorn über den Bedienelementen
+side_R = 19;     side_z = 58;     // links und rechts (rechts über USB und LED)
+port_x = 20;     port_z = 60;     // hinten
+
+// Seiten: Front (−y), links (−x), rechts (+x), hinten (+y); lokale x/y-Achse liegt in der Wand
+module on_front(z) { translate([0, -D / 2, z]) rotate([90, 0, 0]) children(); }
+module on_left(z) { translate([-W / 2, 0, z]) rotate([0, -90, 0]) children(); }
+module on_right(z) { translate([W / 2, 0, z]) rotate([0, 90, 0]) children(); }
+module on_back(x, z) { translate([x, D / 2, z]) rotate([-90, 0, 0]) children(); }
+
+module deko_add() {
+  on_front(woofer_z) speaker_add(woofer_R);
+  on_left(side_z) speaker_add(side_R, false);
+  on_right(side_z) speaker_add(side_R, false);
+  for (s = [-1, 1]) on_back(s * port_x, port_z) bassport_add();
+}
+module deko_cut() {
+  on_front(woofer_z) speaker_cut(woofer_R);
+  on_left(side_z) speaker_cut(side_R, false);
+  on_right(side_z) speaker_cut(side_R, false);
+  for (s = [-1, 1]) on_back(s * port_x, port_z) bassport_cut();
+  // Lautsprechergitter oben hinter dem Kartenschlitz
+  for (i = [0 : 5]) translate([0, 8 + i * 3, H - 0.8]) hull() for (sx = [-1, 1]) translate([sx * 33, 0, 0]) cylinder(d = 1.6, h = 1, $fn = 16);
+}
+
 // ================== Gehäuse (wird kopfüber gedruckt) ==================
 module gehaeuse() {
   difference() {
@@ -87,7 +142,9 @@ module gehaeuse() {
           translate([-btn_body / 2, -btn_body / 2, 1]) cube([btn_body, btn_body, 5]);            // Taster von hinten
           translate([-(btn_body + 4) / 2, -1.5, 3]) cube([btn_body + 4, 3, 3]);                  // Beinchen/Kabel
         }
+      if (stil == "lautsprecher") deko_add();
     }
+    if (stil == "lautsprecher") deko_cut();
     // Schlitz oben mit Einführschräge
     translate([0, -D / 2 + slot_y, floor_z]) cube([slot_w, slot_t, 2 * (H - floor_z) + 1], center = true);
     translate([0, -D / 2 + slot_y, H - 1.2]) hull() {
@@ -176,7 +233,7 @@ else if (part == "karte_hinten") karte_hinten();
 else if (part == "tastenkappe") rotate([180, 0, 0]) tastenkappe();
 else if (part == "drehknopf") rotate([180, 0, 0]) drehknopf();
 else if (part == "alles") {
-  color("#f2efe9", 0.55) gehaeuse();
+  color("#4a4a4a") gehaeuse();
   color("#d9d4cc") translate([0, 0, 0]) boden();
   // Karte steckt im Schlitz
   color("#e8590c") translate([0, -D / 2 + slot_y, floor_z + card / 2]) rotate([90, 0, 0]) translate([0, 0, -card_half]) {
