@@ -14,12 +14,12 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.51',
     date: '2026-10-25',
-    title: 'Logos im Kalender mit zwei Wörtern',
+    title: 'Beide Wappen bei Spielen',
     changes: [
-      'Kalender → + → Logos: optional ein zweites Wort angeben',
-      '„Beide Wörter müssen vorkommen“ – z. B. „Fenerbahçe“ + „Basketbol“ bekommt ein eigenes Logo, Fußballspiele behalten ihres',
-      '„Eines der Wörter reicht“ – z. B. „Fenerbahçe“ oder „FB“ zeigen dasselbe Logo',
-      'Gilt auch auf dem Wanddisplay',
+      'Kalender → + → Logos: neues Feld „Nur zusammen mit“ – z. B. „Galatasaray“ nur zusammen mit „Fenerbahçe“',
+      'Bei „Fenerbahçe – Galatasaray“ stehen beide Wappen nebeneinander, in der Reihenfolge des Titels (Heim zuerst)',
+      'Spiele ohne Fenerbahçe (z. B. „Galatasaray – Beşiktaş“) bekommen kein Wappen',
+      'Gilt in Kalender, Übersicht und auf dem Wanddisplay',
     ],
   },
   {

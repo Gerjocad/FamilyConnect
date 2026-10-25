@@ -155,7 +155,7 @@ export function DashboardPage() {
               <div key={toDateKey(g.day)} className="agenda-group">
                 <h3>{sameDay(g.day, today) ? 'Heute' : formatDay(g.day)}</h3>
                 <div className="stack">
-                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} />)}
+                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} />)}
                 </div>
               </div>
             ))

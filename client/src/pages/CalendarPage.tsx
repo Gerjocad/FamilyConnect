@@ -30,11 +30,11 @@ export function eventColor(event: CalendarEvent, member: ReturnType<typeof useFa
   return member(event.member_ids[0])?.color ?? 'var(--accent)';
 }
 
-export function OccurrenceRow({ occ, onClick, icon, comments = 0 }: {
+export function OccurrenceRow({ occ, onClick, icons = [], comments = 0 }: {
   occ: Occurrence;
   onClick?(): void;
-  /** Logo (eventIcons.ts) */
-  icon?: string | null;
+  /** Logos (eventIcons.ts), z. B. beide Wappen eines Spiels */
+  icons?: string[];
   /** Anzahl Kommentare an diesem Tag */
   comments?: number;
 }) {
@@ -49,7 +49,12 @@ export function OccurrenceRow({ occ, onClick, icon, comments = 0 }: {
         {!event.all_day && <small>{multiDay ? 'mehrtägig' : formatTime(occ.end)}</small>}
       </span>
       <span className="event-main">
-        <strong>{icon && <img src={icon} alt="" className="event-logo" />}{event.title}</strong>
+        <strong>
+          {icons.length > 0 && (
+            <span className="event-logos">{icons.map((src, i) => <img key={i} src={src} alt="" className="event-logo" />)}</span>
+          )}
+          {event.title}
+        </strong>
         {(event.location || event.recurrence !== 'none') && (
           <small className="muted">
             {event.recurrence !== 'none' && <Icon name="repeat" size={12} />} {event.location}
@@ -239,10 +244,10 @@ export function CalendarPage() {
                       </span>
                     ))}
                     {occs.slice(0, 3).map((o, i) => {
-                      const icon = icons.iconFor(o.event.title);
+                      const logos = icons.iconsFor(o.event.title);
                       return (
-                        <span key={i} className={`day-event ${icon ? 'has-logo' : ''}`} style={{ background: eventColor(o.event, member) }}>
-                          {icon && <img src={icon} alt="" className="day-logo" />}
+                        <span key={i} className={`day-event ${logos.length ? 'has-logo' : ''}`} style={{ background: eventColor(o.event, member) }}>
+                          {logos.map((src, j) => <img key={j} src={src} alt="" className="day-logo" />)}
                           <span className="day-event-title">{o.event.title}</span>
                         </span>
                       );
@@ -293,7 +298,7 @@ export function CalendarPage() {
             ) : (
               <div className="stack">
                 {selectedOccurrences.map((o, i) => (
-                  <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icon={icons.iconFor(o.event.title)} comments={commentsOn(o)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
+                  <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={commentsOn(o)} onClick={() => setEditing({ event: o.event, occurrence: o })} />
                 ))}
               </div>
             )}

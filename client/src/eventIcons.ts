@@ -1,4 +1,5 @@
-// Logos im Kalender: steht das Stichwort im Titel eines Termins, erscheint das Bild daneben.
+// Logos im Kalender: steht das Stichwort im Titel eines Termins, erscheint das Bild daneben –
+// bei „Fenerbahçe – Galatasaray“ auch beide Wappen nebeneinander.
 import { useCallback } from 'react';
 import type { EventIcon } from './types';
 import { useResource } from './useResource';
@@ -7,30 +8,28 @@ import { useResource } from './useResource';
 export const normalize = (text: string) =>
   text.toLocaleLowerCase('de').replace(/ı/g, 'i').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss');
 
-/** Passt die Regel zum (normalisierten) Titel? Gleiche Logik wie iconMatches in server/src/wall.js */
-export function iconMatches(icon: Pick<EventIcon, 'keyword' | 'keyword2' | 'match_any'>, title: string) {
-  const words = [icon.keyword, icon.keyword2].map((w) => normalize(w ?? '').trim()).filter(Boolean);
-  if (!words.length) return false;
-  return icon.match_any ? words.some((w) => title.includes(w)) : words.every((w) => title.includes(w));
+/**
+ * Alle Logos zu einem Titel, in der Reihenfolge der Wörter im Titel. Längere Stichwörter gehen vor, wenn sie sich
+ * überschneiden („Fenerbahçe Basketbol“ statt „Fenerbahçe“). Gleiche Logik wie logosFor in server/src/wall.js.
+ */
+export function logosFor(rules: Pick<EventIcon, 'keyword' | 'only_with' | 'image'>[], title: string, max = 3) {
+  const t = normalize(title);
+  const chosen: { pos: number; end: number; image: string }[] = [];
+  for (const r of [...rules].sort((a, b) => b.keyword.length - a.keyword.length)) {
+    const key = normalize(r.keyword).trim();
+    const pos = key ? t.indexOf(key) : -1;
+    if (pos < 0) continue;
+    const condition = normalize(r.only_with ?? '').trim();
+    if (condition && !t.includes(condition)) continue;
+    const end = pos + key.length;
+    if (chosen.some((c) => (pos < c.end && c.pos < end) || c.image === r.image)) continue;
+    chosen.push({ pos, end, image: r.image });
+  }
+  return chosen.sort((a, b) => a.pos - b.pos).slice(0, max).map((c) => c.image);
 }
-
-/** Genauere Regeln zuerst: „Fenerbahçe + Basketbol“ vor „Fenerbahçe“ */
-const score = (i: EventIcon) => (i.match_any ? 0 : (i.keyword2 ?? '').length) + i.keyword.length;
-
-/** Anzeige der Regel: „Fenerbahçe + Basketbol“ (beide) bzw. „Fenerbahçe oder FB“ */
-export const iconLabel = (i: Pick<EventIcon, 'keyword' | 'keyword2' | 'match_any'>) =>
-  i.keyword2 ? `${i.keyword} ${i.match_any ? 'oder' : '+'} ${i.keyword2}` : i.keyword;
 
 export function useEventIcons() {
   const icons = useResource<EventIcon>('event-icons');
-  const iconFor = useCallback(
-    (title: string) => {
-      const t = normalize(title);
-      // genauere Regeln zuerst, damit „Fenerbahçe + Basketbol“ vor „Fenerbahçe“ greift
-      const sorted = [...icons.items].sort((a, b) => score(b) - score(a));
-      return sorted.find((i) => iconMatches(i, t))?.image ?? null;
-    },
-    [icons.items]
-  );
-  return { ...icons, iconFor };
+  const iconsFor = useCallback((title: string) => logosFor(icons.items, title), [icons.items]);
+  return { ...icons, iconsFor };
 }

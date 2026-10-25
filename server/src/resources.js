@@ -240,9 +240,8 @@ export const RESOURCES = [
     childRule: () => 'Logos legen Eltern an',
     fields: {
       keyword: text({ required: true, max: 60 }),
-      // optionales zweites Wort: match_any = false → beide müssen im Titel stehen, true → eines reicht
-      keyword2: text({ max: 60 }),
-      match_any: bool(),
+      // optional: Logo nur zeigen, wenn auch dieses Wort im Titel steht (z. B. Gegner-Wappen nur bei Fenerbahçe-Spielen)
+      only_with: text({ max: 60 }),
       image: text({ required: true, max: 60000 }),
     },
     check(row) {

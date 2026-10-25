@@ -48,6 +48,7 @@
   .title { -webkit-box-flex: 1; flex: 1; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .title small { color: var(--muted); font-size: 14px; }
   .logo { width: 28px; height: 28px; object-fit: contain; margin-left: 8px; flex-shrink: 0; }
+  .logo + .logo { margin-left: 3px; }
   .dots { margin-left: 8px; flex-shrink: 0; }
   .dot { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; margin-left: 3px; }
   .empty { color: var(--muted); font-size: 16px; padding: 4px 0; }
@@ -189,6 +190,11 @@
     }
     return html ? '<span class="dots">' + html + '</span>' : '';
   }
+  function logos(list) {
+    var html = '';
+    for (var i = 0; list && i < list.length; i++) html += '<img class="logo" src="' + esc(list[i]) + '" alt="" />';
+    return html;
+  }
   function specialChips(list) {
     var icons = { birthday: '🎂', vacation: '🧳', holiday: '🎉', school: '🏖️', loan: '📚' };
     var html = '';
@@ -212,7 +218,7 @@
       html += '<div class="' + cls + '"' + (first ? ' style="border-left-color:' + esc(first.color) + '"' : '') + '>' +
         '<span class="time' + (e.all_day ? ' allday' : '') + '">' + time + end + '</span>' +
         '<span class="title">' + esc(e.title) + (e.location ? ' <small>· ' + esc(e.location) + '</small>' : '') + '</span>' +
-        (e.icon ? '<img class="logo" src="' + esc(e.icon) + '" alt="" />' : '') +
+        logos(e.icons) +
         dots(e.member_ids) + '</div>';
     }
     return html;

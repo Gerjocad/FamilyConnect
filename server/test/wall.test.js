@@ -4,7 +4,7 @@ import { createApp } from '../src/app.js';
 import { openDatabase } from '../src/db.js';
 import { localKey } from '../src/occurrences.js';
 import { WeatherService } from '../src/weather.js';
-import { weatherHints } from '../src/wall.js';
+import { logosFor, weatherHints } from '../src/wall.js';
 
 let server;
 let base;
@@ -43,22 +43,21 @@ describe('Wanddisplay', () => {
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Fenerbahçe – Galatasaray', start: `${today}T20:00`, end: `${today}T22:00` } });
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Schwimmen', start: `${lastWeek}T16:00`, end: `${lastWeek}T17:00`, recurrence: 'weekly' } });
     await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahce', image: 'data:image/png;base64,AAAA' } });
-    // zwei Wörter: beide müssen vorkommen (genauer) bzw. eines reicht
-    const { data: two } = await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahçe', keyword2: 'Basketbol', image: 'data:image/png;base64,BBBB' } });
-    assert.equal(two.match_any, false);
-    await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Schwimmen', keyword2: 'Kraulen', match_any: true, image: 'data:image/png;base64,CCCC' } });
-    await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Fenerbahce Basketbol – Efes', start: `${today}T18:00`, end: `${today}T19:00` } });
+    // Gegner-Wappen nur bei Fenerbahçe-Spielen
+    await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Galatasaray', only_with: 'Fenerbahçe', image: 'data:image/png;base64,GGGG' } });
+    await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Besiktas', only_with: 'Fenerbahçe', image: 'data:image/png;base64,BBBB' } });
+    await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Beşiktaş – Galatasaray', start: `${today}T18:00`, end: `${today}T19:00` } });
     await api(`${f}/posts`, { token: lea, method: 'POST', body: { text: 'Hallo Wand!' } });
 
     const dashed = `${wall.token.slice(0, 4)}-${wall.token.slice(4, 8)}-${wall.token.slice(8)}`.toLowerCase();
     const { status, data } = await api(`/wall/${dashed}`);
     assert.equal(status, 200);
     assert.equal(data.family, 'Yumruk');
-    assert.deepEqual(data.days[0].events.map((e) => [e.title, e.start.slice(11)]), [['Schwimmen', '16:00'], ['Fenerbahce Basketbol – Efes', '18:00'], ['Fenerbahçe – Galatasaray', '20:00']]);
-    const iconOf = (title) => data.days[0].events.find((e) => e.title === title).icon;
-    assert.equal(iconOf('Fenerbahçe – Galatasaray'), 'data:image/png;base64,AAAA', 'nur ein Wort passt → Fußball-Logo');
-    assert.equal(iconOf('Fenerbahce Basketbol – Efes'), 'data:image/png;base64,BBBB', 'beide Wörter → genauere Regel gewinnt');
-    assert.equal(iconOf('Schwimmen'), 'data:image/png;base64,CCCC', 'eines der Wörter reicht');
+    assert.deepEqual(data.days[0].events.map((e) => [e.title, e.start.slice(11)]), [['Schwimmen', '16:00'], ['Beşiktaş – Galatasaray', '18:00'], ['Fenerbahçe – Galatasaray', '20:00']]);
+    const logos = (title) => data.days[0].events.find((e) => e.title === title).icons;
+    assert.deepEqual(logos('Fenerbahçe – Galatasaray'), ['data:image/png;base64,AAAA', 'data:image/png;base64,GGGG'], 'beide Wappen in Titel-Reihenfolge');
+    assert.deepEqual(logos('Beşiktaş – Galatasaray'), [], 'ohne Fenerbahçe keine Gegner-Wappen');
+    assert.deepEqual(logos('Schwimmen'), []);
     assert.equal(data.posts[0].text, 'Hallo Wand!');
     assert.equal(data.weather, null);
     assert.equal(data.members.length, 2);
@@ -135,6 +134,18 @@ describe('Wanddisplay', () => {
     assert.equal(view.display.sensor.present, false);
     assert.equal((await api(`${f}/wall-displays`, { token: mama })).data[0].sensor.lux, 30);
     ctrl.abort();
+  });
+
+  test('Logos: Reihenfolge wie im Titel, längeres Stichwort gewinnt', () => {
+    const norm = (t) => t.toLowerCase();
+    const rules = [
+      { keyword: 'Fenerbahce', only_with: '', image: 'FB' },
+      { keyword: 'Fenerbahce Basketbol', only_with: '', image: 'FBB' },
+      { keyword: 'Efes', only_with: 'Fenerbahce', image: 'EFES' },
+    ];
+    assert.deepEqual(logosFor(rules, 'Efes – Fenerbahce Basketbol', norm), ['EFES', 'FBB']);
+    assert.deepEqual(logosFor(rules, 'Fenerbahce – Efes', norm), ['FB', 'EFES']);
+    assert.deepEqual(logosFor(rules, 'Efes – Real', norm), []);
   });
 
   test('Wetter-Hinweise', () => {

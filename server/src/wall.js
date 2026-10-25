@@ -24,14 +24,26 @@ export const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const newCode = () => [...randomBytes(12)].map((b) => CODE_CHARS[b % 32]).join('');
 export const cleanCode = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-/** Logo-Regel passt zum Titel? Ein Wort, oder zwei Wörter (beide bzw. eines davon) – gleiche Logik wie client/src/eventIcons.ts */
-export function iconMatches(icon, normalizedTitle, normalizeFn) {
-  const words = [icon.keyword, icon.keyword2].map((w) => normalizeFn(w ?? '').trim()).filter(Boolean);
-  if (!words.length) return false;
-  return icon.match_any ? words.some((w) => normalizedTitle.includes(w)) : words.every((w) => normalizedTitle.includes(w));
+/**
+ * Alle Logos zu einem Titel, in der Reihenfolge, in der die Wörter im Titel stehen
+ * („Fenerbahçe – Galatasaray“ → beide Wappen). Längere Stichwörter gehen vor, wenn sie sich überschneiden
+ * („Fenerbahçe Basketbol“ statt „Fenerbahçe“). Gleiche Logik wie client/src/eventIcons.ts.
+ */
+export function logosFor(rules, title, normalizeFn, max = 3) {
+  const t = normalizeFn(title);
+  const chosen = [];
+  for (const r of [...rules].sort((a, b) => b.keyword.length - a.keyword.length)) {
+    const key = normalizeFn(r.keyword).trim();
+    const pos = key ? t.indexOf(key) : -1;
+    if (pos < 0) continue;
+    const condition = normalizeFn(r.only_with ?? '').trim();
+    if (condition && !t.includes(condition)) continue;
+    const end = pos + key.length;
+    if (chosen.some((c) => pos < c.end && c.pos < end || c.image === r.image)) continue;
+    chosen.push({ pos, end, image: r.image });
+  }
+  return chosen.sort((a, b) => a.pos - b.pos).slice(0, max).map((c) => c.image);
 }
-/** Genauere Regeln zuerst: „Fenerbahçe + Basketbol“ vor „Fenerbahçe“ */
-export const iconScore = (icon) => (icon.match_any ? 0 : (icon.keyword2 ?? '').length) + icon.keyword.length;
 
 const normalize = (s) => s.toLocaleLowerCase('de').replace(/ı/g, 'i').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -139,9 +151,8 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
     ).all(familyId);
 
     // Termine heute und morgen, mit Logo
-    const icons = db.prepare('SELECT keyword, keyword2, match_any, image FROM event_icons WHERE family_id = ?').all(familyId)
-      .sort((a, b) => iconScore(b) - iconScore(a));
-    const iconFor = (title) => icons.find((i) => iconMatches(i, normalize(title), normalize))?.image ?? null;
+    const rules = db.prepare('SELECT keyword, only_with, image FROM event_icons WHERE family_id = ?').all(familyId);
+    const iconFor = (title) => logosFor(rules, title, normalize);
     const events = db.prepare('SELECT * FROM events WHERE family_id = ?').all(familyId).map((r) => serialize(EVENTS, r));
     const occ = events.flatMap((e) => occurrences(e, today, dayAfter))
       .sort((a, b) => Number(b.event.all_day) - Number(a.event.all_day) || a.start - b.start);
@@ -158,7 +169,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
           end: localStamp(o.end),
           location: o.event.location,
           member_ids: o.event.member_ids,
-          icon: icon.get(o.event.title),
+          icons: icon.get(o.event.title),
         };
       });
     };

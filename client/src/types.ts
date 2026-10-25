@@ -168,10 +168,8 @@ export interface Chore extends Base {
 /** Logo im Kalender für Termine mit dem Stichwort im Titel */
 export interface EventIcon extends Base {
   keyword: string;
-  /** optionales zweites Wort */
-  keyword2: string;
-  /** false: beide Wörter müssen im Titel stehen · true: eines reicht */
-  match_any: boolean;
+  /** optional: nur zeigen, wenn auch dieses Wort im Titel steht (z. B. Gegner-Wappen nur bei Fenerbahçe-Spielen) */
+  only_with: string;
   /** data:image/…;base64,… (96 px) */
   image: string;
 }
