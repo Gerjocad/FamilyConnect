@@ -42,7 +42,7 @@ describe('Wanddisplay', () => {
     const lastWeek = localKey(new Date(Date.now() - 7 * 86_400_000));
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Fenerbahçe – Galatasaray', start: `${today}T20:00`, end: `${today}T22:00` } });
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Schwimmen', start: `${lastWeek}T16:00`, end: `${lastWeek}T17:00`, recurrence: 'weekly' } });
-    await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahce', image: 'data:image/png;base64,AAAA' } });
+    const { data: fbLogo } = await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahce', image: 'data:image/png;base64,AAAA' } });
     // Gegner-Wappen nur bei Fenerbahçe-Spielen
     await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Galatasaray', only_with: 'Fenerbahçe', image: 'data:image/png;base64,GGGG' } });
     await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Besiktas', only_with: 'Fenerbahçe', image: 'data:image/png;base64,BBBB' } });
@@ -58,6 +58,13 @@ describe('Wanddisplay', () => {
     assert.deepEqual(logos('Fenerbahçe – Galatasaray'), ['data:image/png;base64,AAAA', 'data:image/png;base64,GGGG'], 'beide Wappen in Titel-Reihenfolge');
     assert.deepEqual(logos('Beşiktaş – Galatasaray'), [], 'ohne Fenerbahçe keine Gegner-Wappen');
     assert.deepEqual(logos('Schwimmen'), []);
+    assert.equal(data.match, null, 'ohne „groß auf dem Wanddisplay“ kein Spiel-Banner');
+    await api(`${f}/event-icons/${fbLogo.id}`, { token: mama, method: 'PATCH', body: { highlight: true } });
+    const { data: withMatch } = await api(`/wall/${wall.token}`);
+    if (new Date().getHours() < 22) { // nach Spielende (22 Uhr) gibt es heute kein Banner mehr
+      assert.equal(withMatch.match.title, 'Fenerbahçe – Galatasaray');
+      assert.deepEqual(withMatch.match.icons, ['data:image/png;base64,AAAA', 'data:image/png;base64,GGGG']);
+    }
     assert.equal(data.posts[0].text, 'Hallo Wand!');
     assert.equal(data.weather, null);
     assert.equal(data.members.length, 2);

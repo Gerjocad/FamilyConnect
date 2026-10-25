@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.52',
+    date: '2026-10-25',
+    title: 'Spieltag groß auf dem Wanddisplay',
+    changes: [
+      'Kalender → + → Logos: bei einem Logo „Groß auf dem Wanddisplay“ einschalten (z. B. Fenerbahçe)',
+      'Spielt Fenerbahçe heute oder morgen, zeigt das Wanddisplay das Spiel groß mit beiden Wappen, Uhrzeit und Ort',
+      'Am Spieltag mit Countdown („noch 2 Std. 40 Min.“), während des Spiels „Läuft gerade“',
+    ],
+  },
+  {
     version: '1.51',
     date: '2026-10-25',
     title: 'Beide Wappen bei Spielen',

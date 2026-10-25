@@ -242,6 +242,8 @@ export const RESOURCES = [
       keyword: text({ required: true, max: 60 }),
       // optional: Logo nur zeigen, wenn auch dieses Wort im Titel steht (z. B. Gegner-Wappen nur bei Fenerbahçe-Spielen)
       only_with: text({ max: 60 }),
+      // Termine mit diesem Stichwort (z. B. Fenerbahçe) heute/morgen groß auf dem Wanddisplay
+      highlight: bool(),
       image: text({ required: true, max: 60000 }),
     },
     check(row) {

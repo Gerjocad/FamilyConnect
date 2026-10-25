@@ -1096,3 +1096,4 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
   .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .event-icon-label { display: flex; flex-direction: column; min-width: 0; }
+.highlight-chip { align-self: flex-start; margin-top: 3px; font-size: 0.78rem; padding: 2px 9px; }

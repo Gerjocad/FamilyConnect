@@ -320,6 +320,7 @@ export function CalendarPage() {
           icons={icons.items}
           canEdit={isManager}
           onCreate={icons.create}
+          onUpdate={icons.update}
           onDelete={icons.remove}
           onClose={() => setEditingIcons(false)}
         />

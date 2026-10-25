@@ -17,7 +17,7 @@
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body { background: var(--bg); color: var(--text); font-family: Roboto, "Segoe UI", sans-serif; font-size: 16px; -webkit-user-select: none; user-select: none; }
   #app { display: -webkit-box; display: flex; height: 100%; padding: 14px; }
-  .col-left { width: 36%; display: flex; flex-direction: column; margin-right: 14px; }
+  .col-left { width: 36%; display: flex; flex-direction: column; margin-right: 14px; overflow: hidden; }
   .col-right { -webkit-box-flex: 1; flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .card { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
   .night .card { box-shadow: none; }
@@ -25,6 +25,19 @@
   .date { font-size: 20px; margin-top: 4px; }
   .family { color: var(--muted); font-size: 14px; margin-top: 2px; }
   .weather-now { display: flex; align-items: center; }
+  /* Großes Spiel (z. B. Fenerbahçe) heute/morgen */
+  .match { background: var(--accent); color: #fff; text-align: center; padding: 12px 14px 14px; }
+  .match.tomorrow { background: var(--card); color: var(--text); border: 3px solid var(--accent); }
+  .m-when { font-size: 17px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  .m-when small { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; opacity: 0.85; }
+  .m-logos { display: flex; align-items: center; justify-content: center; margin: 8px 0 6px; }
+  .m-logos img { width: 76px; height: 76px; object-fit: contain; background: #fff; border-radius: 50%; padding: 6px; }
+  .m-logos .vs { font-size: 24px; font-weight: 800; margin: 0 12px; }
+  .m-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .m-place { font-size: 14px; opacity: 0.85; margin-top: 2px; }
+  .live { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #fff; margin-right: 6px; vertical-align: 1px; animation: blink 1.2s infinite; }
+  @-webkit-keyframes blink { 50% { opacity: 0.2; } }
+  @keyframes blink { 50% { opacity: 0.2; } }
   .w-icon { font-size: 46px; line-height: 1; margin-right: 10px; }
   .w-temp { font-size: 36px; font-weight: 600; line-height: 1; }
   .w-label { color: var(--muted); font-size: 14px; }
@@ -195,6 +208,37 @@
     for (var i = 0; list && i < list.length; i++) html += '<img class="logo" src="' + esc(list[i]) + '" alt="" />';
     return html;
   }
+  function stampDate(stamp) {
+    return new Date(Number(stamp.slice(0, 4)), Number(stamp.slice(5, 7)) - 1, Number(stamp.slice(8, 10)), Number(stamp.slice(11, 13)), Number(stamp.slice(14, 16)));
+  }
+  // Großes Spiel heute oder morgen (in der App beim Logo „Groß auf dem Wanddisplay“ eingeschaltet)
+  function matchHtml(now, nowStamp) {
+    var m = data.match;
+    if (!m || m.end <= nowStamp) return '';
+    var today = m.start.slice(0, 10) === nowStamp.slice(0, 10);
+    var running = !m.all_day && m.start <= nowStamp;
+    var when;
+    if (running) {
+      when = '<span class="live"></span>Läuft gerade';
+    } else {
+      when = (today || m.start < nowStamp ? 'Heute' : 'Morgen') + (m.all_day ? '' : ' · ' + hm(m.start) + ' Uhr');
+      var minutes = Math.round((stampDate(m.start) - now) / 60000);
+      if (today && !m.all_day && minutes > 0) {
+        when += '<small>noch ' + (minutes >= 60 ? Math.floor(minutes / 60) + ' Std. ' : '') + (minutes % 60) + ' Min.</small>';
+      }
+    }
+    var logos = '';
+    for (var i = 0; m.icons && i < m.icons.length && i < 2; i++) {
+      if (i > 0) logos += '<span class="vs">–</span>';
+      logos += '<img src="' + esc(m.icons[i]) + '" alt="" />';
+    }
+    return '<div class="card match' + (today || running ? '' : ' tomorrow') + '">' +
+      '<div class="m-when">' + when + '</div>' +
+      (logos ? '<div class="m-logos">' + logos + '</div>' : '') +
+      '<div class="m-title">' + esc(m.title) + '</div>' +
+      (m.location ? '<div class="m-place">📍 ' + esc(m.location) + '</div>' : '') +
+      '</div>';
+  }
   function specialChips(list) {
     var icons = { birthday: '🎂', vacation: '🧳', holiday: '🎉', school: '🏖️', loan: '📚' };
     var html = '';
@@ -235,6 +279,8 @@
     var left = '<div class="card"><div class="clock">' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + '</div>' +
       '<div class="date">' + DAYS[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()] + '</div>' +
       '<div class="family">' + esc(data.family) + '</div></div>';
+
+    left += matchHtml(now, nowStamp);
 
     var w = data.weather;
     if (w && w.days && w.days.length) {

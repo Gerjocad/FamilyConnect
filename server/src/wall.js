@@ -151,7 +151,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
     ).all(familyId);
 
     // Termine heute und morgen, mit Logo
-    const rules = db.prepare('SELECT keyword, only_with, image FROM event_icons WHERE family_id = ?').all(familyId);
+    const rules = db.prepare('SELECT keyword, only_with, highlight, image FROM event_icons WHERE family_id = ?').all(familyId);
     const iconFor = (title) => logosFor(rules, title, normalize);
     const events = db.prepare('SELECT * FROM events WHERE family_id = ?').all(familyId).map((r) => serialize(EVENTS, r));
     const occ = events.flatMap((e) => occurrences(e, today, dayAfter))
@@ -173,6 +173,19 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
         };
       });
     };
+
+    // Großes Spiel: nächster noch nicht beendeter Termin heute/morgen mit einem hervorgehobenen Stichwort (z. B. Fenerbahçe)
+    const highlights = rules.filter((r) => r.highlight).map((r) => normalize(r.keyword).trim()).filter(Boolean);
+    const big = occ.filter((o) => o.end > now && highlights.some((k) => normalize(o.event.title).includes(k)))
+      .sort((a, b) => a.start - b.start)[0];
+    const match = big ? {
+      title: big.event.title,
+      all_day: big.event.all_day,
+      start: localStamp(big.start),
+      end: localStamp(big.end),
+      location: big.event.location,
+      icons: iconFor(big.event.title),
+    } : null;
 
     // Besondere Tage: Geburtstage (Mitglieder + Kontakte), Urlaube, Ferien/Feiertage
     const special = (offset) => {
@@ -249,6 +262,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
       weather: forecast,
       climate,
       posts,
+      match,
       display: { id: req.display.id, sleep_after: req.display.sleep_after, sensor: sensorOf(req.display.id) },
     });
   });

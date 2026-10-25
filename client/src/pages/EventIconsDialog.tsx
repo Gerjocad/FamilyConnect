@@ -9,14 +9,16 @@ interface Props {
   icons: EventIcon[];
   canEdit: boolean;
   onCreate(data: Partial<EventIcon>): Promise<unknown>;
+  onUpdate(id: number, data: Partial<EventIcon>): Promise<unknown>;
   onDelete(id: number): Promise<unknown>;
   onClose(): void;
 }
 
 /** Logos im Kalender verwalten: Stichwort im Titel → kleines Bild am Termin */
-export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }: Props) {
+export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete, onClose }: Props) {
   const [keyword, setKeyword] = useState('');
   const [onlyWith, setOnlyWith] = useState('');
+  const [highlight, setHighlight] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const { busy, error, run } = useAsync();
 
@@ -41,6 +43,17 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
                 <span className="event-icon-label">
                   <strong>{i.keyword}</strong>
                   {i.only_with && <small className="muted">nur zusammen mit „{i.only_with}“</small>}
+                  {!i.only_with && (canEdit ? (
+                    <button
+                      type="button"
+                      className={`chip highlight-chip ${i.highlight ? 'chip-active' : ''}`}
+                      aria-pressed={i.highlight}
+                      disabled={busy}
+                      onClick={() => void run(() => onUpdate(i.id, { highlight: !i.highlight }))}
+                    >
+                      📺 {i.highlight ? 'Groß auf dem Wanddisplay' : 'Groß auf dem Wanddisplay?'}
+                    </button>
+                  ) : i.highlight && <small className="muted">📺 groß auf dem Wanddisplay</small>)}
                 </span>
                 <span className="spacer" />
                 {canEdit && (
@@ -65,9 +78,10 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
               e.preventDefault();
               if (!image) return;
               void run(async () => {
-                await onCreate({ keyword: keyword.trim(), only_with: onlyWith.trim(), image });
+                await onCreate({ keyword: keyword.trim(), only_with: onlyWith.trim(), highlight: !onlyWith.trim() && highlight, image });
                 setKeyword('');
                 setOnlyWith('');
+                setHighlight(false);
                 setImage(null);
               });
             }}
@@ -83,6 +97,12 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
                 {[...new Set(icons.filter((i) => !i.only_with).map((i) => i.keyword))].map((k) => <option key={k} value={k} />)}
               </datalist>
             </label>
+            {!onlyWith.trim() && (
+              <label className="checkbox">
+                <input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} />
+                Spiele heute/morgen groß auf dem Wanddisplay zeigen
+              </label>
+            )}
             {keyword.trim() && (
               <small className="hint">
                 Logo erscheint bei Terminen mit „{keyword.trim()}“ im Titel

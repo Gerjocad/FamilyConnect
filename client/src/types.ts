@@ -170,6 +170,8 @@ export interface EventIcon extends Base {
   keyword: string;
   /** optional: nur zeigen, wenn auch dieses Wort im Titel steht (z. B. Gegner-Wappen nur bei Fenerbahçe-Spielen) */
   only_with: string;
+  /** Termine mit diesem Stichwort heute/morgen groß auf dem Wanddisplay */
+  highlight: boolean;
   /** data:image/…;base64,… (96 px) */
   image: string;
 }
