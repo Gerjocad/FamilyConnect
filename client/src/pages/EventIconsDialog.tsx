@@ -4,6 +4,7 @@ import { LogoSearch } from '../components/LogoSearch';
 import { OpponentWizard } from '../components/OpponentWizard';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
+import { normalize } from '../eventIcons';
 import { iconImage } from '../images';
 import type { EventIcon } from '../types';
 
@@ -53,6 +54,64 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
     if (file) void run(async () => setImage(await iconImage(file)));
   };
 
+  // Logos mit „nur zusammen mit“ stehen eingeklappt unter dem Logo, zu dem sie gehören
+  const groups = (() => {
+    const key = (t: string) => normalize(t).trim();
+    const parents = icons.filter((i) => !i.only_with || !icons.some((p) => !p.only_with && key(p.keyword) === key(i.only_with)));
+    return parents.map((parent) => ({
+      parent,
+      children: parent.only_with ? [] : icons
+        .filter((c) => c.only_with && key(c.only_with) === key(parent.keyword))
+        .sort((a, b) => a.keyword.localeCompare(b.keyword, 'tr')),
+    }));
+  })();
+
+  const row = (i: EventIcon, child = false) => (
+    <div className={`event-icon-row ${editing?.id === i.id ? 'editing' : ''}`}>
+      <img src={i.image} alt="" className="event-icon-preview" />
+      <span className="event-icon-label">
+        <strong>{i.keyword}</strong>
+        {i.only_with && !child && <small className="muted">nur zusammen mit „{i.only_with}“</small>}
+        {!i.only_with && (canEdit ? (
+          <span className="row wrap event-icon-actions">
+            <button
+              type="button"
+              className={`chip highlight-chip ${i.highlight ? 'chip-active' : ''}`}
+              aria-pressed={i.highlight}
+              disabled={busy}
+              onClick={() => void run(() => onUpdate(i.id, { highlight: !i.highlight }))}
+            >
+              📺 {i.highlight ? 'Groß auf dem Wanddisplay' : 'Groß auf dem Wanddisplay?'}
+            </button>
+            <button type="button" className="chip highlight-chip" disabled={busy} onClick={() => setOpponentsOf(i.keyword)}>
+              ⚽ Gegner-Logos suchen
+            </button>
+          </span>
+        ) : i.highlight && <small className="muted">📺 groß auf dem Wanddisplay</small>)}
+      </span>
+      <span className="spacer" />
+      {canEdit && (
+        <button type="button" className="icon-button" aria-label={`Logo für ${i.keyword} ändern`} disabled={busy} onClick={() => startEdit(i)}>
+          <Icon name="edit" size={18} />
+        </button>
+      )}
+      {canEdit && (
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`Logo für ${i.keyword} löschen`}
+          disabled={busy}
+          onClick={() => confirm(`Logo für „${i.keyword}“ löschen?`) && void run(async () => {
+            await onDelete(i.id);
+            if (editing?.id === i.id) reset();
+          })}
+        >
+          <Icon name="trash" size={18} />
+        </button>
+      )}
+    </div>
+  );
+
   if (opponentsOf) {
     return (
       <Modal title="Gegner-Logos" onClose={onClose}>
@@ -66,56 +125,24 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
   return (
     <Modal title="Logos im Kalender" onClose={onClose}>
       <div className="form">
-        <p className="muted">
-          Steht das Stichwort im Titel eines Termins, zeigt der Kalender das Logo daneben – z. B. „Fenerbahçe“ für alle Spiele.
-          Für den Gegner ein weiteres Logo anlegen, z. B. „Galatasaray“ <b>nur zusammen mit</b> „Fenerbahçe“: Bei
-          „Fenerbahçe – Galatasaray“ stehen dann beide Wappen in der Reihenfolge des Titels.
-          Groß-/Kleinschreibung und Sonderzeichen (ç, ş, ı …) sind egal.
-        </p>
+        <p className="muted">Steht das Stichwort im Termintitel, erscheint das Logo daneben.</p>
         {icons.length > 0 && (
           <ul className="event-icon-list">
-            {icons.map((i) => (
-              <li key={i.id} className={editing?.id === i.id ? 'editing' : undefined}>
-                <img src={i.image} alt="" className="event-icon-preview" />
-                <span className="event-icon-label">
-                  <strong>{i.keyword}</strong>
-                  {i.only_with && <small className="muted">nur zusammen mit „{i.only_with}“</small>}
-                  {!i.only_with && (canEdit ? (
-                    <button
-                      type="button"
-                      className={`chip highlight-chip ${i.highlight ? 'chip-active' : ''}`}
-                      aria-pressed={i.highlight}
-                      disabled={busy}
-                      onClick={() => void run(() => onUpdate(i.id, { highlight: !i.highlight }))}
-                    >
-                      📺 {i.highlight ? 'Groß auf dem Wanddisplay' : 'Groß auf dem Wanddisplay?'}
-                    </button>
-                  ) : i.highlight && <small className="muted">📺 groß auf dem Wanddisplay</small>)}
-                  {!i.only_with && canEdit && (
-                    <button type="button" className="chip highlight-chip" disabled={busy} onClick={() => setOpponentsOf(i.keyword)}>
-                      ⚽ Gegner-Logos suchen
-                    </button>
-                  )}
-                </span>
-                <span className="spacer" />
-                {canEdit && (
-                  <button type="button" className="icon-button" aria-label={`Logo für ${i.keyword} ändern`} disabled={busy} onClick={() => startEdit(i)}>
-                    <Icon name="edit" size={18} />
-                  </button>
-                )}
-                {canEdit && (
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label={`Logo für ${i.keyword} löschen`}
-                    disabled={busy}
-                    onClick={() => confirm(`Logo für „${i.keyword}“ löschen?`) && void run(async () => {
-                      await onDelete(i.id);
-                      if (editing?.id === i.id) reset();
-                    })}
-                  >
-                    <Icon name="trash" size={18} />
-                  </button>
+            {groups.map(({ parent, children }) => (
+              <li key={parent.id} className="event-icon-group">
+                {row(parent)}
+                {children.length > 0 && (
+                  <details className="event-icon-children" open={children.some((c) => c.id === editing?.id) || undefined}>
+                    <summary>
+                      {children.length} {children.length === 1 ? 'Logo' : 'Logos'} nur zusammen mit „{parent.keyword}“
+                      <span className="event-icon-thumbs" aria-hidden>
+                        {children.slice(0, 6).map((c) => <img key={c.id} src={c.image} alt="" />)}
+                      </span>
+                    </summary>
+                    <ul className="event-icon-list">
+                      {children.map((c) => <li key={c.id}>{row(c, true)}</li>)}
+                    </ul>
+                  </details>
                 )}
               </li>
             ))}

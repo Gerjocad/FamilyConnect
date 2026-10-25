@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.58',
+    date: '2026-10-25',
+    title: 'Logos übersichtlicher',
+    changes: [
+      'Kalender → Logos: Erklärung oben auf einen Satz gekürzt',
+      'Gegner-Logos („nur zusammen mit“) stehen eingeklappt unter dem Logo, zu dem sie gehören – antippen zum Aufklappen',
+    ],
+  },
+  {
     version: '1.57',
     date: '2026-10-25',
     title: 'Formel 1 im Kalender',

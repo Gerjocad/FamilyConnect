@@ -1112,7 +1112,7 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .logo-google { display: flex; flex-direction: column; gap: 6px; }
 .logo-google > .button { align-self: flex-start; }
 .row.wrap { flex-wrap: wrap; }
-.event-icon-list li.editing { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.event-icon-row.editing { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
 .event-icon-form-title { margin: 6px 0 0; font-size: 1rem; }
 /* Monatswechsel (Pfeile oder Wischen) */
 .month-grid { touch-action: pan-y; }
@@ -1130,3 +1130,15 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .opponent-list img, .opponent-nobadge { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
 .opponent-nobadge { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--surface-2); color: var(--muted); font-weight: 700; }
 .opponent-list span { display: flex; flex-direction: column; }
+.event-icon-list li { flex-direction: column; align-items: stretch; }
+.event-icon-row { display: flex; align-items: center; gap: 10px; }
+.event-icon-actions { gap: 4px; }
+.event-icon-children { margin: 4px 0 2px 38px; }
+.event-icon-children > summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; list-style: none; padding: 4px 0; }
+.event-icon-children > summary::-webkit-details-marker { display: none; }
+.event-icon-children > summary::before { content: '▸'; transition: transform 0.15s; }
+.event-icon-children[open] > summary::before { transform: rotate(90deg); }
+.event-icon-thumbs { display: inline-flex; gap: 2px; }
+.event-icon-thumbs img { width: 18px; height: 18px; object-fit: contain; }
+.event-icon-children[open] .event-icon-thumbs { display: none; }
+.event-icon-children .event-icon-list { margin-top: 4px; }
