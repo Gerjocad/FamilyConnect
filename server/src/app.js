@@ -20,6 +20,7 @@ import { wallRouter } from './wall.js';
 import { postExtrasRouter } from './postExtras.js';
 import { SpotifyClient, spotifyRouter } from './spotify.js';
 import { Geocoder, placesRouter } from './places.js';
+import { LogoFinder, logoSearchRouter } from './logoSearch.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
@@ -41,7 +42,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), publicUrl = process.env.PUBLIC_URL } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), publicUrl = process.env.PUBLIC_URL } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -372,6 +373,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));
+  app.use(logoSearchRouter({ auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));

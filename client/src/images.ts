@@ -19,29 +19,44 @@ export async function compressImage(file: File): Promise<string> {
 }
 
 function loadImage(file: File, url: string) {
+  return loadUrl(url, `„${file.name}“ ist kein lesbares Bild`);
+}
+
+function loadUrl(src: string, error = 'Das Bild ist nicht lesbar') {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const el = new Image();
     el.onload = () => resolve(el);
-    el.onerror = () => reject(new Error(`„${file.name}“ ist kein lesbares Bild`));
-    el.src = url;
+    el.onerror = () => reject(new Error(error));
+    el.src = src;
   });
+}
+
+/** Bild quadratisch einpassen (SVGs ohne eigene Größe füllen das Feld) */
+function fitIcon(img: HTMLImageElement, size: number) {
+  const natW = img.naturalWidth || size;
+  const natH = img.naturalHeight || size;
+  const scale = size / Math.max(natW, natH);
+  const [w, h] = [natW * scale, natH * scale];
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL('image/png');
 }
 
 /** Logo quadratisch auf 96 px einpassen; PNG, damit ein durchsichtiger Hintergrund bleibt */
 export async function iconImage(file: File, size = 96): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
-    const img = await loadImage(file, url);
-    const scale = size / Math.max(img.naturalWidth, img.naturalHeight);
-    const [w, h] = [img.naturalWidth * scale, img.naturalHeight * scale];
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-    return canvas.toDataURL('image/png');
+    return fitIcon(await loadImage(file, url), size);
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+/** Wie iconImage, aber für ein vom Server geladenes Bild (data:-URL, z. B. aus der Logo-Suche) */
+export async function iconFromDataUrl(dataUrl: string, size = 96): Promise<string> {
+  return fitIcon(await loadUrl(dataUrl), size);
 }

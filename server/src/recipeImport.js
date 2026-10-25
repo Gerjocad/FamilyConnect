@@ -232,7 +232,7 @@ export function pageText(html) {
 
 // --- Schutz vor Zugriffen ins interne Netz ----------------------------------
 
-function isPrivateAddress(address) {
+export function isPrivateAddress(address) {
   if (isIP(address) === 4) {
     const [a, b] = address.split('.').map(Number);
     return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||

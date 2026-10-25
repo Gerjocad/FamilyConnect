@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
+import { LogoSearch } from '../components/LogoSearch';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { iconImage } from '../images';
@@ -19,6 +20,7 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
   const [keyword, setKeyword] = useState('');
   const [onlyWith, setOnlyWith] = useState('');
   const [highlight, setHighlight] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const { busy, error, run } = useAsync();
 
@@ -109,12 +111,22 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
                 {onlyWith.trim() ? <> – aber nur, wenn auch „{onlyWith.trim()}“ drinsteht</> : null}.
               </small>
             )}
+            {searching ? (
+              <LogoSearch initial={keyword.trim()} onPick={(img) => { setImage(img); setSearching(false); }} onClose={() => setSearching(false)} />
+            ) : (
+              <div className="row wrap">
+                <button type="button" className="button" onClick={() => setSearching(true)}>
+                  <Icon name="search" size={18} /> Logo suchen
+                </button>
+                <label className="button file-button">
+                  <Icon name="download" size={18} /> Datei
+                  <input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => pick(e.target.files?.[0])} />
+                </label>
+              </div>
+            )}
             <div className="row align-end">
-              <label className="button file-button">
-                {image ? <img src={image} alt="" className="event-icon-preview" /> : <Icon name="download" size={18} />}
-                {image ? 'Anderes Bild' : 'Logo auswählen'}
-                <input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => pick(e.target.files?.[0])} />
-              </label>
+              {image ? <img src={image} alt="Gewähltes Logo" className="event-icon-chosen" /> : <span className="muted">Noch kein Logo gewählt</span>}
+              <span className="spacer" />
               <button className="button primary" disabled={busy || !image || !keyword.trim()}>Hinzufügen</button>
             </div>
             <small className="hint">Am besten ein PNG mit durchsichtigem Hintergrund; es wird automatisch verkleinert.</small>

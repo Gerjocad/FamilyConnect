@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.53',
+    date: '2026-10-25',
+    title: 'Logos suchen statt Datei suchen',
+    changes: [
+      'Kalender → + → Logos → „Logo suchen“: Vereinswappen und Bilder aus Wikipedia direkt in der App finden, antippen = übernehmen',
+      '„Bei Google suchen“ öffnet die Google-Bildersuche; dort „Bildadresse kopieren“ und in der App einfügen – der Server lädt das Bild',
+      'Eigene Datei geht weiterhin',
+    ],
+  },
+  {
     version: '1.52',
     date: '2026-10-25',
     title: 'Spieltag groß auf dem Wanddisplay',
