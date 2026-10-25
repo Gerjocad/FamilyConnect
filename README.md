@@ -2,6 +2,8 @@
 
 Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsamer Bereich für die ganze Familie. Die App läuft im Browser auf Handy, Tablet und Desktop und lässt sich als App auf dem Startbildschirm ablegen.
 
+> 📍 **Wegweiser:** Alle Anleitungen, Bastelprojekte, Einrichtungs-Hilfen und Pläne stehen gesammelt in [docs/README.md](docs/README.md).
+
 ## Funktionen
 
 - **Übersicht**: Termine der nächsten 7 Tage, die eigenen offenen Aufgaben, das Essen von heute und die neuesten Beiträge
