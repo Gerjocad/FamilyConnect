@@ -240,6 +240,9 @@ export const RESOURCES = [
     childRule: () => 'Logos legen Eltern an',
     fields: {
       keyword: text({ required: true, max: 60 }),
+      // optionales zweites Wort: match_any = false → beide müssen im Titel stehen, true → eines reicht
+      keyword2: text({ max: 60 }),
+      match_any: bool(),
       image: text({ required: true, max: 60000 }),
     },
     check(row) {

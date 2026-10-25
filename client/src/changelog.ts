@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.51',
+    date: '2026-10-25',
+    title: 'Logos im Kalender mit zwei Wörtern',
+    changes: [
+      'Kalender → + → Logos: optional ein zweites Wort angeben',
+      '„Beide Wörter müssen vorkommen“ – z. B. „Fenerbahçe“ + „Basketbol“ bekommt ein eigenes Logo, Fußballspiele behalten ihres',
+      '„Eines der Wörter reicht“ – z. B. „Fenerbahçe“ oder „FB“ zeigen dasselbe Logo',
+      'Gilt auch auf dem Wanddisplay',
+    ],
+  },
+  {
     version: '1.50',
     date: '2026-10-25',
     title: 'Orte: keine falschen „losgegangen“-Meldungen mehr',

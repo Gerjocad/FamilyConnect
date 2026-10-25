@@ -43,14 +43,22 @@ describe('Wanddisplay', () => {
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Fenerbahçe – Galatasaray', start: `${today}T20:00`, end: `${today}T22:00` } });
     await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Schwimmen', start: `${lastWeek}T16:00`, end: `${lastWeek}T17:00`, recurrence: 'weekly' } });
     await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahce', image: 'data:image/png;base64,AAAA' } });
+    // zwei Wörter: beide müssen vorkommen (genauer) bzw. eines reicht
+    const { data: two } = await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Fenerbahçe', keyword2: 'Basketbol', image: 'data:image/png;base64,BBBB' } });
+    assert.equal(two.match_any, false);
+    await api(`${f}/event-icons`, { token: mama, method: 'POST', body: { keyword: 'Schwimmen', keyword2: 'Kraulen', match_any: true, image: 'data:image/png;base64,CCCC' } });
+    await api(`${f}/events`, { token: mama, method: 'POST', body: { title: 'Fenerbahce Basketbol – Efes', start: `${today}T18:00`, end: `${today}T19:00` } });
     await api(`${f}/posts`, { token: lea, method: 'POST', body: { text: 'Hallo Wand!' } });
 
     const dashed = `${wall.token.slice(0, 4)}-${wall.token.slice(4, 8)}-${wall.token.slice(8)}`.toLowerCase();
     const { status, data } = await api(`/wall/${dashed}`);
     assert.equal(status, 200);
     assert.equal(data.family, 'Yumruk');
-    assert.deepEqual(data.days[0].events.map((e) => [e.title, e.start.slice(11)]), [['Schwimmen', '16:00'], ['Fenerbahçe – Galatasaray', '20:00']]);
-    assert.equal(data.days[0].events[1].icon, 'data:image/png;base64,AAAA');
+    assert.deepEqual(data.days[0].events.map((e) => [e.title, e.start.slice(11)]), [['Schwimmen', '16:00'], ['Fenerbahce Basketbol – Efes', '18:00'], ['Fenerbahçe – Galatasaray', '20:00']]);
+    const iconOf = (title) => data.days[0].events.find((e) => e.title === title).icon;
+    assert.equal(iconOf('Fenerbahçe – Galatasaray'), 'data:image/png;base64,AAAA', 'nur ein Wort passt → Fußball-Logo');
+    assert.equal(iconOf('Fenerbahce Basketbol – Efes'), 'data:image/png;base64,BBBB', 'beide Wörter → genauere Regel gewinnt');
+    assert.equal(iconOf('Schwimmen'), 'data:image/png;base64,CCCC', 'eines der Wörter reicht');
     assert.equal(data.posts[0].text, 'Hallo Wand!');
     assert.equal(data.weather, null);
     assert.equal(data.members.length, 2);

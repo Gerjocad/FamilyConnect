@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
+import { iconLabel } from '../eventIcons';
 import { iconImage } from '../images';
 import type { EventIcon } from '../types';
 
@@ -16,6 +17,8 @@ interface Props {
 /** Logos im Kalender verwalten: Stichwort im Titel → kleines Bild am Termin */
 export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }: Props) {
   const [keyword, setKeyword] = useState('');
+  const [keyword2, setKeyword2] = useState('');
+  const [matchAny, setMatchAny] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const { busy, error, run } = useAsync();
 
@@ -28,22 +31,23 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
       <div className="form">
         <p className="muted">
           Steht das Stichwort im Titel eines Termins, zeigt der Kalender das Logo daneben – z. B. „Fenerbahçe“ für alle Spiele.
-          Groß-/Kleinschreibung und Sonderzeichen (ç, ş, ı …) sind egal.
+          Mit einem zweiten Wort geht es genauer („Fenerbahçe“ + „Basketbol“ bekommt ein anderes Logo als Fußball) oder
+          breiter („Fenerbahçe“ oder „FB“). Groß-/Kleinschreibung und Sonderzeichen (ç, ş, ı …) sind egal.
         </p>
         {icons.length > 0 && (
           <ul className="event-icon-list">
             {icons.map((i) => (
               <li key={i.id}>
                 <img src={i.image} alt="" className="event-icon-preview" />
-                <strong>{i.keyword}</strong>
+                <strong>{iconLabel(i)}</strong>
                 <span className="spacer" />
                 {canEdit && (
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={`Logo für ${i.keyword} löschen`}
+                    aria-label={`Logo für ${iconLabel(i)} löschen`}
                     disabled={busy}
-                    onClick={() => confirm(`Logo für „${i.keyword}“ löschen?`) && void run(() => onDelete(i.id))}
+                    onClick={() => confirm(`Logo für „${iconLabel(i)}“ löschen?`) && void run(() => onDelete(i.id))}
                   >
                     <Icon name="trash" size={18} />
                   </button>
@@ -59,8 +63,10 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
               e.preventDefault();
               if (!image) return;
               void run(async () => {
-                await onCreate({ keyword: keyword.trim(), image });
+                await onCreate({ keyword: keyword.trim(), keyword2: keyword2.trim(), match_any: matchAny, image });
                 setKeyword('');
+                setKeyword2('');
+                setMatchAny(false);
                 setImage(null);
               });
             }}
@@ -69,6 +75,27 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onDelete, onClose }
               Stichwort
               <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="z. B. Fenerbahçe" maxLength={60} required />
             </label>
+            <label>
+              Zweites Wort <span className="hint">(optional)</span>
+              <input value={keyword2} onChange={(e) => setKeyword2(e.target.value)} placeholder="z. B. Basketbol" maxLength={60} />
+            </label>
+            {keyword2.trim() && (
+              <div className="radius-chips" role="radiogroup" aria-label="Wie sollen die Wörter passen?">
+                <button type="button" role="radio" aria-checked={!matchAny} className={`chip ${!matchAny ? 'chip-active' : ''}`} onClick={() => setMatchAny(false)}>
+                  Beide Wörter müssen vorkommen
+                </button>
+                <button type="button" role="radio" aria-checked={matchAny} className={`chip ${matchAny ? 'chip-active' : ''}`} onClick={() => setMatchAny(true)}>
+                  Eines der Wörter reicht
+                </button>
+              </div>
+            )}
+            {keyword.trim() && (
+              <small className="hint">
+                Logo erscheint bei Terminen mit {keyword2.trim()
+                  ? matchAny ? <>„{keyword.trim()}“ <b>oder</b> „{keyword2.trim()}“</> : <>„{keyword.trim()}“ <b>und</b> „{keyword2.trim()}“</>
+                  : <>„{keyword.trim()}“</>} im Titel.
+              </small>
+            )}
             <div className="row align-end">
               <label className="button file-button">
                 {image ? <img src={image} alt="" className="event-icon-preview" /> : <Icon name="download" size={18} />}

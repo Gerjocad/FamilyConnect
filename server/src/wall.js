@@ -24,6 +24,15 @@ export const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const newCode = () => [...randomBytes(12)].map((b) => CODE_CHARS[b % 32]).join('');
 export const cleanCode = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]/g, '');
 
+/** Logo-Regel passt zum Titel? Ein Wort, oder zwei Wörter (beide bzw. eines davon) – gleiche Logik wie client/src/eventIcons.ts */
+export function iconMatches(icon, normalizedTitle, normalizeFn) {
+  const words = [icon.keyword, icon.keyword2].map((w) => normalizeFn(w ?? '').trim()).filter(Boolean);
+  if (!words.length) return false;
+  return icon.match_any ? words.some((w) => normalizedTitle.includes(w)) : words.every((w) => normalizedTitle.includes(w));
+}
+/** Genauere Regeln zuerst: „Fenerbahçe + Basketbol“ vor „Fenerbahçe“ */
+export const iconScore = (icon) => (icon.match_any ? 0 : (icon.keyword2 ?? '').length) + icon.keyword.length;
+
 const normalize = (s) => s.toLocaleLowerCase('de').replace(/ı/g, 'i').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /** Kurze Wetter-Hinweise wie auf der Übersicht der App */
@@ -130,9 +139,9 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
     ).all(familyId);
 
     // Termine heute und morgen, mit Logo
-    const icons = db.prepare('SELECT keyword, image FROM event_icons WHERE family_id = ?').all(familyId)
-      .map((i) => ({ key: normalize(i.keyword), image: i.image })).sort((a, b) => b.key.length - a.key.length);
-    const iconFor = (title) => icons.find((i) => i.key && normalize(title).includes(i.key))?.image ?? null;
+    const icons = db.prepare('SELECT keyword, keyword2, match_any, image FROM event_icons WHERE family_id = ?').all(familyId)
+      .sort((a, b) => iconScore(b) - iconScore(a));
+    const iconFor = (title) => icons.find((i) => iconMatches(i, normalize(title), normalize))?.image ?? null;
     const events = db.prepare('SELECT * FROM events WHERE family_id = ?').all(familyId).map((r) => serialize(EVENTS, r));
     const occ = events.flatMap((e) => occurrences(e, today, dayAfter))
       .sort((a, b) => Number(b.event.all_day) - Number(a.event.all_day) || a.start - b.start);
