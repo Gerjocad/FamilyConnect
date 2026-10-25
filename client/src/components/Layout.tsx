@@ -48,8 +48,9 @@ function useDrawerSwipe(open: boolean, setOpen: (open: boolean) => void) {
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
       const t = e.touches[0];
-      // Nicht in waagerecht scrollbaren Bereichen (z. B. Filter-Chips) und nur auf dem Handy-Layout
-      const scrollable = (e.target as HTMLElement).closest('.filter-bar, .segmented, input, textarea, select');
+      // Nicht in waagerecht scrollbaren Bereichen (z. B. Filter-Chips), nicht im Monatskalender (dort wechselt Wischen
+      // den Monat) und nur auf dem Handy-Layout
+      const scrollable = (e.target as HTMLElement).closest('.filter-bar, .segmented, .month-grid, input, textarea, select');
       start.current = window.innerWidth < 900 && !scrollable && (open || t.clientX < EDGE) ? { x: t.clientX, y: t.clientY } : null;
     };
     const onEnd = (e: TouchEvent) => {

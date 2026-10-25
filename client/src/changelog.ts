@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.55',
+    date: '2026-10-25',
+    title: 'Monat wechseln durch Wischen',
+    changes: [
+      'Kalender: im Monat nach links wischen = nächster Monat, nach rechts = vorheriger – mit kurzer Schiebe-Animation',
+      'Im Monatskalender öffnet Wischen vom linken Rand nicht mehr das Menü',
+    ],
+  },
+  {
     version: '1.54',
     date: '2026-10-25',
     title: 'Logos ändern',

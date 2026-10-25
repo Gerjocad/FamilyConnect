@@ -1111,3 +1111,11 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .row.wrap { flex-wrap: wrap; }
 .event-icon-list li.editing { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
 .event-icon-form-title { margin: 6px 0 0; font-size: 1rem; }
+/* Monatswechsel (Pfeile oder Wischen) */
+.month-grid { touch-action: pan-y; }
+.card.calendar { overflow: hidden; }
+.month-grid.slide-next { animation: month-in-next 0.22s ease-out; }
+.month-grid.slide-prev { animation: month-in-prev 0.22s ease-out; }
+@keyframes month-in-next { from { transform: translateX(40px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes month-in-prev { from { transform: translateX(-40px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .month-grid.slide-next, .month-grid.slide-prev { animation: none; } }

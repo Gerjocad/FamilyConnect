@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { birthdaysInRange } from '../birthdays';
 import { AvatarStack } from '../components/Avatar';
@@ -172,7 +172,30 @@ export function CalendarPage() {
     { label: 'Logos', icon: 'sparkle', onSelect: () => setEditingIcons(true) },
   ];
 
-  const moveMonth = (delta: number) => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
+  // Richtung der letzten Monatsänderung – für die kleine Schiebe-Animation
+  const [slide, setSlide] = useState<'next' | 'prev' | null>(null);
+  const moveMonth = (delta: number) => {
+    setSlide(delta > 0 ? 'next' : 'prev');
+    setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
+  };
+  // Wischen im Monatskalender: nach links = nächster Monat, nach rechts = vorheriger
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipe = {
+    onTouchStart: (e: ReactTouchEvent) => {
+      const t = e.touches[0];
+      swipeStart.current = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+    },
+    onTouchEnd: (e: ReactTouchEvent) => {
+      const start = swipeStart.current;
+      swipeStart.current = null;
+      if (!start) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.7) return; // zu kurz oder eher gescrollt
+      moveMonth(dx < 0 ? 1 : -1);
+    },
+  };
 
   return (
     <div className="page">
@@ -212,7 +235,11 @@ export function CalendarPage() {
               Heute
             </button>
           </div>
-          <div className="month-grid">
+          <div
+            key={`${cursor.getFullYear()}-${cursor.getMonth()}`}
+            className={`month-grid ${slide ? `slide-${slide}` : ''}`}
+            {...swipe}
+          >
             {WEEKDAYS_SHORT.map((d) => <div key={d} className="weekday">{d}</div>)}
             {days.map((day) => {
               const occs = byDay.get(toDateKey(day)) ?? [];
