@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.56',
+    date: '2026-10-25',
+    title: 'Alle Gegner-Logos auf einmal',
+    changes: [
+      'Kalender → + → Logos → beim Verein „⚽ Gegner-Logos suchen“: findet alle Gegner – aus deinen Terminen, der ganzen Liga und den Europapokal-/Pokalspielen',
+      'Liste zum Abwählen, eigene Gegner lassen sich ergänzen',
+      'Danach fragt die App Verein für Verein, welches Logo rein soll (Liga-Wappen und weitere Treffer) – antippen, überspringen oder beenden',
+      'Jedes Logo wird gleich als „nur zusammen mit“ dem Verein gespeichert',
+    ],
+  },
+  {
     version: '1.55',
     date: '2026-10-25',
     title: 'Monat wechseln durch Wischen',

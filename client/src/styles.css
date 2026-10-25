@@ -1119,3 +1119,11 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 @keyframes month-in-next { from { transform: translateX(40px); opacity: 0.3; } to { transform: none; opacity: 1; } }
 @keyframes month-in-prev { from { transform: translateX(-40px); opacity: 0.3; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .month-grid.slide-next, .month-grid.slide-prev { animation: none; } }
+.opponent-wizard { display: flex; flex-direction: column; gap: 10px; }
+.opponent-wizard h3 { margin: 0; }
+.opponent-wizard .row input { flex: 1; min-width: 0; }
+.opponent-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 45vh; overflow-y: auto; }
+.opponent-list label.checkbox { display: flex; align-items: center; gap: 10px; padding: 4px 2px; }
+.opponent-list img, .opponent-nobadge { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
+.opponent-nobadge { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--surface-2); color: var(--muted); font-weight: 700; }
+.opponent-list span { display: flex; flex-direction: column; }

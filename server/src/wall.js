@@ -45,7 +45,7 @@ export function logosFor(rules, title, normalizeFn, max = 3) {
   return chosen.sort((a, b) => a.pos - b.pos).slice(0, max).map((c) => c.image);
 }
 
-const normalize = (s) => s.toLocaleLowerCase('de').replace(/ı/g, 'i').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
+export const normalize = (s) => s.toLocaleLowerCase('de').replace(/ı/g, 'i').replace(/ß/g, 'ss').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /** Kurze Wetter-Hinweise wie auf der Übersicht der App */
 export function weatherHints(forecast, now, todays) {

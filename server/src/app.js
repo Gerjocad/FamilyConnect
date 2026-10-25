@@ -373,7 +373,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));
-  app.use(logoSearchRouter({ auth, member, finder: logoFinder }));
+  app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));

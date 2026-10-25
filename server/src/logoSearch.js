@@ -5,8 +5,10 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { Router } from 'express';
 import { isPrivateAddress } from './recipeImport.js';
+import { normalize } from './wall.js';
 
-const SPORTSDB = 'https://www.thesportsdb.com/api/v1/json/123/searchteams.php';
+const SPORTSDB_API = 'https://www.thesportsdb.com/api/v1/json/123';
+const SPORTSDB = `${SPORTSDB_API}/searchteams.php`;
 const WIKIPEDIA = 'https://de.wikipedia.org/w/api.php';
 const USER_AGENT = 'FamilyConnect/1.0 (private Familien-App)';
 const MAX_BYTES = 3 * 1024 * 1024;
@@ -64,6 +66,44 @@ export class LogoFinder {
     const results = await Promise.all([this.#teams(query), this.#wikipedia(query)].map((p) => p.catch(() => [])));
     const seen = new Set();
     return results.flat().filter((r) => !seen.has(r.image) && seen.add(r.image)).slice(0, 16);
+  }
+
+  /**
+   * Gegner eines Vereins aus der Sport-Datenbank: alle Mannschaften seiner Liga (über die Spiele der laufenden Saison)
+   * und die Gegner der letzten/nächsten Spiele (Pokal, Europapokal). Ergänzt wird aus dem Kalender.
+   */
+  async opponents(teamName, now = new Date()) {
+    const key = normalize(teamName).trim();
+    const teams = (await this.#json(`${SPORTSDB}?t=${encodeURIComponent(teamName)}`).catch(() => ({}))).teams ?? [];
+    const team = teams.find((t) => normalize(t.strTeam) === key) ?? teams.find((t) => t.strSport === 'Soccer') ?? teams[0];
+    if (!team) return [];
+    const found = [];
+    const fromEvents = (events, league, onlyOwnGames) => {
+      for (const e of events ?? []) {
+        const home = e.idHomeTeam === team.idTeam;
+        const away = e.idAwayTeam === team.idTeam;
+        if (onlyOwnGames && !home && !away) continue;
+        // eigenes Spiel → nur der Gegner; fremdes Spiel (Liga-Übersicht) → beide Mannschaften
+        if (!home) found.push({ name: e.strHomeTeam, badge: e.strHomeTeamBadge || null, source: league ?? e.strLeague });
+        if (!away) found.push({ name: e.strAwayTeam, badge: e.strAwayTeamBadge || null, source: league ?? e.strLeague });
+      }
+    };
+    // Saison läuft von Sommer bis Frühjahr: im Oktober 2026 → „2026-2027“
+    const year = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    const season = async () => {
+      if (!team.idLeague) return;
+      for (const s of [`${year}-${year + 1}`, `${year - 1}-${year}`]) {
+        const d = await this.#json(`${SPORTSDB_API}/eventsseason.php?id=${team.idLeague}&s=${s}`);
+        if (d.events?.length) return fromEvents(d.events, team.strLeague, false);
+      }
+    };
+    await Promise.all([
+      season(),
+      this.#json(`${SPORTSDB_API}/eventslast.php?id=${team.idTeam}`).then((d) => fromEvents(d.results, null, true)),
+      this.#json(`${SPORTSDB_API}/eventsnext.php?id=${team.idTeam}`).then((d) => fromEvents(d.events, null, true)),
+    ].map((r) => r.catch(() => undefined)));
+    const own = normalize(team.strTeam).trim();
+    return found.filter((o) => o.name && ![key, own].includes(normalize(o.name).trim()));
   }
 
   async #checkHost(url) {
@@ -134,7 +174,52 @@ async function readLimited(res) {
   return Buffer.concat(chunks);
 }
 
-export function logoSearchRouter({ auth, member, finder }) {
+// „Fenerbahçe – Galatasaray“, „Galatasaray vs. Fenerbahçe“, „Fenerbahçe : Beşiktaş (Pokal)“ …
+const VERSUS = /\s+(?:[–—-]|vs\.?|gegen|:)\s+/i;
+
+/** Gegner aus Kalendertiteln, in denen das Stichwort vorkommt */
+export function opponentsFromTitles(titles, keyword) {
+  const key = normalize(keyword).trim();
+  const names = [];
+  for (const title of titles) {
+    if (!normalize(title).includes(key)) continue;
+    const parts = title.split(VERSUS);
+    if (parts.length < 2) continue;
+    for (const part of parts) {
+      const name = part.replace(/\(.*?\)/g, '').split(/[,·|]/)[0].replace(/\s+\d+\s*$/, '').trim();
+      if (name.length >= 2 && name.length <= 40 && !normalize(name).includes(key)) names.push(name);
+    }
+  }
+  return names;
+}
+
+/** Gegner zusammenführen: „Galatasaray“ und „Galatasaray SK“ sind derselbe; Kalender-Schreibweise gewinnt */
+export function mergeOpponents(fromCalendar, fromDatabase, existingKeywords) {
+  const same = (a, b) => {
+    const [x, y] = [normalize(a).trim(), normalize(b).trim()];
+    return x === y || x.includes(y) || y.includes(x);
+  };
+  const result = [];
+  for (const name of fromCalendar) {
+    const hit = result.find((r) => same(r.name, name));
+    if (hit) hit.games++;
+    else result.push({ name, badge: null, sources: ['Kalender'], games: 1 });
+  }
+  for (const o of fromDatabase) {
+    const hit = result.find((r) => same(r.name, o.name));
+    if (hit) {
+      hit.badge ??= o.badge;
+      if (!hit.sources.includes(o.source)) hit.sources.push(o.source);
+    } else {
+      result.push({ name: o.name, badge: o.badge, sources: [o.source], games: 0 });
+    }
+  }
+  return result
+    .filter((r) => !existingKeywords.some((k) => same(k, r.name)))
+    .sort((a, b) => b.games - a.games || a.name.localeCompare(b.name, 'tr'));
+}
+
+export function logoSearchRouter(db, { auth, member, finder }) {
   const router = Router();
   const base = '/api/families/:familyId/logos';
   const handle = (fn) => async (req, res) => {
@@ -146,6 +231,15 @@ export function logoSearchRouter({ auth, member, finder }) {
     }
   };
   router.get(`${base}/search`, auth, member, handle(async (req) => finder.search(req.query.q)));
+  // Alle Gegner eines Vereins, für die es noch kein Logo gibt
+  router.get(`${base}/opponents`, auth, member, handle(async (req) => {
+    const team = String(req.query.team ?? '').trim().slice(0, 60);
+    if (team.length < 2) throw new LogoError(400, 'Welcher Verein?');
+    const titles = db.prepare('SELECT title FROM events WHERE family_id = ?').all(req.familyId).map((r) => r.title);
+    const existing = db.prepare('SELECT keyword FROM event_icons WHERE family_id = ?').all(req.familyId).map((r) => r.keyword);
+    const fromDatabase = await finder.opponents(team).catch(() => []);
+    return mergeOpponents(opponentsFromTitles(titles, team), fromDatabase, [...existing, team]);
+  }));
   router.post(`${base}/download`, auth, member, handle(async (req) => ({ image: await finder.download(req.body?.url) })));
   return router;
 }

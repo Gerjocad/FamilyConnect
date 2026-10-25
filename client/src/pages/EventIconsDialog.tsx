@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { LogoSearch } from '../components/LogoSearch';
+import { OpponentWizard } from '../components/OpponentWizard';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { iconImage } from '../images';
@@ -24,6 +25,8 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
   const [image, setImage] = useState<string | null>(null);
   // Logo, das gerade geändert wird (null = neues Logo anlegen)
   const [editing, setEditing] = useState<EventIcon | null>(null);
+  // Gegner-Assistent für diesen Verein
+  const [opponentsOf, setOpponentsOf] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const { busy, error, run } = useAsync();
 
@@ -49,6 +52,16 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
   const pick = (file: File | undefined) => {
     if (file) void run(async () => setImage(await iconImage(file)));
   };
+
+  if (opponentsOf) {
+    return (
+      <Modal title="Gegner-Logos" onClose={onClose}>
+        <div className="form">
+          <OpponentWizard team={opponentsOf} onCreate={onCreate} onClose={() => setOpponentsOf(null)} />
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title="Logos im Kalender" onClose={onClose}>
@@ -78,6 +91,11 @@ export function EventIconsDialog({ icons, canEdit, onCreate, onUpdate, onDelete,
                       📺 {i.highlight ? 'Groß auf dem Wanddisplay' : 'Groß auf dem Wanddisplay?'}
                     </button>
                   ) : i.highlight && <small className="muted">📺 groß auf dem Wanddisplay</small>)}
+                  {!i.only_with && canEdit && (
+                    <button type="button" className="chip highlight-chip" disabled={busy} onClick={() => setOpponentsOf(i.keyword)}>
+                      ⚽ Gegner-Logos suchen
+                    </button>
+                  )}
                 </span>
                 <span className="spacer" />
                 {canEdit && (
