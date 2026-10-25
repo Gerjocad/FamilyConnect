@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.54',
+    date: '2026-10-25',
+    title: 'Logos ändern',
+    changes: [
+      'Kalender → + → Logos: mit dem Stift ein vorhandenes Logo ändern – Stichwort, „Nur zusammen mit“, Wanddisplay und Bild (auch über die Logo-Suche)',
+    ],
+  },
+  {
     version: '1.53',
     date: '2026-10-25',
     title: 'Logos suchen statt Datei suchen',
