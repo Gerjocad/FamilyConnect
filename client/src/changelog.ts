@@ -16,7 +16,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-10-24',
     title: 'Wanddisplay mit Näherungs- und Lichtsensor',
     changes: [
-      'Wanddisplay: mit einem kleinen Sensor (ESP32 + Radar/Bewegungsmelder + Lichtsensor) geht die Anzeige an, wenn jemand davorsteht, und wird schwarz, wenn niemand da ist',
+      'Wanddisplay: mit einem kleinen Sensor (ESP32 + Radar + Lichtsensor) geht die Anzeige an, wenn jemand davorsteht – auch wenn man still steht, und wird schwarz, wenn niemand da ist',
       'Wird es dunkel, wechselt das Wanddisplay von selbst in den Dark Mode',
       'Familie & Profil → Geräte → Wanddisplay: Sensorstand sehen, Ruhezeit und Dark-Mode-Helligkeit einstellen',
       'Bauanleitung, 3D-Druckdateien und Software liegen im Ordner hardware/wandsensor',

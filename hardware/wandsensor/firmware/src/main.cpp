@@ -1,6 +1,6 @@
 // FamilyConnect Wandsensor
 // Sitzt neben dem Wanddisplay (Fire-Tablet) und meldet dem Server:
-//   – ob jemand davor steht (Radar HLK-LD2402 oder Bewegungsmelder HC-SR501, Ausgang „OUT“)
+//   – ob jemand davor steht (Radar HLK-LD2402, Ausgang „OUT“ – erkennt Menschen auch, wenn sie still stehen)
 //   – wie hell es ist (BH1750)
 // Der Server weckt damit das Display bzw. schickt es in den Ruhemodus und schaltet den Dark Mode.
 //
@@ -8,8 +8,8 @@
 //                      ESP32-C3 SuperMini     ESP32-S3-DevKitC-1
 //   BH1750  SDA        GPIO 6                 GPIO 8
 //   BH1750  SCL        GPIO 7                 GPIO 9
-//   Sensor  OUT        GPIO 3                 GPIO 4
-//   BH1750 VCC → 3V3 · ADDR offen lassen · Radar VCC → 3V3 · PIR VCC → 5V · alle GND zusammen
+//   Radar   OUT        GPIO 3                 GPIO 4
+//   BH1750 VCC → 3V3 · ADDR offen lassen · Radar VCC → 3V3 · alle GND zusammen
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -92,14 +92,14 @@ bool send(const String &body) {
 bool present = false;
 bool sentPresent = false;
 bool sentOnce = false;
-uint32_t lastMotion = 0;
+uint32_t lastSeen = 0;
 float lux = -1;
 float sentLux = -1;
 uint32_t lastLuxRead = 0;
 uint32_t lastSend = 0;
 uint32_t retryAt = 0;
 
-bool motion() { return digitalRead(PIN_PRESENCE) == (PRESENCE_ACTIVE_HIGH ? HIGH : LOW); }
+bool detected() { return digitalRead(PIN_PRESENCE) == (PRESENCE_ACTIVE_HIGH ? HIGH : LOW); }
 
 bool luxChanged() {
   if (lux < 0) return false;
@@ -128,11 +128,11 @@ void setup() {
 void loop() {
   uint32_t now = millis();
 
-  // Anwesenheit: jede Bewegung verlängert; „weg“ erst nach PRESENCE_HOLD_S ohne Bewegung
-  if (motion()) {
-    lastMotion = now;
+  // Anwesenheit: „weg“ erst, wenn der Radar PRESENCE_HOLD_S lang niemanden mehr sieht
+  if (detected()) {
+    lastSeen = now;
     present = true;
-  } else if (present && now - lastMotion > PRESENCE_HOLD_S * 1000UL) {
+  } else if (present && now - lastSeen > PRESENCE_HOLD_S * 1000UL) {
     present = false;
   }
   led(present);

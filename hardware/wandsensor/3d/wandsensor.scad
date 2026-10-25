@@ -1,17 +1,16 @@
-// FamilyConnect Wandsensor – Gehäuse für Anwesenheitssensor + Lichtsensor neben dem Wanddisplay
+// FamilyConnect Wandsensor – Gehäuse für Radar (Menschenerkennung) + Lichtsensor neben dem Wanddisplay
 //
-// Vorderseite (zum Raum):  links der Anwesenheitssensor, rechts oben das kleine Lichtfenster (BH1750)
+// Vorderseite (zum Raum):  links (unsichtbar hinter der Front) der Radar HLK-LD2402, rechts oben das kleine Lichtfenster (BH1750)
 // Rückwand: wird an die Wand geschraubt (2 Schlüssellöcher) oder geklebt, dann das Gehäuse mit 3–4 Schrauben drauf.
 // Der ESP32 liegt auf der Rückwand, das USB-Kabel kommt unten (C3) bzw. rechts (S3) heraus.
 //
 // Drucken: Gehäuse mit der Vorderseite nach unten (keine Stützen nötig), Rückwand flach.
 // PLA/PETG, 0,2 mm Schicht, 3 Wandlinien. Für den Radar möglichst kein metallhaltiges Filament (Glitzer, Carbon).
 //
-// Exportieren, z. B.:  openscad -D 'part="gehaeuse"' -D 'board="c3"' -D 'sensor="radar"' -o gehaeuse.stl wandsensor.scad
+// Exportieren, z. B.:  openscad -D 'part="gehaeuse"' -D 'board="c3"' -o gehaeuse.stl wandsensor.scad
 
 part = "alles";      // gehaeuse | rueckwand | alles
 board = "c3";        // c3 = ESP32-C3 SuperMini · s3 = ESP32-S3-DevKitC-1
-sensor = "radar";    // radar = HLK-LD2402 (unsichtbar hinter der Front) · pir = HC-SR501 (Kuppel schaut heraus)
 
 $fn = 64;
 
@@ -26,10 +25,9 @@ W = board == "s3" ? 84 : 62;   // innen
 H = board == "s3" ? 40 : 38;
 D = board == "s3" ? 36 : 20;
 
-// Anwesenheitssensor (Mitte der Zone)
+// Radar (Mitte der Zone)
 sens_x = -W / 2 + 24;
 sens_y = 0;
-pir_hole = 23.5;     // Kuppel des HC-SR501
 radar_w = 30;        // Vertiefung innen, in die der Radar geklebt wird (größer als das Modul)
 radar_h = 26;
 radar_front = 1.0;   // Restwandstärke vor dem Radar
@@ -79,12 +77,8 @@ module gehaeuse() {
     }
     for (b = bosses) translate([b[0] * boss_in[0], b[1] * boss_in[1], OD - bp - 12]) cylinder(d = 2.5, h = 13);
 
-    // Anwesenheitssensor
-    if (sensor == "pir") {
-      translate([sens_x, sens_y, -1]) cylinder(d = pir_hole, h = ft + 2);
-    } else {
-      translate([sens_x - radar_w / 2, sens_y - radar_h / 2, radar_front]) cube([radar_w, radar_h, ft]);
-    }
+    // Vertiefung für den Radar (dünne Restwand davor)
+    translate([sens_x - radar_w / 2, sens_y - radar_h / 2, radar_front]) cube([radar_w, radar_h, ft]);
 
     // Lichtfenster mit Fase außen
     translate([light_x, light_y, -1]) cylinder(d = light_d, h = ft + 2);
@@ -148,10 +142,6 @@ module rueckwand_innen() {
 }
 
 // --- Vorschau ------------------------------------------------------------------------------
-module pir_dummy() {
-  color("white") translate([sens_x, sens_y, -9]) sphere(d = pir_hole - 0.5);
-  color("green") translate([sens_x - 16.15, sens_y - 12.15, ft]) cube([32.3, 24.3, 1.6]);
-}
 module radar_dummy() {
   color("dodgerblue") translate([sens_x - 11, sens_y - 11, radar_front]) cube([22, 22, 3]);
 }
@@ -162,7 +152,7 @@ if (part == "gehaeuse") {
   rueckwand();
 } else if (part == "alles") {
   color("orange", 0.9) gehaeuse();
-  if (sensor == "pir") pir_dummy(); else radar_dummy();
+  radar_dummy();
   // Rückwand umgedreht an ihrem Platz, etwas herausgezogen
   color("gray") translate([0, 0, OD + 25]) rotate([0, 180, 0]) rueckwand();
 }
