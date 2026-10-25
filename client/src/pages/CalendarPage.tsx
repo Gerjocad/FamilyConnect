@@ -10,6 +10,7 @@ import {
 } from '../dates';
 import { useFamily } from '../session';
 import { useHolidays } from '../holidays';
+import { raceLabel, useFormula1 } from '../formula1';
 import type { CalendarEvent, Contact, Loan, Vacation } from '../types';
 import { useResource } from '../useResource';
 import { usePermissions } from '../permissions';
@@ -129,6 +130,7 @@ export function CalendarPage() {
 
   // Feiertage, Schulferien und Geburtstage als Zusatz zu den Terminen
   const holidays = useHolidays([...new Set([days[0].getFullYear(), days[days.length - 1].getFullYear(), today.getFullYear()])]);
+  const formula1 = useFormula1([...new Set([days[0].getFullYear(), days[days.length - 1].getFullYear()])]);
   const contacts = useResource<Contact>('contacts');
   const vacations = useResource<Vacation>('vacations');
   const loans = useResource<Loan>('loans');
@@ -151,6 +153,7 @@ export function CalendarPage() {
     birthdays: birthdays.filter((b) => b.date === date).map((b) => b.label),
     vacations: vacationsOn(visibleVacations, date),
     loans: loansDueOn(visibleLoans, date),
+    race: formula1.raceOn(date),
   });
   // Ferien und Urlaube färben das Feld leicht ein; bei Überschneidung teilt es sich auf
   const marks = (extras: ReturnType<typeof extrasFor>) => [
@@ -161,7 +164,7 @@ export function CalendarPage() {
   const selectedExtras = extrasFor(selectedKey);
   const hasExtras = Boolean(
     selectedExtras.publicHoliday || selectedExtras.school || selectedExtras.birthdays.length || selectedExtras.vacations.length
-    || selectedExtras.loans.length
+    || selectedExtras.loans.length || selectedExtras.race
   );
 
   const addItems: PlusMenuItem[] = [
@@ -265,6 +268,11 @@ export function CalendarPage() {
                   <span className="day-events">
                     {extras.publicHoliday && <span className="day-event holiday-pill">{extras.publicHoliday}</span>}
                     {extras.birthdays.map((b) => <span key={b} className="day-event birthday-pill">{b}</span>)}
+                    {extras.race && (
+                      <span className="day-event f1-pill" title={raceLabel(extras.race)}>
+                        <span className="loan-emoji" aria-hidden>🏁</span><span className="day-event-title">{extras.race.name}</span>
+                      </span>
+                    )}
                     {extras.loans.map((l) => (
                       <span key={`l${l.id}`} className="day-event loan-pill" title={`Rückgabe: ${l.title}`}>
                         <span className="loan-emoji" aria-hidden>📚</span><span className="day-event-title">{l.title}</span>
@@ -306,6 +314,16 @@ export function CalendarPage() {
                   </li>
                 ))}
                 {selectedExtras.birthdays.map((b) => <li key={b}>{b.replace('🎂 ', '🎂 Geburtstag: ')}</li>)}
+                {selectedExtras.race && (
+                  <li>
+                    🏁 Formel 1: {raceLabel(selectedExtras.race)}
+                    <span className="muted">
+                      {' · '}{selectedExtras.race.locality || selectedExtras.race.circuit}
+                      {selectedExtras.race.sprint && ' · Sprint-Wochenende'}
+                      {selectedExtras.race.qualifying?.time && ` · Qualifying ${formatShortDay(parseLocal(selectedExtras.race.qualifying.date))} ${selectedExtras.race.qualifying.time} Uhr`}
+                    </span>
+                  </li>
+                )}
                 {selectedExtras.loans.map((l) => (
                   <li key={`l${l.id}`}>
                     <button type="button" className="vacation-line" onClick={() => setEditingLoan(l)}>

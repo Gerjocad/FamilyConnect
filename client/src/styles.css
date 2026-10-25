@@ -894,10 +894,13 @@ textarea { resize: vertical; }
 .loan-returned { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 .loan-returned > .link-button { align-self: flex-start; }
 .day-event.loan-pill { background: var(--surface-2); color: var(--text); display: flex; align-items: center; gap: 2px; }
+.day-event.f1-pill { background: #1f1f1f; color: #fff; display: flex; align-items: center; gap: 2px; }
 /* Handy: statt Punkt das Bücher-Symbol (wie die Logos) */
 @media (max-width: 600px) {
   .day-event.loan-pill { width: auto; height: auto; padding: 0; border-radius: 0; background: none; font-size: 15px; line-height: 1; }
   .day-event.loan-pill .day-event-title { display: none; }
+  .day-event.f1-pill { width: auto; height: auto; padding: 0; border-radius: 0; background: none; font-size: 15px; line-height: 1; }
+  .day-event.f1-pill .day-event-title { display: none; }
 }
 .loan-line a { color: inherit; text-decoration: none; }
 .loan-line.overdue { color: var(--danger); font-weight: 600; }

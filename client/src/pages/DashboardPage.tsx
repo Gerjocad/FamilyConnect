@@ -16,6 +16,7 @@ import { PostCard, usePolls } from './BoardPage';
 import { usePostExtras } from '../postExtras';
 import { untilLabel, upcomingBirthdays } from '../birthdays';
 import { useHolidays } from '../holidays';
+import { raceLabel, useFormula1 } from '../formula1';
 import { allOccurrences, useChores } from '../chores';
 import { WARNING_LABELS, formatNumber, useClimate } from '../climate';
 import { OccurrenceRow as ChoreRow } from './ChoresPage';
@@ -66,7 +67,17 @@ export function DashboardPage() {
   // Rückgaben, die heute/morgen fällig oder überfällig sind
   const loansDue = loans.items.filter((l) => !l.returned && daysUntil(l, today) <= 1).sort((a, b) => a.due_date.localeCompare(b.due_date));
   const holidays = useHolidays([today.getFullYear(), today.getFullYear() + 1]);
+  const formula1 = useFormula1([today.getFullYear(), today.getFullYear() + 1]);
   const todayKey = toDateKey(today);
+  // Formel 1: Rennen heute oder in den nächsten Tagen
+  const raceLine = (() => {
+    const race = formula1.nextRace(todayKey);
+    if (!race) return null;
+    const days = Math.round((parseLocal(race.date).getTime() - today.getTime()) / 86_400_000);
+    if (days > 6) return null;
+    const when = days === 0 ? 'Heute' : days === 1 ? 'Morgen' : parseLocal(race.date).toLocaleDateString('de-DE', { weekday: 'long' });
+    return `🏁 ${when}: ${raceLabel(race)}`;
+  })();
   const holidayLine = (() => {
     const pub = holidays.publicHoliday(todayKey);
     if (pub) return `🎉 Heute ist ${pub}`;
@@ -110,6 +121,7 @@ export function DashboardPage() {
           <h1>{greeting()}, {user.name.split(' ')[0]}!</h1>
           <p className="muted">{formatDay(today)} · {family.name}</p>
           {holidayLine && <p className="holiday-line">{holidayLine}</p>}
+          {raceLine && <p className="holiday-line">{raceLine}</p>}
           {loansDue.map((l) => (
             <p key={l.id} className={`holiday-line loan-line ${daysUntil(l, today) < 0 ? 'overdue' : ''}`}>
               <Link to="/ausgeliehen">📚 {l.title}: {dueLabel(daysUntil(l, today))}{l.member_id && l.member_id !== user.id ? ` (${member(l.member_id)?.name.split(' ')[0] ?? ''})` : ''}</Link>

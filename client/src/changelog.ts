@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.57',
+    date: '2026-10-25',
+    title: 'Formel 1 im Kalender',
+    changes: [
+      'Familie & Profil → Kalender & Wetter: „🏁 Formel 1“ einschalten',
+      'Rennsonntage erscheinen im Kalender mit 🏁 – beim Antippen: Grand Prix mit Flagge, Startzeit (deutsche Zeit), Strecke, Qualifying und Sprint-Wochenende',
+      'Auf der Übersicht steht ab einer Woche vorher, wann das nächste Rennen ist; auf dem Wanddisplay am Renntag und am Vortag',
+    ],
+  },
+  {
     version: '1.56',
     date: '2026-10-25',
     title: 'Alle Gegner-Logos auf einmal',

@@ -281,7 +281,7 @@ export function SettingsPage() {
             id="kalender"
             icon="calendar"
             title="Kalender & Wetter"
-            summary={[family.state ? STATES[family.state as keyof typeof STATES] : 'kein Bundesland', family.weather_place ?? 'kein Wetter-Ort'].join(' · ')}
+            summary={[family.state ? STATES[family.state as keyof typeof STATES] : 'kein Bundesland', family.weather_place ?? 'kein Wetter-Ort', ...(family.show_f1 ? ['Formel 1'] : [])].join(' · ')}
           >
         <label>
           Bundesland <span className="hint">(für Ferien und Feiertage im Kalender)</span>
@@ -295,6 +295,14 @@ export function SettingsPage() {
         </label>
 
             <WeatherPlace onSaved={setFamily} />
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={family.show_f1}
+                onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}`, { method: 'PATCH', body: { show_f1: e.target.checked } })))}
+              />
+              🏁 Formel 1: Rennsonntage mit Startzeit im Kalender zeigen
+            </label>
           </SettingsGroup>
         )}
 

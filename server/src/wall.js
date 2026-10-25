@@ -78,7 +78,7 @@ export function weatherHints(forecast, now, todays) {
   return hints.slice(0, 3);
 }
 
-export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
+export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }) {
   const router = Router();
   const admin = (req, res, next) => (req.role === 'admin' ? next() : res.status(403).json({ error: 'Nur Admins' }));
   const base = '/api/families/:familyId/wall-displays';
@@ -145,7 +145,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const dayAfter = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-    const family = db.prepare('SELECT name, state, weather_place, weather_lat, weather_lon FROM families WHERE id = ?').get(familyId);
+    const family = db.prepare('SELECT name, state, weather_place, weather_lat, weather_lon, show_f1 FROM families WHERE id = ?').get(familyId);
     const members = db.prepare(
       'SELECT u.id, u.name, u.color, u.birthday FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id'
     ).all(familyId);
@@ -221,6 +221,20 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays }) {
         }
       } catch {
         // ohne Ferien weiter
+      }
+    }
+
+    // Formel 1: Rennen heute/morgen
+    if (family.show_f1 && formula1) {
+      try {
+        const races = (await Promise.all([...new Set(days.map((d) => Number(d.date.slice(0, 4))))].map((y) => formula1.season(y)))).flat();
+        for (const day of days) {
+          for (const r of races.filter((x) => x.date === day.date)) {
+            day.special.push({ kind: 'f1', text: `${r.flag} ${r.name}${r.time ? ` · ${r.time} Uhr` : ''}` });
+          }
+        }
+      } catch {
+        // ohne Formel 1 weiter
       }
     }
 

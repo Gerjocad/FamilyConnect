@@ -24,6 +24,7 @@ import { LogoFinder, logoSearchRouter } from './logoSearch.js';
 import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
+import { Formula1Service } from './formula1.js';
 import { LiveHub } from './live.js';
 import { TuyaClient } from './tuya.js';
 import { ROLES } from './permissions.js';
@@ -42,7 +43,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), publicUrl = process.env.PUBLIC_URL } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -89,7 +90,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     ).all(userId);
 
   const familyDetails = (familyId) => {
-    const family = db.prepare('SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, created_at FROM families WHERE id = ?').get(familyId);
+    const family = db.prepare('SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, show_f1, created_at FROM families WHERE id = ?').get(familyId);
+    family.show_f1 = Boolean(family.show_f1);
     family.members = db.prepare(
       `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
@@ -225,6 +227,11 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     }
     db.prepare('UPDATE families SET name = ?, state = ? WHERE id = ?').run(name, state, req.familyId);
     if (weather) db.prepare('UPDATE families SET weather_place = ?, weather_lat = ?, weather_lon = ? WHERE id = ?').run(...weather, req.familyId);
+    // Formel-1-Rennen im Kalender
+    if (req.body?.show_f1 !== undefined) {
+      if (typeof req.body.show_f1 !== 'boolean') return res.status(400).json({ error: 'show_f1 muss true/false sein' });
+      db.prepare('UPDATE families SET show_f1 = ? WHERE id = ?').run(req.body.show_f1 ? 1 : 0, req.familyId);
+    }
     hub.publish(req.familyId, 'family');
     res.json(familyDetails(req.familyId));
   });
@@ -355,6 +362,18 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   if (recipeImporter) app.use(recipesRouter({ auth, member, importer: recipeImporter }));
   if (uploadDir) app.use(feedbackRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), uploadDir }));
   // Feiertage und Schulferien des Bundeslands der Familie
+  // Formel-1-Rennen eines Jahres (nur wenn die Familie sie eingeschaltet hat)
+  app.get('/api/families/:familyId/formula1', auth, member, async (req, res) => {
+    const year = Number(req.query.year) || new Date().getFullYear();
+    if (year < 1950 || year > 2100) return res.status(400).json({ error: 'Ungültiges Jahr' });
+    if (!db.prepare('SELECT show_f1 FROM families WHERE id = ?').get(req.familyId).show_f1) return res.json([]);
+    try {
+      res.json(await formula1.season(year));
+    } catch {
+      res.status(502).json({ error: 'Der Formel-1-Kalender ist gerade nicht erreichbar' });
+    }
+  });
+
   app.get('/api/families/:familyId/holidays', auth, member, async (req, res) => {
     const { state } = db.prepare('SELECT state FROM families WHERE id = ?').get(req.familyId);
     const year = Number(req.query.year);
@@ -372,7 +391,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(spotifyRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), spotify, publicUrl }));
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
-  app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays }));
+  app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }));
   app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

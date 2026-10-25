@@ -35,6 +35,8 @@ export interface Family {
   state: string | null;
   /** Ort fürs Wetter auf der Übersicht */
   weather_place: string | null;
+  /** Formel-1-Rennsonntage im Kalender */
+  show_f1: boolean;
   members: Member[];
 }
 

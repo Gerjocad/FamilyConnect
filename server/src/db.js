@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 // Spalten, die nach der ersten Version dazugekommen sind. Bestehende Datenbanken werden beim Start ergänzt.
 const ADDED_COLUMNS = [
+  ['families', 'show_f1', 'INTEGER NOT NULL DEFAULT 0'],
   ['event_icons', 'highlight', 'INTEGER NOT NULL DEFAULT 0'],
   ['event_icons', 'only_with', "TEXT NOT NULL DEFAULT ''"],
   ['place_presence', 'pending_exit_at', 'TEXT'],

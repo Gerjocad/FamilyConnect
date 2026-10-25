@@ -240,7 +240,7 @@
       '</div>';
   }
   function specialChips(list) {
-    var icons = { birthday: '🎂', vacation: '🧳', holiday: '🎉', school: '🏖️', loan: '📚' };
+    var icons = { birthday: '🎂', vacation: '🧳', holiday: '🎉', school: '🏖️', loan: '📚', f1: '🏁' };
     var html = '';
     for (var i = 0; i < list.length; i++) html += '<span class="chip">' + icons[list[i].kind] + ' ' + esc(list[i].text) + '</span>';
     return html ? '<div class="special">' + html + '</div>' : '';
