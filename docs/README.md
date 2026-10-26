@@ -59,6 +59,12 @@ Geheime Schlüssel gehören nie in diese Dateien oder in den Chat – nur auf de
 
 [BACKLOG.md](../BACKLOG.md) – was gemerkt ist („später“), was auf Rückmeldung wartet und was schon erledigt ist.
 
+Ausgearbeitete Pläne:
+
+| Plan | Stand |
+| --- | --- |
+| [Aufsteh-Ampel](plaene/aufsteh-ampel.md) | geplant, wartet auf Antworten zu den offenen Fragen |
+
 ## 🆕 Was hat sich wann geändert?
 
 In der App unter **Familie & Profil → Neuigkeiten** (jede Version mit Datum). Im Code: [client/src/changelog.ts](../client/src/changelog.ts).

@@ -20,9 +20,9 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Omron 12 mm, TTP223, MCP23017, OV7670 (ohne FIFO, eher nicht nutzen), WS2812B 8×8 + Ring 16, SMD-LEDs
   3528 grün/weiß, SMD-Widerstände 1206 (20/51/100 Ω), IR-Handwisch-Schalter, FTS-06, 3-Stufen-Drehschalter
   6 A, N20-Motor.
-- **ESP32-Aufsteh-Ampel** für die Kinder (gefällt – merken, noch nicht umsetzen): WS2812B-Ring rot = noch
-  schlafen, grün = aufstehen erlaubt; rundes GC9A01 mit Mond/Sonne; BH1750 dimmt nachts. Zeiten je Kind in
-  der App einstellbar (Wochenende anders).
+- **ESP32-Aufsteh-Ampel** für die Kinder – **ausgearbeiteter Plan:** [docs/plaene/aufsteh-ampel.md](docs/plaene/aufsteh-ampel.md)
+  (8×8-Matrix mit Mond/Sonnenaufgang/Sonne, Zeiten in der App, Ferien = Wochenende, „Ich bin wach“ per
+  Berührung). Wartet auf Antworten zu den offenen Fragen, dann bauen.
 - **ESP32-„Bitte lüften“-Lampe** (gefällt – merken, noch nicht umsetzen): WS2812B-Ring im Zimmer leuchtet
   blau, solange die Luftfeuchte des Tuya-Thermometers über dem Grenzwert liegt (Werte/Grenzen kommen aus
   dem Raumklima der App), geht nach dem Lüften wieder aus.
@@ -32,8 +32,8 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   3× USB-Netzteil 5 V/2 A + Kabel, 3× 1000 µF Elko, 3× 330 Ω Widerstand, Jumperkabel/Lochraster, Gehäuse
   bzw. Milchglas-Streuscheibe. Ampel nutzt die vorhandene 8×8-Matrix + 2. BH1750.
 
-- **Punkte & Belohnungen** – „klingt gut, aber noch nicht“: Punkte für Aufgaben/Gewohnheiten/Dienste,
-  Belohnungen einlösen über Anfragen, Wochen-Rangliste
+- **Punkte & Belohnungen** – gebaut als Testfunktion (v1.59), zuerst nur für Admins sichtbar; Freigabe auf der
+  Seite „Punkte“. Bewusst ohne Rangliste zwischen den Kindern.
 - **Taschengeld-Konto** – Idee muss noch ausgearbeitet werden (Kontostand je Kind, wöchentliche
   Gutschrift, Ausgaben, evtl. Verbindung zu Punkten)
 - **Wochenplan-Assistent** für den Essensplan – noch nicht
@@ -42,7 +42,8 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Vorschaubild im Cache
 - **Müllabfuhr automatisch** aus dem ICS-Kalender der Stadt – erstmal nicht (Dienste gibt es manuell)
 - **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
-- **Standort-Abfrage** – nur geplant, noch nicht umsetzen. Plan:
+- **Standort-Abfrage** – Stufe 1 gebaut als Testfunktion (v1.59, „Wo bist du?“ auf der Übersicht), Freigabe unter
+  Familie & Profil → Testfunktionen. Stufe 2 (automatische Antwort) weiter nur geplant. Ursprünglicher Plan:
   - Stufe 1 (empfohlen): „📍 Wo bist du?“ bei einer Person → Push → Person tippt „Standort senden“ (oder
     „Nicht jetzt“) → einmaliger GPS-Standort an den Fragenden, Anzeige mit Uhrzeit, Genauigkeit und Link
     zu Google Maps; nach 24 h automatisch gelöscht. Braucht neue APK (Standort-Berechtigung), geht auch im
