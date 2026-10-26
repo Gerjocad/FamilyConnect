@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { isValidDate } from './crud.js';
 import { isManager } from './permissions.js';
+import { awardPoints, revokePoints } from './points.js';
 
 /** Index des Termins (0, 1, 2 …) oder -1, wenn `date` kein Termin des Dienstes ist */
 export function occurrenceIndex(chore, date) {
@@ -53,6 +54,8 @@ export function choresRouter(db, { auth, member, publish }) {
       return res.status(403).json({ error: 'Abhaken kann nur, wer dran ist' });
     }
     upsert(found.chore.id, found.date, { done_by: req.user.id, done_at: new Date().toISOString() });
+    // Punkte bekommt, wer dran war (auch wenn Eltern für ein Kind abhaken)
+    awardPoints(db, { familyId: req.familyId, userId: found.assignee ?? req.user.id, source: 'chore', ref: `chore:${found.chore.id}:${found.date}`, reason: `Dienst: ${found.chore.title}`, publish });
     publish(req.familyId, 'chores');
     res.status(204).end();
   });
@@ -62,6 +65,7 @@ export function choresRouter(db, { auth, member, publish }) {
     if (!found) return;
     if (found.assignee && found.assignee !== req.user.id && !isManager(req.role)) return res.status(403).json({ error: 'Keine Berechtigung' });
     upsert(found.chore.id, found.date, { done_by: null, done_at: null });
+    revokePoints(db, { familyId: req.familyId, ref: `chore:${found.chore.id}:${found.date}`, publish });
     publish(req.familyId, 'chores');
     res.status(204).end();
   });

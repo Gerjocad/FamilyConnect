@@ -25,6 +25,8 @@ import { feedbackRouter } from './feedback.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
 import { Formula1Service } from './formula1.js';
+import { pointsForTaskChange, pointsRouter } from './points.js';
+import { locateRouter } from './locate.js';
 import { LiveHub } from './live.js';
 import { TuyaClient } from './tuya.js';
 import { ROLES } from './permissions.js';
@@ -55,7 +57,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use('/api', (req, res, next) => {
     res.set({
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Authorization, Content-Type',
       'Access-Control-Max-Age': '86400',
     });
@@ -90,8 +92,13 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     ).all(userId);
 
   const familyDetails = (familyId) => {
-    const family = db.prepare('SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, show_f1, created_at FROM families WHERE id = ?').get(familyId);
+    const family = db.prepare(
+      'SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, show_f1, points_released, locate_released, created_at FROM families WHERE id = ?'
+    ).get(familyId);
     family.show_f1 = Boolean(family.show_f1);
+    // Testfunktionen, die für die ganze Familie freigegeben sind
+    family.points_released = Boolean(family.points_released);
+    family.locate_released = Boolean(family.locate_released);
     family.members = db.prepare(
       `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
@@ -144,20 +151,29 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     res.status(204).end();
   });
 
+  const meOf = (user) => ({ ...user, beta: Boolean(user.beta), families: familiesOf(user.id) });
   app.get('/api/me', auth, (req, res) => {
-    res.json({ ...req.user, families: familiesOf(req.user.id) });
+    res.json(meOf(req.user));
   });
 
   app.patch('/api/me', auth, (req, res) => {
     const name = req.body?.name === undefined ? req.user.name : cleanText(req.body.name, 100);
     const color = req.body?.color === undefined ? req.user.color : req.body.color;
     const theme = req.body?.theme === undefined ? req.user.theme : req.body.theme;
+    // Testfunktionen: nur wer irgendwo Admin ist, darf sie für sich einschalten
+    let beta = req.user.beta;
+    if (req.body?.beta !== undefined) {
+      if (typeof req.body.beta !== 'boolean') return res.status(400).json({ error: 'beta muss true/false sein' });
+      const admin = db.prepare("SELECT 1 FROM memberships WHERE user_id = ? AND role = 'admin'").get(req.user.id);
+      if (req.body.beta && !admin) return res.status(403).json({ error: 'Testfunktionen sind nur für Admins' });
+      beta = req.body.beta ? 1 : 0;
+    }
     if (!name) return res.status(400).json({ error: 'Bitte gib deinen Namen an' });
     if (typeof color !== 'string' || !COLOR_RE.test(color)) return res.status(400).json({ error: 'Ungültige Farbe' });
     if (!THEMES.includes(theme)) return res.status(400).json({ error: 'Unbekanntes Farbschema' });
-    db.prepare('UPDATE users SET name = ?, color = ?, theme = ? WHERE id = ?').run(name, color, theme, req.user.id);
+    db.prepare('UPDATE users SET name = ?, color = ?, theme = ?, beta = ? WHERE id = ?').run(name, color, theme, beta, req.user.id);
     for (const f of familiesOf(req.user.id)) hub.publish(f.id, 'family');
-    res.json({ ...req.user, name, color, theme, families: familiesOf(req.user.id) });
+    res.json(meOf({ ...req.user, name, color, theme, beta }));
   });
 
   // --- Geräte für Push-Benachrichtigungen ----------------------------------
@@ -227,6 +243,11 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     }
     db.prepare('UPDATE families SET name = ?, state = ? WHERE id = ?').run(name, state, req.familyId);
     if (weather) db.prepare('UPDATE families SET weather_place = ?, weather_lat = ?, weather_lon = ? WHERE id = ?').run(...weather, req.familyId);
+    // „Wo bist du?“ für alle freigeben
+    if (req.body?.locate_released !== undefined) {
+      if (typeof req.body.locate_released !== 'boolean') return res.status(400).json({ error: 'locate_released muss true/false sein' });
+      db.prepare('UPDATE families SET locate_released = ? WHERE id = ?').run(req.body.locate_released ? 1 : 0, req.familyId);
+    }
     // Formel-1-Rennen im Kalender
     if (req.body?.show_f1 !== undefined) {
       if (typeof req.body.show_f1 !== 'boolean') return res.status(400).json({ error: 'show_f1 muss true/false sein' });
@@ -392,6 +413,8 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }));
+  app.use(pointsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
+  app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
@@ -407,6 +430,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,
       crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name), (change) => {
         recordMentions(db, change);
+        pointsForTaskChange(db, change, (familyId, name) => hub.publish(familyId, name));
         push?.handleChange(change);
       }));
   }

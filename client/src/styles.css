@@ -1142,3 +1142,54 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .event-icon-thumbs img { width: 18px; height: 18px; object-fit: contain; }
 .event-icon-children[open] .event-icon-thumbs { display: none; }
 .event-icon-children .event-icon-list { margin-top: 4px; }
+/* Testfunktionen */
+.beta-badge { background: #f3e8ff; color: #6b21a8; font-size: 0.75rem; }
+.beta-list { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; }
+.beta-list li .checkbox { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-weight: 600; }
+
+/* Punkte & Belohnungen */
+.points-page .page-header { gap: 10px; flex-wrap: wrap; }
+.points-intro ul { margin: 6px 0 12px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.points-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.points-person { display: flex; align-items: center; gap: 12px; }
+.points-person-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.points-balance { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+.points-person-actions { display: flex; flex-direction: column; gap: 6px; }
+.points-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.points-row { display: flex; align-items: center; gap: 10px; }
+.points-row-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.reward-emoji { font-size: 1.6rem; width: 36px; text-align: center; flex-shrink: 0; }
+.reward-ideas { margin: 10px 0; }
+.reward-form { gap: 6px; margin-top: 6px; }
+.reward-form input { flex: 1 1 140px; min-width: 0; }
+.reward-form .emoji-input { flex: 0 0 52px; text-align: center; font-size: 1.2rem; }
+.reward-form .cost-input { flex: 0 0 80px; }
+.reward-progress { display: block; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin: 4px 0 2px; }
+.reward-progress span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.points-history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.points-history li { display: flex; align-items: center; gap: 10px; }
+.points-history .plus { color: #2f9e44; }
+.points-history .minus { color: var(--danger); }
+.points-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px; }
+.points-hero-star { font-size: 2.2rem; }
+.points-hero-number { font-size: 3rem; font-weight: 800; line-height: 1; }
+.points-amounts { display: flex; flex-wrap: wrap; gap: 10px; }
+.points-amounts label { flex: 1 1 120px; }
+.points-collectors { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.points-collectors legend { font-weight: 600; margin-bottom: 4px; }
+
+/* Wo bist du? */
+.locate-card { display: flex; flex-direction: column; gap: 10px; }
+.locate-incoming { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--text); text-decoration: none; flex-wrap: wrap; }
+.locate-incoming .button { margin-left: auto; }
+.locate-people { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.locate-person { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; color: var(--text); font: inherit; font-size: 0.85rem; cursor: pointer; padding: 4px; border-radius: 12px; }
+.locate-person:active { background: var(--surface-2); }
+.locate-answers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+.locate-answers a { color: var(--text); text-decoration: none; }
+.locate-page .card { display: flex; flex-direction: column; gap: 12px; }
+.locate-page h1 { font-size: 1.3rem; margin: 0; }
+.locate-question .button.big { font-size: 1.15rem; padding: 14px; }
+.locate-question .row input { flex: 1; min-width: 0; }
+.locate-or { color: var(--muted); font-size: 0.9rem; }
+.locate-result { margin: 0; }

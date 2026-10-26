@@ -30,7 +30,7 @@ export function userForToken(db, token) {
   if (!token) return null;
   return db
     .prepare(
-      `SELECT u.id, u.name, u.email, u.color, u.theme FROM sessions s
+      `SELECT u.id, u.name, u.email, u.color, u.theme, u.beta FROM sessions s
        JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`
     )
     .get(hashToken(token)) ?? null;

@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { WeatherCard } from '../components/WeatherCard';
 import { NavCard } from '../components/NavCard';
 import { WhereCard } from '../components/WhereCard';
+import { LocateCard } from '../components/LocateCard';
 import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay, toDateKey } from '../dates';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -152,6 +153,7 @@ export function DashboardPage() {
           </NavCard>
         )}
         <WeatherCard events={events.items} />
+        <LocateCard />
         <WhereCard />
 
         <NavCard to="/kalender" className="span-2">

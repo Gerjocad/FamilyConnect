@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.59',
+    date: '2026-10-26',
+    title: 'Testfunktionen: „Wo bist du?“ und Punkte & Belohnungen',
+    changes: [
+      'Familie & Profil → Testfunktionen (nur Admins): neue Bereiche erst allein ausprobieren, später für die Familie freigeben',
+      '📍 Wo bist du?: auf der Übersicht eine Person antippen – sie bekommt eine Nachricht und schickt ihren Standort, eine kurze Antwort oder „Nicht jetzt“; Anzeige mit Karte und „bei 🏫 Schule“, nach 24 Stunden gelöscht',
+      '⭐ Punkte: Kinder sammeln automatisch für Aufgaben, Gewohnheiten und Dienste; Bonus/Abzug mit Grund; Belohnungen einlösen mit Ja/Nein der Eltern',
+    ],
+  },
+  {
     version: '1.58',
     date: '2026-10-25',
     title: 'Logos übersichtlicher',

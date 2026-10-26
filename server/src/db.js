@@ -118,6 +118,15 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 // Spalten, die nach der ersten Version dazugekommen sind. Bestehende Datenbanken werden beim Start ergänzt.
 const ADDED_COLUMNS = [
+  ['users', 'beta', 'INTEGER NOT NULL DEFAULT 0'],
+  // NULL = Standard nach Rolle (Kinder sammeln Punkte)
+  ['memberships', 'collects_points', 'INTEGER'],
+  ['families', 'points_enabled', 'INTEGER NOT NULL DEFAULT 0'],
+  ['families', 'points_released', 'INTEGER NOT NULL DEFAULT 0'],
+  ['families', 'points_task', 'INTEGER NOT NULL DEFAULT 5'],
+  ['families', 'points_habit', 'INTEGER NOT NULL DEFAULT 2'],
+  ['families', 'points_chore', 'INTEGER NOT NULL DEFAULT 5'],
+  ['families', 'locate_released', 'INTEGER NOT NULL DEFAULT 0'],
   ['families', 'show_f1', 'INTEGER NOT NULL DEFAULT 0'],
   ['event_icons', 'highlight', 'INTEGER NOT NULL DEFAULT 0'],
   ['event_icons', 'only_with', "TEXT NOT NULL DEFAULT ''"],
@@ -532,6 +541,59 @@ CREATE TABLE IF NOT EXISTS devices (
   token TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   platform TEXT NOT NULL DEFAULT 'android',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Testfunktionen und Punkte & Belohnungen
+CREATE TABLE IF NOT EXISTS points_ledger (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  source TEXT NOT NULL,
+  -- eindeutige Erledigung (z. B. task:12), damit nichts doppelt zählt und Rückgängig genau diese Punkte abzieht
+  ref TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS points_ledger_ref ON points_ledger (family_id, ref) WHERE ref IS NOT NULL;
+CREATE TABLE IF NOT EXISTS rewards (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  emoji TEXT NOT NULL DEFAULT '🎁',
+  cost INTEGER NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS reward_redemptions (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reward_id INTEGER REFERENCES rewards(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  cost INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  decided_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  decided_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- „Wo bist du?“: einmalige Standort-Abfragen, nach 24 Stunden gelöscht
+CREATE TABLE IF NOT EXISTS locate_requests (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  from_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  lat REAL,
+  lon REAL,
+  accuracy INTEGER,
+  message TEXT,
+  answered_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 `;

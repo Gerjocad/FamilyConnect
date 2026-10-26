@@ -13,6 +13,8 @@ export interface User {
   color: string;
   /** Farbschema der App, siehe themes.ts */
   theme: string;
+  /** Testfunktionen für sich eingeschaltet (nur Admins) */
+  beta: boolean;
   families: FamilySummary[];
 }
 
@@ -37,6 +39,9 @@ export interface Family {
   weather_place: string | null;
   /** Formel-1-Rennsonntage im Kalender */
   show_f1: boolean;
+  /** Testfunktionen, die für die ganze Familie freigegeben sind */
+  points_released: boolean;
+  locate_released: boolean;
   members: Member[];
 }
 

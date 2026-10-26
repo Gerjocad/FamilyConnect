@@ -11,6 +11,8 @@ import { MusicCoversPage } from './pages/MusicCoversPage';
 import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ChoresPage } from './pages/ChoresPage';
+import { PointsPage } from './pages/PointsPage';
+import { LocatePage } from './pages/LocatePage';
 import { ComplaintsPage } from './pages/ComplaintsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -71,6 +73,8 @@ export function App() {
           <Route path="musik/cover" element={<MusicCoversPage />} />
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="dienste" element={<ChoresPage />} />
+          <Route path="punkte" element={<PointsPage />} />
+          <Route path="standort/:id" element={<LocatePage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route path="beschwerden" element={<ComplaintsPage />} />
           <Route path="anfragen" element={<RequestsPage />} />

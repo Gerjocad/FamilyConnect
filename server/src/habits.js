@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { isValidDate } from './crud.js';
 import { todayKey } from './dates.js';
 import { isManager } from './permissions.js';
+import { awardPoints, revokePoints } from './points.js';
 
 const SOURCES = ['app', 'nfc', 'button'];
 
@@ -39,6 +40,7 @@ export function habitsRouter(db, { auth, member, publish }) {
       'INSERT INTO habit_checkins (family_id, habit_id, user_id, date, source, created_by) VALUES (?, ?, ?, ?, ?, ?)'
     ).run(habit.family_id, habit.id, userId, date, source, req.user.id);
     publish(habit.family_id, 'checkins');
+    awardPoints(db, { familyId: habit.family_id, userId, source: 'habit', ref: `habit:${habit.id}:${userId}:${date}`, reason: `${habit.emoji ?? ''} ${habit.title}`.trim(), publish });
     const row = db.prepare('SELECT * FROM habit_checkins WHERE id = ?').get(lastInsertRowid);
     res.status(201).json({ checkin: serializeCheckin(row), already: false, habit: { id: habit.id, title: habit.title, emoji: habit.emoji, family_id: habit.family_id } });
   }
@@ -83,6 +85,7 @@ export function habitsRouter(db, { auth, member, publish }) {
     if (userId === null) return;
     const date = req.body?.date ?? todayKey();
     db.prepare('DELETE FROM habit_checkins WHERE habit_id = ? AND user_id = ? AND date = ?').run(habit.id, userId, date);
+    revokePoints(db, { familyId: habit.family_id, ref: `habit:${habit.id}:${userId}:${date}`, publish });
     publish(habit.family_id, 'checkins');
     res.status(204).end();
   });
