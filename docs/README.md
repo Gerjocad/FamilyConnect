@@ -16,6 +16,7 @@ Alles Wichtige zu FamilyConnect auf einen Blick. Neue Anleitungen und Bastelproj
 | --- | --- |
 | [hardware/musikbox](../hardware/musikbox/) | Anleitung, STL-Dateien (Gehäuse im Lautsprecher-Look oder schlicht, Boden, Karten, Knopf, Tastenkappe), OpenSCAD-Modell, Firmware |
 | [hardware/wandsensor](../hardware/wandsensor/) | Anleitung, STL-Dateien (Gehäuse + Rückwand für ESP32-C3 oder -S3), OpenSCAD-Modell, Firmware |
+| [hardware/aufsteh-ampel](../hardware/aufsteh-ampel/) | Erster Test: ESP32 + 8×8-Matrix zeigt Mond, Sonnenaufgang, Sonne – Verkabelung und Firmware |
 
 ## 🧊 3D-Druck-Dateien (STL)
 
