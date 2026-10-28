@@ -13,6 +13,10 @@ import { CalendarPage } from './pages/CalendarPage';
 import { ChoresPage } from './pages/ChoresPage';
 import { PointsPage } from './pages/PointsPage';
 import { LocatePage } from './pages/LocatePage';
+import { GamesPage } from './pages/GamesPage';
+import { BoardGamePage } from './pages/BoardGamePage';
+import { MemoryPage } from './pages/MemoryPage';
+import { WordGamePage } from './pages/WordGamePage';
 import { ComplaintsPage } from './pages/ComplaintsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -74,6 +78,11 @@ export function App() {
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="dienste" element={<ChoresPage />} />
           <Route path="punkte" element={<PointsPage />} />
+          <Route path="spiele" element={<GamesPage />} />
+          <Route path="spiele/memory" element={<MemoryPage />} />
+          <Route path="spiele/woerter" element={<WordGamePage />} />
+          <Route path="spiele/:game" element={<BoardGamePage />} />
+          <Route path="spiele/:game/:matchId" element={<BoardGamePage />} />
           <Route path="standort/:id" element={<LocatePage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route path="beschwerden" element={<ComplaintsPage />} />

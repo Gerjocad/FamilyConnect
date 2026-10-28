@@ -64,4 +64,5 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand),
   Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum), Orte (angekommen/losgegangen),
   aufgeräumte Seite Familie & Profil, Musik über Spotify mit NFC-Karten und Musik-Box (hardware/musikbox),
-  Wandsensor fürs Wanddisplay: Radar weckt, BH1750 schaltet Dark Mode (hardware/wandsensor)
+  Wandsensor fürs Wanddisplay: Radar weckt, BH1750 schaltet Dark Mode (hardware/wandsensor),
+  Spiele (Tic-Tac-Toe, Vier gewinnt online/Computer, Memory, Wörter raten)

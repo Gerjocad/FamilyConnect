@@ -23,6 +23,7 @@ const NAV: { to: string; label: string; icon: IconName; feature?: 'points' }[] =
   { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit' },
   { to: '/dienste', label: 'Dienste', icon: 'chore' },
   { to: '/punkte', label: 'Punkte', icon: 'star', feature: 'points' },
+  { to: '/spiele', label: 'Spiele', icon: 'game' },
   { to: '/essen', label: 'Essensplan', icon: 'meal' },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },

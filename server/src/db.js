@@ -596,6 +596,34 @@ CREATE TABLE IF NOT EXISTS locate_requests (
   answered_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Spiele: Online-Partien und Bestenlisten
+CREATE TABLE IF NOT EXISTS game_matches (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  game TEXT NOT NULL,
+  player1 INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  player2 INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  board TEXT NOT NULL,
+  turn INTEGER NOT NULL DEFAULT 1,
+  -- 1/2 = Gewinner, 0 = unentschieden, NULL = läuft
+  winner INTEGER,
+  line TEXT NOT NULL DEFAULT '[]',
+  last_move TEXT NOT NULL DEFAULT 'null',
+  resigned INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS game_scores (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  seconds INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 `;
 
 function migrate(db) {

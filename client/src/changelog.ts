@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.60',
+    date: '2026-10-28',
+    title: 'Spiele',
+    changes: [
+      'Neu im Menü: Spiele',
+      '❌⭕ Tic-Tac-Toe und 🔴🟡 Vier gewinnt – zu zweit auf einem Handy, gegen den Computer (leicht/schwer) oder online gegen jemanden aus der Familie, jeder auf seinem Handy',
+      'Online: Herausforderung per Nachricht, Züge erscheinen sofort beim anderen, Revanche mit einem Tipp',
+      '🃏 Memory mit Tieren, Essen oder Sport – Bestenliste der Familie',
+      '🔤 Wörter raten – mit Wörtern vom Computer oder einem eigenen Wort für die anderen',
+    ],
+  },
+  {
     version: '1.59',
     date: '2026-10-26',
     title: 'Testfunktionen: „Wo bist du?“ und Punkte & Belohnungen',
