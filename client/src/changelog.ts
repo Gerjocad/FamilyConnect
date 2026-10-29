@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.65',
+    date: '2026-10-29',
+    title: 'Chat bleibt beim Verschieben erhalten',
+    changes: [
+      'Wird ein Termin auf einen anderen Tag gelegt, wandern die Kommentare mit und stehen unter dem aufklappbaren Punkt „Alter Chat“',
+      'Auch bei Serien: verschiebt man die ganze Serie, rückt der Chat jedes Tages mit; ändert man nur einen Tag, nimmt dieser seinen Chat mit',
+    ],
+  },
+  {
     version: '1.64',
     date: '2026-10-29',
     title: 'Termine absagen statt löschen',

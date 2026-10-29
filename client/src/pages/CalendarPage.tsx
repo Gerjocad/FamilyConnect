@@ -393,8 +393,15 @@ export function CalendarPage() {
           defaultDay={selected}
           onClose={() => setEditing(null)}
           readOnly={editing !== 'new' && !canEdit(editing.event)}
-          onSave={(data, scope) =>
-            editing === 'new' ? saveEvent(events, data) : saveEvent(events, data, editing.event, editing.occurrence, scope)}
+          onSave={async (data, scope) => {
+            if (editing === 'new') return saveEvent(events, data);
+            const { event, occurrence } = editing;
+            const saved = await saveEvent(events, data, event, occurrence, scope);
+            // Nur dieser Tag einer Serie → eigener Termin: der Chat dieses Tages zieht mit um
+            if (scope === 'one' && event.recurrence !== 'none' && occurrence) {
+              await comments.move(event.id, toDateKey(occurrence.start), (saved as CalendarEvent).id, data.start!.slice(0, 10));
+            }
+          }}
           onDelete={editing === 'new' ? undefined : (scope) => deleteEvent(events, editing.event, editing.occurrence, scope)}
           onCancel={editing === 'new' ? undefined : (scope, cancelled) => cancelEvent(events, editing.event, editing.occurrence, scope, cancelled)}
         />

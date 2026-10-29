@@ -9,6 +9,8 @@ export interface EventComment {
   event_id: number;
   /** Tag des Termins (bei Serien das einzelne Vorkommen) */
   date: string;
+  /** Termin wurde verschoben: Tag, an dem dieser Kommentar ursprünglich geschrieben wurde („Alter Chat“) */
+  moved_from: string | null;
   user_id: number | null;
   text: string;
   created_at: string;
@@ -45,10 +47,15 @@ export function useEventComments() {
     await api(`${base}/events/${eventId}/comments`, { method: 'POST', body: { date, text } });
     await reload();
   };
+  /** Einzelnen Tag einer Serie als eigenen Termin gespeichert → Kommentare dieses Tages mitnehmen */
+  const move = async (fromEvent: number, fromDate: string, toEvent: number, toDate: string) => {
+    await api(`${base}/events/${fromEvent}/comments/move`, { method: 'POST', body: { to_event: toEvent, from_date: fromDate, to_date: toDate } });
+    await reload();
+  };
   const remove = async (id: number) => {
     await api(`${base}/event-comments/${id}`, { method: 'DELETE' });
     await reload();
   };
 
-  return { items, counts, add, remove };
+  return { items, counts, add, move, remove };
 }

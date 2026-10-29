@@ -12,7 +12,7 @@ import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
-import { eventCommentsRouter } from './eventComments.js';
+import { eventCommentsRouter, followEventDate } from './eventComments.js';
 import { activityRouter, recordMentions } from './activity.js';
 import { WeatherService, weatherRouter } from './weather.js';
 import { wishesRouter } from './wishes.js';
@@ -434,6 +434,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     app.use(`/api/families/:familyId/${resource.path}`, auth, member,
       crudRouter(db, resource, (familyId, name) => hub.publish(familyId, name), (change) => {
         recordMentions(db, change);
+        followEventDate(db, change, (familyId, name) => hub.publish(familyId, name));
         pointsForTaskChange(db, change, (familyId, name) => hub.publish(familyId, name));
         push?.handleChange(change);
       }));

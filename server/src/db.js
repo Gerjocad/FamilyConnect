@@ -137,6 +137,8 @@ const ADDED_COLUMNS = [
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
   ['events', 'cancelled', 'INTEGER NOT NULL DEFAULT 0'],
+  // Termin verschoben: an welchem Tag der Kommentar ursprünglich geschrieben wurde („Alter Chat“)
+  ['event_comments', 'moved_from', 'TEXT'],
   ['events', 'cancelled_dates', "TEXT NOT NULL DEFAULT '[]'"],
   // Aus einer Kalenderdatei (.ics) importiert: Name des Kalenders und UID des Termins (für erneuten Import)
   ['events', 'source', "TEXT NOT NULL DEFAULT ''"],
