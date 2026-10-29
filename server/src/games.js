@@ -1,12 +1,15 @@
 // Spiele: Online-Partien zwischen zwei Familienmitgliedern (Tic-Tac-Toe, Vier gewinnt) und Bestenlisten (Memory).
 // Der Server prüft jeden Zug, damit niemand schummeln kann; beide Handys bekommen Änderungen live.
 import { Router } from 'express';
+import { randomFleet, shoot, validateFleet, viewFor } from './battleship.js';
 
 export const GAMES = {
   tictactoe: { name: 'Tic-Tac-Toe', emoji: '❌', rows: 3, cols: 3, connect: 3 },
   connect4: { name: 'Vier gewinnt', emoji: '🔴', rows: 6, cols: 7, connect: 4 },
+  battleship: { name: 'Schiffe versenken', emoji: '🚢' },
 };
-const SCORE_GAMES = ['memory'];
+// Bestenlisten: Memory = wenigste Züge, Kniffel = meiste Punkte
+const SCORE_GAMES = { memory: 'ASC', kniffel: 'DESC' };
 // Wer gerade aktiv mitspielt, bekommt keine Nachricht pro Zug – erst nach so langer Pause wieder
 const NUDGE_AFTER_MS = 60_000;
 
@@ -61,11 +64,12 @@ export function gamesRouter(db, { auth, member, publish, push }) {
   const router = Router();
   const base = '/api/families/:familyId/games';
   const nameOf = (userId) => db.prepare('SELECT name FROM users WHERE id = ?').get(userId)?.name.split(' ')[0] ?? '';
-  const serialize = (m) => ({
+  // Schiffe versenken: jeder sieht nur, was er sehen darf (viewFor)
+  const serialize = (m, viewer) => ({
     id: m.id,
     game: m.game,
     players: [m.player1, m.player2],
-    board: JSON.parse(m.board),
+    board: m.game === 'battleship' ? viewFor(JSON.parse(m.board), m.player1 === viewer ? 1 : 2, m.status === 'finished') : JSON.parse(m.board),
     turn: m.turn,
     winner: m.winner === null ? null : m.winner === 0 ? 'draw' : m.winner,
     line: JSON.parse(m.line),
@@ -81,15 +85,15 @@ export function gamesRouter(db, { auth, member, publish, push }) {
   router.get(`${base}/matches`, auth, member, (req, res) => {
     const rows = db.prepare(
       `SELECT * FROM game_matches WHERE family_id = ? AND (player1 = ? OR player2 = ?)
-       ORDER BY status = 'active' DESC, updated_at DESC LIMIT 30`
+       ORDER BY status != 'finished' DESC, updated_at DESC LIMIT 30`
     ).all(req.familyId, req.user.id, req.user.id);
-    res.json(rows.map(serialize));
+    res.json(rows.map((m) => serialize(m, req.user.id)));
   });
 
   router.get(`${base}/matches/:id`, auth, member, (req, res) => {
     const m = find(req);
     if (!mine(m, req.user.id)) return res.status(404).json({ error: 'Diese Partie gibt es nicht' });
-    res.json(serialize(m));
+    res.json(serialize(m, req.user.id));
   });
 
   // Herausfordern: wer herausfordert, beginnt
@@ -100,16 +104,41 @@ export function gamesRouter(db, { auth, member, publish, push }) {
     if (opponent === req.user.id || !db.prepare('SELECT 1 FROM memberships WHERE family_id = ? AND user_id = ?').get(req.familyId, opponent)) {
       return res.status(400).json({ error: 'Gegen wen?' });
     }
+    // Schiffe versenken beginnt mit dem Aufstellen der Flotten
+    const battleship = game === 'battleship';
+    const board = battleship ? { ships: {}, shots: { 1: [], 2: [] } } : emptyBoard(game);
     const { lastInsertRowid } = db.prepare(
-      `INSERT INTO game_matches (family_id, game, player1, player2, board, turn) VALUES (?, ?, ?, ?, ?, 1)`
-    ).run(req.familyId, game, req.user.id, opponent, JSON.stringify(emptyBoard(game)));
+      `INSERT INTO game_matches (family_id, game, player1, player2, board, turn, status) VALUES (?, ?, ?, ?, ?, 1, ?)`
+    ).run(req.familyId, game, req.user.id, opponent, JSON.stringify(board), battleship ? 'setup' : 'active');
     push?.notify?.([opponent], {
       title: `${GAMES[game].emoji} ${nameOf(req.user.id)} fordert dich heraus`,
-      body: `${GAMES[game].name} – ${nameOf(req.user.id)} fängt an`,
+      body: battleship ? `${GAMES[game].name} – stell deine Schiffe auf!` : `${GAMES[game].name} – ${nameOf(req.user.id)} fängt an`,
       path: `/spiele/${game}/${lastInsertRowid}`,
     });
     publish(req.familyId, 'games');
-    res.status(201).json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(lastInsertRowid)));
+    res.status(201).json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(lastInsertRowid), req.user.id));
+  });
+
+  // Schiffe versenken: eigene Flotte aufstellen ({ ships } oder { random: true }); sind beide fertig, geht es los
+  router.post(`${base}/matches/:id/ships`, auth, member, (req, res) => {
+    const m = find(req);
+    if (!mine(m, req.user.id) || m.game !== 'battleship') return res.status(404).json({ error: 'Diese Partie gibt es nicht' });
+    if (m.status !== 'setup') return res.status(409).json({ error: 'Die Schiffe stehen schon' });
+    const player = m.player1 === req.user.id ? 1 : 2;
+    const ships = req.body?.random ? randomFleet() : req.body?.ships;
+    const problem = validateFleet(ships);
+    if (problem) return res.status(400).json({ error: problem });
+    const state = JSON.parse(m.board);
+    state.ships[player] = ships.map(({ row, col, len, vertical }) => ({ row, col, len, vertical }));
+    const ready = Boolean(state.ships[1] && state.ships[2]);
+    db.prepare("UPDATE game_matches SET board = ?, status = ?, updated_at = datetime('now') WHERE id = ?")
+      .run(JSON.stringify(state), ready ? 'active' : 'setup', m.id);
+    if (ready) {
+      const other = player === 1 ? m.player2 : m.player1;
+      push?.notify?.([other], { title: '🚢 Alle Schiffe stehen', body: m.turn === (player === 1 ? 2 : 1) ? 'Du fängst an – Feuer frei!' : `${nameOf(req.user.id)} fängt an`, path: `/spiele/battleship/${m.id}` });
+    }
+    publish(req.familyId, 'games');
+    res.json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id), req.user.id));
   });
 
   router.post(`${base}/matches/:id/move`, auth, member, (req, res) => {
@@ -118,6 +147,7 @@ export function gamesRouter(db, { auth, member, publish, push }) {
     if (m.status !== 'active') return res.status(409).json({ error: 'Die Partie ist schon vorbei' });
     const player = m.player1 === req.user.id ? 1 : 2;
     if (m.turn !== player) return res.status(409).json({ error: 'Du bist nicht dran' });
+    if (m.game === 'battleship') return battleshipShot(req, res, m, player);
     const result = applyMove(m.game, JSON.parse(m.board), player, req.body);
     if (result.error) return res.status(400).json({ error: result.error });
     const { winner, line } = outcome(m.game, result.board);
@@ -139,18 +169,42 @@ export function gamesRouter(db, { auth, member, publish, push }) {
       push?.notify?.([other], { title: `${g.emoji} Du bist dran`, body: `${g.name} gegen ${nameOf(req.user.id)}`, path: `/spiele/${m.game}/${m.id}` });
     }
     publish(req.familyId, 'games');
-    res.json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id)));
+    res.json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id), req.user.id));
   });
+
+  // Schiffe versenken: Treffer = nochmal schießen, Wasser = der andere ist dran
+  function battleshipShot(req, res, m, player) {
+    const state = JSON.parse(m.board);
+    const other = player === 1 ? 2 : 1;
+    const row = Number(req.body?.row);
+    const col = Number(req.body?.col);
+    const result = shoot(state.ships[other], state.shots[player], row, col);
+    if (result.error) return res.status(400).json({ error: result.error });
+    state.shots[player].push([row, col]);
+    const finished = result.allSunk;
+    db.prepare(
+      `UPDATE game_matches SET board = ?, turn = ?, winner = ?, last_move = ?, status = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(JSON.stringify(state), result.hit ? player : other, finished ? player : null, JSON.stringify([row, col]), finished ? 'finished' : 'active', m.id);
+    const otherId = player === 1 ? m.player2 : m.player1;
+    const idle = Date.now() - new Date(`${m.updated_at.replace(' ', 'T')}Z`).getTime() > NUDGE_AFTER_MS;
+    if (finished) {
+      push?.notify?.([otherId], { title: `🚢 ${nameOf(req.user.id)} hat alle deine Schiffe versenkt`, body: 'Revanche? 😉', path: `/spiele/battleship/${m.id}` });
+    } else if (!result.hit && idle) {
+      push?.notify?.([otherId], { title: '🚢 Du bist dran', body: `Schiffe versenken gegen ${nameOf(req.user.id)}`, path: `/spiele/battleship/${m.id}` });
+    }
+    publish(req.familyId, 'games');
+    res.json({ ...serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id), req.user.id), shot: { hit: result.hit, sunk: result.sunk?.len ?? null } });
+  }
 
   // Aufgeben bzw. Partie beenden – zählt als Sieg für die andere Seite
   router.post(`${base}/matches/:id/resign`, auth, member, (req, res) => {
     const m = find(req);
     if (!mine(m, req.user.id)) return res.status(404).json({ error: 'Diese Partie gibt es nicht' });
-    if (m.status !== 'active') return res.status(409).json({ error: 'Die Partie ist schon vorbei' });
+    if (m.status === 'finished') return res.status(409).json({ error: 'Die Partie ist schon vorbei' });
     const winner = m.player1 === req.user.id ? 2 : 1;
     db.prepare("UPDATE game_matches SET status = 'finished', winner = ?, resigned = 1, updated_at = datetime('now') WHERE id = ?").run(winner, m.id);
     publish(req.familyId, 'games');
-    res.json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id)));
+    res.json(serialize(db.prepare('SELECT * FROM game_matches WHERE id = ?').get(m.id), req.user.id));
   });
 
   // Bilanz: Siege/Niederlagen/Unentschieden je Gegner
@@ -172,21 +226,25 @@ export function gamesRouter(db, { auth, member, publish, push }) {
   // --- Bestenlisten (Memory: weniger Züge = besser) ---------------------------------------------
   router.post(`${base}/scores`, auth, member, (req, res) => {
     const { game, score, seconds } = req.body ?? {};
-    if (!SCORE_GAMES.includes(game) || !Number.isInteger(score) || score < 1 || score > 10_000) return res.status(400).json({ error: 'Ungültiges Ergebnis' });
+    if (!SCORE_GAMES[game] || !Number.isInteger(score) || score < 1 || score > 10_000) return res.status(400).json({ error: 'Ungültiges Ergebnis' });
     const time = Number.isInteger(seconds) && seconds >= 0 && seconds < 100_000 ? seconds : null;
-    db.prepare('INSERT INTO game_scores (family_id, user_id, game, score, seconds) VALUES (?, ?, ?, ?, ?)').run(req.familyId, req.user.id, game, score, time);
+    // Spiele auf einem Handy (Kniffel): Ergebnisse auch für die anderen Mitspieler aus der Familie
+    const userId = req.body?.user_id === undefined ? req.user.id : Number(req.body.user_id);
+    if (!db.prepare('SELECT 1 FROM memberships WHERE family_id = ? AND user_id = ?').get(req.familyId, userId)) return res.status(400).json({ error: 'Unbekannte Person' });
+    db.prepare('INSERT INTO game_scores (family_id, user_id, game, score, seconds) VALUES (?, ?, ?, ?, ?)').run(req.familyId, userId, game, score, time);
     publish(req.familyId, 'games');
     res.status(201).end();
   });
 
   router.get(`${base}/scores/:game`, auth, member, (req, res) => {
-    if (!SCORE_GAMES.includes(req.params.game)) return res.status(404).json({ error: 'Unbekanntes Spiel' });
-    // bestes Ergebnis je Person (wenigste Züge, dann schnellste Zeit)
+    const order = SCORE_GAMES[req.params.game];
+    if (!order) return res.status(404).json({ error: 'Unbekanntes Spiel' });
+    // bestes Ergebnis je Person (Memory: wenigste Züge, Kniffel: meiste Punkte; dann schnellste Zeit)
     const rows = db.prepare(
       `SELECT user_id, score, seconds, created_at FROM game_scores s WHERE family_id = ? AND game = ? AND id = (
          SELECT id FROM game_scores t WHERE t.family_id = s.family_id AND t.game = s.game AND t.user_id = s.user_id
-         ORDER BY score ASC, COALESCE(seconds, 1e9) ASC, id ASC LIMIT 1)
-       ORDER BY score ASC, COALESCE(seconds, 1e9) ASC`
+         ORDER BY score ${order}, COALESCE(seconds, 1e9) ASC, id ASC LIMIT 1)
+       ORDER BY score ${order}, COALESCE(seconds, 1e9) ASC`
     ).all(req.familyId, req.params.game);
     res.json(rows);
   });

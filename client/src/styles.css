@@ -1247,3 +1247,44 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .word-key { padding: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer; }
 .word-key.hit { background: #d3f9d8; color: #2b8a3e; }
 .word-key.miss { background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+
+/* Schiffe versenken */
+.battleship { max-width: 560px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.sea { display: grid; grid-template-columns: 18px repeat(10, minmax(0, 1fr)); gap: 2px; width: 100%; margin: 4px 0 12px; }
+.sea.small { max-width: 300px; margin-left: auto; margin-right: auto; }
+.sea-row { display: contents; }
+.sea-label { font-size: 0.65rem; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.sea-cell { aspect-ratio: 1; border: 0; border-radius: 4px; background: #a5d8ff; padding: 0; font-size: 0.9rem; line-height: 1; color: #1c3d5a; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.sea.small .sea-cell { font-size: 0.65rem; border-radius: 3px; }
+.sea-cell:disabled { cursor: default; }
+.sea-cell.ship { background: #868e96; }
+.sea-cell.miss { background: #d0ebff; color: #4dabf7; }
+.sea-cell.hit { background: #ffa8a8; }
+.sea-cell.sunk { background: #c92a2a; color: #fff; }
+.sea-cell.last { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sea-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; font-size: 0.95rem; flex-wrap: wrap; }
+.fleet-status { display: inline-flex; gap: 6px; font-size: 0.7rem; letter-spacing: -1px; color: var(--accent); font-weight: 400; }
+.fleet-status .gone { color: var(--muted); text-decoration: line-through; opacity: 0.5; }
+.battleship-setup { display: flex; flex-direction: column; gap: 6px; }
+
+/* Kniffel */
+.kniffel { max-width: 640px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.locate-person.picked { background: var(--accent-soft); outline: 2px solid var(--accent); }
+.kniffel-order { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.kniffel-turn { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.dice { display: flex; gap: 8px; justify-content: center; }
+.die { width: 56px; height: 56px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); font-size: 2.6rem; line-height: 1; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; padding: 0; }
+.die.held { border-color: var(--accent); background: var(--accent-soft); transform: translateY(4px); }
+.dice.rolling .die:not(.held) { animation: shake 0.35s; }
+@keyframes shake { 25% { transform: rotate(-12deg); } 50% { transform: rotate(10deg); } 75% { transform: rotate(-6deg); } }
+.kniffel-turn .button.big { width: 100%; padding: 14px; font-size: 1.05rem; justify-content: center; }
+.kniffel-sheet-wrap { overflow-x: auto; margin-top: 12px; }
+.kniffel-sheet { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--surface); border-radius: 12px; overflow: hidden; }
+.kniffel-sheet th, .kniffel-sheet td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+.kniffel-sheet tbody th { text-align: left; font-weight: 500; white-space: nowrap; }
+.kniffel-sheet thead th.current { color: var(--accent); }
+.kniffel-sheet td.done { font-weight: 700; }
+.kniffel-sheet tr.sum td, .kniffel-sheet tr.sum th { background: var(--surface-2); font-size: 0.82rem; }
+.kniffel-sheet tr.total td, .kniffel-sheet tr.total th { font-weight: 800; font-size: 1rem; }
+.kniffel-pick { min-width: 34px; padding: 3px 6px; border-radius: 8px; border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.kniffel-pick.zero { border-color: var(--border); background: none; color: var(--muted); font-weight: 400; }

@@ -17,6 +17,8 @@ import { GamesPage } from './pages/GamesPage';
 import { BoardGamePage } from './pages/BoardGamePage';
 import { MemoryPage } from './pages/MemoryPage';
 import { WordGamePage } from './pages/WordGamePage';
+import { KniffelPage } from './pages/KniffelPage';
+import { BattleshipPage } from './pages/BattleshipPage';
 import { ComplaintsPage } from './pages/ComplaintsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -81,6 +83,9 @@ export function App() {
           <Route path="spiele" element={<GamesPage />} />
           <Route path="spiele/memory" element={<MemoryPage />} />
           <Route path="spiele/woerter" element={<WordGamePage />} />
+          <Route path="spiele/kniffel" element={<KniffelPage />} />
+          <Route path="spiele/battleship" element={<BattleshipPage />} />
+          <Route path="spiele/battleship/:matchId" element={<BattleshipPage />} />
           <Route path="spiele/:game" element={<BoardGamePage />} />
           <Route path="spiele/:game/:matchId" element={<BoardGamePage />} />
           <Route path="standort/:id" element={<LocatePage />} />

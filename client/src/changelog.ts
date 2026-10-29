@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.61',
+    date: '2026-10-29',
+    title: 'Kniffel und Schiffe versenken',
+    changes: [
+      '🎲 Kniffel: 1–6 Spieler reihum auf einem Handy (Familie und Gäste), Würfel festhalten, Spielblatt mit Vorschau der Punkte, Bonus ab 63 – mit Familien-Bestenliste',
+      '🚢 Schiffe versenken: gegen den Computer oder online gegen jemanden aus der Familie; Flotte zufällig aufstellen, Treffer = nochmal schießen, versenkte Schiffe werden aufgedeckt',
+      'Online bleiben die Schiffe des Gegners auf dem Server verborgen – kein Schummeln möglich',
+    ],
+  },
+  {
     version: '1.60',
     date: '2026-10-28',
     title: 'Spiele',

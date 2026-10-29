@@ -13,16 +13,24 @@ export const BOARD_GAMES: Record<BoardGame, { name: string; emoji: string; rows:
   connect4: { name: 'Vier gewinnt', emoji: '🔴', rows: 6, cols: 7, connect: 4 },
 };
 
+/** Spiele, die man online gegeneinander spielen kann */
+export type OnlineGame = BoardGame | 'battleship';
+export const GAME_INFO: Record<OnlineGame, { name: string; emoji: string }> = {
+  tictactoe: { name: 'Tic-Tac-Toe', emoji: '❌' },
+  connect4: { name: 'Vier gewinnt', emoji: '🔴' },
+  battleship: { name: 'Schiffe versenken', emoji: '🚢' },
+};
+
 export interface Match {
   id: number;
-  game: BoardGame;
+  game: OnlineGame;
   players: [number, number];
   board: Board;
   turn: 1 | 2;
   winner: 1 | 2 | 'draw' | null;
   line: [number, number][];
   last: [number, number] | null;
-  status: 'active' | 'finished';
+  status: 'setup' | 'active' | 'finished';
   created_at: string;
   updated_at: string;
 }

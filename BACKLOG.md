@@ -65,4 +65,4 @@ Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
   Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum), Orte (angekommen/losgegangen),
   aufgeräumte Seite Familie & Profil, Musik über Spotify mit NFC-Karten und Musik-Box (hardware/musikbox),
   Wandsensor fürs Wanddisplay: Radar weckt, BH1750 schaltet Dark Mode (hardware/wandsensor),
-  Spiele (Tic-Tac-Toe, Vier gewinnt online/Computer, Memory, Wörter raten)
+  Spiele (Tic-Tac-Toe, Vier gewinnt online/Computer, Memory, Wörter raten, Kniffel, Schiffe versenken)
