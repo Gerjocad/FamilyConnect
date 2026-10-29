@@ -651,6 +651,10 @@ function migrate(db) {
   }
   // Früher gab es nur Admin und „Mitglied“ – bisherige Mitglieder werden Eltern
   db.exec("UPDATE memberships SET role = 'parent' WHERE role = 'member'");
+  // Kommentare von Einzelterminen, die vor Version 1.65 verschoben wurden, hingen noch am alten Tag → „Alter Chat“
+  db.exec(`UPDATE event_comments SET moved_from = date, date = (SELECT substr(e.start, 1, 10) FROM events e WHERE e.id = event_id)
+    WHERE moved_from IS NULL AND event_id IN (SELECT id FROM events WHERE recurrence = 'none')
+      AND date != (SELECT substr(e.start, 1, 10) FROM events e WHERE e.id = event_id)`);
   for (const { id } of db.prepare('SELECT id FROM families').all()) ensureShoppingList(db, id);
 }
 

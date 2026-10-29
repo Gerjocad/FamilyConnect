@@ -18,6 +18,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       'Wird ein Termin auf einen anderen Tag gelegt, wandern die Kommentare mit und stehen unter dem aufklappbaren Punkt „Alter Chat“',
       'Auch bei Serien: verschiebt man die ganze Serie, rückt der Chat jedes Tages mit; ändert man nur einen Tag, nimmt dieser seinen Chat mit',
+      'Kommentare von Terminen, die schon früher verschoben wurden, tauchen jetzt auch wieder als „Alter Chat“ auf',
     ],
   },
   {

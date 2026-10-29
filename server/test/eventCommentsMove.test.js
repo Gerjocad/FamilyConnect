@@ -1,5 +1,8 @@
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createApp } from '../src/app.js';
 import { openDatabase } from '../src/db.js';
 
@@ -22,6 +25,20 @@ async function api(path, { token, method = 'GET', body } = {}) {
 }
 
 describe('Kommentare beim Verschieben', () => {
+  test('alte, früher verschobene Einzeltermine: Chat wird beim Start als „Alter Chat“ übernommen', () => {
+    const file = join(mkdtempSync(join(tmpdir(), 'fc-')), 'test.db');
+    const db = openDatabase(file);
+    db.exec("INSERT INTO users (id, name, email, password_hash, color) VALUES (1, 'M', 'm@x', 'x', '#000')");
+    db.exec("INSERT INTO families (id, name, invite_code) VALUES (1, 'F', 'abc')");
+    db.exec("INSERT INTO events (id, family_id, title, start, end, created_by) VALUES (1, 1, 'Grillen', '2026-11-14T15:00', '2026-11-14T18:00', 1)");
+    db.exec("INSERT INTO event_comments (family_id, event_id, date, user_id, text) VALUES (1, 1, '2026-11-07', 1, 'Salat'), (1, 1, '2026-11-14', 1, 'Neu')");
+    db.close();
+    const reopened = openDatabase(file);
+    assert.deepEqual(reopened.prepare('SELECT date, moved_from FROM event_comments ORDER BY id').all().map((r) => [r.date, r.moved_from]),
+      [['2026-11-14', '2026-11-07'], ['2026-11-14', null]]);
+    reopened.close();
+  });
+
   test('Einzeltermin: Chat zieht mit und wird „Alter Chat“, zurückverschoben wieder normal', async () => {
     const { data: { token } } = await api('/auth/register', { method: 'POST', body: { name: 'Mama', email: 'mama@chat.test', password: 'geheim123' } });
     const { data: fam } = await api('/families', { token, method: 'POST', body: { name: 'F' } });
