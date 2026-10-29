@@ -84,6 +84,7 @@ export function App() {
           <Route path="spiele/memory" element={<MemoryPage />} />
           <Route path="spiele/woerter" element={<WordGamePage />} />
           <Route path="spiele/kniffel" element={<KniffelPage />} />
+          <Route path="spiele/kniffel/:matchId" element={<KniffelPage />} />
           <Route path="spiele/battleship" element={<BattleshipPage />} />
           <Route path="spiele/battleship/:matchId" element={<BattleshipPage />} />
           <Route path="spiele/:game" element={<BoardGamePage />} />

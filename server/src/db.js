@@ -624,6 +624,18 @@ CREATE TABLE IF NOT EXISTS game_scores (
   seconds INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Kniffel online (2–6 Spieler)
+CREATE TABLE IF NOT EXISTS kniffel_matches (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  players TEXT NOT NULL,
+  state TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 `;
 
 function migrate(db) {

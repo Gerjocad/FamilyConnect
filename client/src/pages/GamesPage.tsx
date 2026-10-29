@@ -1,16 +1,33 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../api';
 import { Avatar } from '../components/Avatar';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { GAME_INFO, useMatches, type Match, type OnlineGame } from '../games';
+import { onLiveChange } from '../live';
 import { useFamily } from '../session';
+
+interface KniffelGame { id: number; players: number[]; current: number; status: string }
+
+/** Laufende Online-Kniffel-Spiele */
+function useKniffelGames() {
+  const { family } = useFamily();
+  const url = `/families/${family.id}/games/kniffel`;
+  const [games, setGames] = useState<KniffelGame[]>([]);
+  const load = useCallback(() => api<KniffelGame[]>(url).then(setGames, () => undefined), [url]);
+  useEffect(() => {
+    void load();
+    return onLiveChange((resource) => resource === 'games' && void load());
+  }, [load]);
+  return games.filter((g) => g.status === 'active');
+}
 
 /** Untermenü „Spiele“: Übersicht der Spiele und meiner laufenden Online-Partien */
 export function GamesPage() {
   const { user, member } = useFamily();
   const { matches } = useMatches();
+  const kniffel = useKniffelGames();
   const [starting, setStarting] = useState<OnlineGame | null>(null);
   const active = (matches ?? []).filter((m) => m.status !== 'finished');
   const me = (m: Match) => (m.players[0] === user.id ? 1 : 2);
@@ -23,10 +40,26 @@ export function GamesPage() {
     <div className="page games-page">
       <header className="page-header"><h1>Spiele</h1></header>
 
-      {active.length > 0 && (
+      {active.length + kniffel.length > 0 && (
         <section className="card">
           <h2>Laufende Partien</h2>
           <ul className="match-list">
+            {kniffel.map((k) => {
+              const turn = k.players[k.current];
+              const others = k.players.filter((id) => id !== user.id).map((id) => member(id)?.name.split(' ')[0]).filter(Boolean);
+              return (
+                <li key={`k${k.id}`}>
+                  <Link to={`/spiele/kniffel/${k.id}`} className="match-row">
+                    <span className="game-tile-emoji small" aria-hidden>🎲</span>
+                    <span className="match-main">
+                      <strong>Kniffel</strong>
+                      <small className="muted">mit {others.join(', ')}</small>
+                    </span>
+                    {turn === user.id ? <span className="badge match-turn">Du bist dran</span> : <small className="muted">{member(turn)?.name.split(' ')[0]} ist dran</small>}
+                  </Link>
+                </li>
+              );
+            })}
             {active.sort((a, b) => Number(myTurn(b)) - Number(myTurn(a))).map((m) => {
               const o = opponent(m);
               return (

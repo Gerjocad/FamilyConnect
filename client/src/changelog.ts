@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.62',
+    date: '2026-10-29',
+    title: 'Kniffel online zu dritt, zu viert …',
+    changes: [
+      'Kniffel → „Online einladen“: 1–5 Leute aus der Familie einladen, jeder spielt auf seinem Handy',
+      'Alle sehen live, was gewürfelt wird; wer dran ist, bekommt eine Nachricht',
+      'Gewürfelt wird auf dem Server – Ergebnisse kommen am Ende automatisch in die Bestenliste',
+      'Laufende Kniffel-Spiele stehen unter Spiele → Laufende Partien',
+    ],
+  },
+  {
     version: '1.61',
     date: '2026-10-29',
     title: 'Kniffel und Schiffe versenken',
