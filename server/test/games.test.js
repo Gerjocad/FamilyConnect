@@ -59,8 +59,10 @@ describe('Spiele', () => {
     assert.equal((await move(lea, 0, 0)).status, 409, 'Lea ist nicht dran');
     assert.equal((await move(tom, 0, 0)).status, 404, 'Tom spielt nicht mit');
     await move(mama, 0, 0);
+    assert.deepEqual(sent.at(-1), [[id('Lea')], { title: '❌ Du bist dran', body: 'Tic-Tac-Toe gegen Mama', path: `/spiele/tictactoe/${match.id}` }], 'auch beim schnellen Hin-und-her');
     assert.equal((await move(lea, 0, 0)).status, 400, 'belegt');
     await move(lea, 1, 0);
+    assert.deepEqual(sent.at(-1)[0], [id('Mama')], 'wer angefangen hat, bekommt „Du bist dran“ auch');
     await move(mama, 0, 1);
     await move(lea, 1, 1);
     const pushes = sent.length;

@@ -10,8 +10,8 @@ export const GAMES = {
 };
 // Bestenlisten: Memory = wenigste Züge, Kniffel = meiste Punkte
 const SCORE_GAMES = { memory: 'ASC', kniffel: 'DESC' };
-// Wer gerade aktiv mitspielt, bekommt keine Nachricht pro Zug – erst nach so langer Pause wieder
-const NUDGE_AFTER_MS = 60_000;
+// „Du bist dran“ kommt bei jedem Zug. Ist die App gerade offen, zeigt das Handy die Nachricht nicht an –
+// beim schnellen Hin-und-her stört sie also nicht; wer die App zu hat, verpasst seinen Zug nicht.
 
 export const emptyBoard = (game) => Array.from({ length: GAMES[game].rows }, () => Array(GAMES[game].cols).fill(0));
 
@@ -157,7 +157,6 @@ export function gamesRouter(db, { auth, member, publish, push }) {
     ).run(JSON.stringify(result.board), player === 1 ? 2 : 1, finished ? (winner === 'draw' ? 0 : winner) : null,
       JSON.stringify(line), JSON.stringify(result.cell), finished ? 'finished' : 'active', m.id);
     const other = player === 1 ? m.player2 : m.player1;
-    const idle = Date.now() - new Date(`${m.updated_at.replace(' ', 'T')}Z`).getTime() > NUDGE_AFTER_MS;
     const g = GAMES[m.game];
     if (finished) {
       push?.notify?.([other], {
@@ -165,7 +164,7 @@ export function gamesRouter(db, { auth, member, publish, push }) {
         body: winner === 'draw' ? 'Revanche?' : 'Revanche? 😉',
         path: `/spiele/${m.game}/${m.id}`,
       });
-    } else if (idle) {
+    } else {
       push?.notify?.([other], { title: `${g.emoji} Du bist dran`, body: `${g.name} gegen ${nameOf(req.user.id)}`, path: `/spiele/${m.game}/${m.id}` });
     }
     publish(req.familyId, 'games');
@@ -186,10 +185,9 @@ export function gamesRouter(db, { auth, member, publish, push }) {
       `UPDATE game_matches SET board = ?, turn = ?, winner = ?, last_move = ?, status = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(JSON.stringify(state), result.hit ? player : other, finished ? player : null, JSON.stringify([row, col]), finished ? 'finished' : 'active', m.id);
     const otherId = player === 1 ? m.player2 : m.player1;
-    const idle = Date.now() - new Date(`${m.updated_at.replace(' ', 'T')}Z`).getTime() > NUDGE_AFTER_MS;
     if (finished) {
       push?.notify?.([otherId], { title: `🚢 ${nameOf(req.user.id)} hat alle deine Schiffe versenkt`, body: 'Revanche? 😉', path: `/spiele/battleship/${m.id}` });
-    } else if (!result.hit && idle) {
+    } else if (!result.hit) {
       push?.notify?.([otherId], { title: '🚢 Du bist dran', body: `Schiffe versenken gegen ${nameOf(req.user.id)}`, path: `/spiele/battleship/${m.id}` });
     }
     publish(req.familyId, 'games');

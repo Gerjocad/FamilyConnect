@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.63',
+    date: '2026-10-29',
+    title: '„Du bist dran“ kommt jetzt immer',
+    changes: [
+      'Tic-Tac-Toe, Vier gewinnt und Schiffe versenken: die Nachricht „Du bist dran“ kommt bei jedem Zug – auch wenn der andere schnell geantwortet hat (vorher erst nach einer Minute Pause)',
+      'Ist die App gerade offen, zeigt das Handy die Nachricht nicht an – beim Spielen piept es also nicht dauernd',
+    ],
+  },
+  {
     version: '1.62',
     date: '2026-10-29',
     title: 'Kniffel online zu dritt, zu viert …',
