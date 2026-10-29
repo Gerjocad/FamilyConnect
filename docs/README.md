@@ -56,6 +56,10 @@ Auf GitHub eine STL anklicken zeigt sie in 3D; rechts oben „Download“ lädt 
 
 Geheime Schlüssel gehören nie in diese Dateien oder in den Chat – nur auf den Server unter `/etc/familyconnect/`.
 
+## 🛒 Einkaufsliste
+
+[Einkaufsliste](einkaufsliste.md) – was für Aufsteh-Ampel, Wandsensor und Zahnputz-Kamera noch fehlt.
+
 ## 💡 Ideen und Pläne
 
 [BACKLOG.md](../BACKLOG.md) – was gemerkt ist („später“), was auf Rückmeldung wartet und was schon erledigt ist.
@@ -64,7 +68,8 @@ Ausgearbeitete Pläne:
 
 | Plan | Stand |
 | --- | --- |
-| [Aufsteh-Ampel](plaene/aufsteh-ampel.md) | geplant, wartet auf Antworten zu den offenen Fragen |
+| [Aufsteh-Ampel](plaene/aufsteh-ampel.md) | erster Test fertig (hardware/aufsteh-ampel), App-Anbindung folgt |
+| [Zahnputz-Kamera](plaene/zahnputz-kamera.md) | geplant: Ton der E-Zahnbürste + Kamera-KI auf dem Gerät |
 
 ## 🆕 Was hat sich wann geändert?
 
