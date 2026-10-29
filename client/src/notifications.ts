@@ -8,6 +8,7 @@ import {
   addDays, formatShortDay, formatTime, occurrencesInRange, parseLocal, reminderTime, startOfDay, toDateKey,
 } from './dates';
 import { habitStatus } from './habitStatus';
+import { isCancelled } from './eventSeries';
 import type { CalendarEvent, Checkin, Chore, ChoreDay, Contact, Habit, Member, Task } from './types';
 
 /** Push braucht android/app/google-services.json (erkennt vite.config.ts); ohne sie würde die App beim Registrieren abstürzen */
@@ -73,6 +74,7 @@ export function buildReminders(
   // Termine: alle Beteiligten, bzw. alle, wenn niemand ausgewählt ist
   const mine = events.filter((e) => e.reminder_minutes != null && (e.member_ids.length === 0 || e.member_ids.includes(userId)));
   for (const occ of occurrencesInRange(mine, now, horizon)) {
+    if (isCancelled(occ.event, occ)) continue;
     const at = reminderTime(occ);
     if (!at || at <= now) continue;
     const day = dayLabel(occ.start, at);

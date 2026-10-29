@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.64',
+    date: '2026-10-29',
+    title: 'Termine absagen statt löschen',
+    changes: [
+      'Im Termin gibt es jetzt „Absagen“: der Termin bleibt durchgestrichen im Kalender stehen (auch auf dem Wanddisplay), bei Serien wahlweise nur dieser Tag oder alle',
+      'Mit „Findet doch statt“ lässt sich die Absage zurücknehmen; die Beteiligten bekommen jeweils eine Nachricht',
+      'Für abgesagte Termine kommt keine Erinnerung mehr',
+      'Startseite: Termine lassen sich direkt antippen und öffnen sich im Kalender',
+    ],
+  },
+  {
     version: '1.63',
     date: '2026-10-29',
     title: '„Du bist dran“ kommt jetzt immer',

@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { WeatherCard } from '../components/WeatherCard';
@@ -47,6 +47,7 @@ const SLOT_LABEL = { breakfast: 'Frühstück', lunch: 'Mittag', dinner: 'Abend' 
 export function DashboardPage() {
   const today = startOfDay(new Date());
   const { user, family, member } = useFamily();
+  const navigate = useNavigate();
   const events = useResource<CalendarEvent>('events');
   const icons = useEventIcons();
   const comments = useEventComments();
@@ -169,7 +170,7 @@ export function DashboardPage() {
               <div key={toDateKey(g.day)} className="agenda-group">
                 <h3>{sameDay(g.day, today) ? 'Heute' : formatDay(g.day)}</h3>
                 <div className="stack">
-                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} />)}
+                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} onClick={() => navigate(`/kalender?tag=${toDateKey(o.start)}&termin=${o.event.id}`)} />)}
                 </div>
               </div>
             ))

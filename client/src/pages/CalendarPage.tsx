@@ -15,7 +15,7 @@ import type { CalendarEvent, Contact, Loan, Vacation } from '../types';
 import { useResource } from '../useResource';
 import { usePermissions } from '../permissions';
 import { EventForm } from './EventForm';
-import { deleteEvent, saveEvent } from '../eventSeries';
+import { cancelEvent, deleteEvent, isCancelled, saveEvent } from '../eventSeries';
 import { SCHOOL_HOLIDAY_COLOR, markBackground, vacationColor, vacationsOn } from '../vacations';
 import { VacationForm } from './VacationForm';
 import { LoanForm } from '../components/LoanForm';
@@ -43,8 +43,9 @@ export function OccurrenceRow({ occ, onClick, icons = [], comments = 0 }: {
   const { event } = occ;
   const members = event.member_ids.map((id) => member(id)).filter((m) => m !== undefined);
   const multiDay = !sameDay(occ.start, occ.end);
+  const cancelled = isCancelled(event, occ);
   return (
-    <button type="button" className="event-row" onClick={onClick} style={{ borderLeftColor: eventColor(event, member) }}>
+    <button type="button" className={`event-row ${cancelled ? 'cancelled' : ''}`} onClick={onClick} style={{ borderLeftColor: eventColor(event, member) }}>
       <span className="event-time">
         {event.all_day ? 'Ganztägig' : formatTime(occ.start)}
         {!event.all_day && <small>{multiDay ? 'mehrtägig' : formatTime(occ.end)}</small>}
@@ -54,7 +55,8 @@ export function OccurrenceRow({ occ, onClick, icons = [], comments = 0 }: {
           {icons.length > 0 && (
             <span className="event-logos">{icons.map((src, i) => <img key={i} src={src} alt="" className="event-logo" />)}</span>
           )}
-          {event.title}
+          <span className="event-title">{event.title}</span>
+          {cancelled && <span className="badge cancelled-badge">Abgesagt</span>}
         </strong>
         {(event.location || event.recurrence !== 'none') && (
           <small className="muted">
@@ -281,7 +283,7 @@ export function CalendarPage() {
                     {occs.slice(0, 3).map((o, i) => {
                       const logos = icons.iconsFor(o.event.title);
                       return (
-                        <span key={i} className={`day-event ${logos.length ? 'has-logo' : ''}`} style={{ background: eventColor(o.event, member) }}>
+                        <span key={i} className={`day-event ${logos.length ? 'has-logo' : ''} ${isCancelled(o.event, o) ? 'cancelled' : ''}`} style={{ background: eventColor(o.event, member) }}>
                           {logos.map((src, j) => <img key={j} src={src} alt="" className="day-logo" />)}
                           <span className="day-event-title">{o.event.title}</span>
                         </span>
@@ -394,6 +396,7 @@ export function CalendarPage() {
           onSave={(data, scope) =>
             editing === 'new' ? saveEvent(events, data) : saveEvent(events, data, editing.event, editing.occurrence, scope)}
           onDelete={editing === 'new' ? undefined : (scope) => deleteEvent(events, editing.event, editing.occurrence, scope)}
+          onCancel={editing === 'new' ? undefined : (scope, cancelled) => cancelEvent(events, editing.event, editing.occurrence, scope, cancelled)}
         />
       )}
     </div>

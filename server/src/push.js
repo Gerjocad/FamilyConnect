@@ -159,11 +159,35 @@ export class PushService {
     } else if (path === 'events' && action === 'update') {
       // Später dazugenommen → nur die Neuen benachrichtigen
       this.#notifyTagged(newlyTagged({ action, path, row, before, user }), actor, row);
+      this.#notifyCancel(familyId, user, actor, row, before);
     } else if (path === 'tasks' && row.assignee_id && row.assignee_id !== user.id
       && (action === 'create' || before?.assignee_id !== row.assignee_id)) {
       this.#send([row.assignee_id], { title: 'Neue Aufgabe für dich', body: `${actor}: ${row.title}`, path: '/aufgaben' });
     } else if (path === 'items' && action === 'create') {
       this.#queueItem(familyId, user, actor, row);
+    }
+  }
+
+  // Abgesagt bzw. findet doch statt: Beteiligte (ohne Auswahl alle) bekommen Bescheid
+  #notifyCancel(familyId, user, actor, row, before) {
+    if (!before) return;
+    const was = new Set(before.cancelled_dates ?? []);
+    const now = new Set(row.cancelled_dates ?? []);
+    const changes = [];
+    if (row.cancelled !== before.cancelled) changes.push({ cancelled: row.cancelled, start: row.start });
+    else if (!row.cancelled) {
+      for (const d of now) if (!was.has(d)) changes.push({ cancelled: true, start: `${d}T${row.start.slice(11)}` });
+      for (const d of was) if (!now.has(d)) changes.push({ cancelled: false, start: `${d}T${row.start.slice(11)}` });
+    }
+    if (changes.length === 0) return;
+    const targets = row.member_ids.length > 0 ? row.member_ids.filter((id) => id !== user.id) : this.#others(familyId, user.id);
+    for (const c of changes) {
+      const occ = { ...row, start: c.start };
+      this.#send(targets, {
+        title: c.cancelled ? `❌ Abgesagt: ${row.title}` : `✅ Findet doch statt: ${row.title}`,
+        body: `${formatEventDate(occ)} (von ${actor})`,
+        path: eventPath(occ),
+      });
     }
   }
 

@@ -136,6 +136,8 @@ const ADDED_COLUMNS = [
   ['events', 'exdates', "TEXT NOT NULL DEFAULT '[]'"],
   ['events', 'until', 'TEXT'],
   ['events', 'reminder_minutes', 'INTEGER'],
+  ['events', 'cancelled', 'INTEGER NOT NULL DEFAULT 0'],
+  ['events', 'cancelled_dates', "TEXT NOT NULL DEFAULT '[]'"],
   // Aus einer Kalenderdatei (.ics) importiert: Name des Kalenders und UID des Termins (für erneuten Import)
   ['events', 'source', "TEXT NOT NULL DEFAULT ''"],
   ['events', 'source_uid', "TEXT NOT NULL DEFAULT ''"],

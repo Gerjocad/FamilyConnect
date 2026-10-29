@@ -68,6 +68,10 @@ export interface CalendarEvent extends Base {
   until: string | null;
   /** Minuten vorher; bei ganztägigen Terminen relativ zu 9:00 Uhr */
   reminder_minutes: number | null;
+  /** abgesagt (bleibt durchgestrichen im Kalender stehen) */
+  cancelled: boolean;
+  /** abgesagte Tage einer Serie (JJJJ-MM-TT) */
+  cancelled_dates: string[];
   /** Name des importierten Kalenders (.ics), sonst leer */
   source: string;
   source_uid: string;

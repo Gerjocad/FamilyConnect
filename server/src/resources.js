@@ -46,6 +46,9 @@ export const RESOURCES = [
       // Letzter Tag der Serie ("dieser und alle folgenden Termine löschen")
       until: date(),
       reminder_minutes: oneOf(REMINDER_OPTIONS, { default: null }),
+      // abgesagt statt gelöscht: der ganze Termin bzw. einzelne Tage einer Serie
+      cancelled: bool(),
+      cancelled_dates: dates(),
       // importierte Kalender (.ics): erneuter Import aktualisiert Termine mit gleicher UID
       source: text({ max: 100 }),
       source_uid: text({ max: 500 }),

@@ -4,7 +4,7 @@ import { MemberPicker } from '../components/MemberPicker';
 import { Modal } from '../components/Modal';
 import { useAsync } from '../components/useAsync';
 import { RECURRENCE_LABELS, REMINDER_LABELS, toDateTimeKey, type Occurrence } from '../dates';
-import type { Scope } from '../eventSeries';
+import { isCancelled, type Scope } from '../eventSeries';
 import type { CalendarEvent, Recurrence } from '../types';
 
 interface Props {
@@ -14,6 +14,8 @@ interface Props {
   defaultDay: Date;
   onSave(data: Partial<CalendarEvent>, scope: Scope): Promise<unknown>;
   onDelete?(scope: Scope): Promise<unknown>;
+  /** absagen bzw. Absage zurücknehmen (statt löschen) */
+  onCancel?(scope: Scope, cancelled: boolean): Promise<unknown>;
   onClose(): void;
   /** nur ansehen (Kinder bei Terminen anderer) */
   readOnly?: boolean;
@@ -25,10 +27,11 @@ function defaults(day: Date) {
   return { start: toDateTimeKey(start), end: toDateTimeKey(new Date(start.getTime() + 3_600_000)), all_day: false };
 }
 
-type Pending = { kind: 'save'; data: Partial<CalendarEvent> } | { kind: 'delete' };
+type Pending = { kind: 'save'; data: Partial<CalendarEvent> } | { kind: 'delete' } | { kind: 'cancel' };
 
-export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onClose, readOnly = false }: Props) {
+export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onCancel, onClose, readOnly = false }: Props) {
   const isSeries = Boolean(event && event.recurrence !== 'none' && occurrence);
+  const cancelled = event ? isCancelled(event, occurrence) : false;
   // Bei Serien das angeklickte Vorkommen zeigen, nicht den ersten Termin der Serie
   const initial = event
     ? {
@@ -66,6 +69,7 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
   const finish = (action: Pending, scope: Scope) =>
     void run(async () => {
       if (action.kind === 'save') await onSave(action.data, scope);
+      else if (action.kind === 'cancel') await onCancel!(scope, true);
       else await onDelete!(scope);
       onClose();
     });
@@ -82,10 +86,17 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
     setStartDate(value);
   };
 
+  // Absage zurücknehmen: gilt für das, was abgesagt wurde (ganze Serie oder nur dieser Tag)
+  const uncancel = () => void run(async () => {
+    await onCancel!(event!.cancelled ? 'all' : 'one', false);
+    onClose();
+  });
+
   if (pending) {
     const deleting = pending.kind === 'delete';
+    const title = { save: 'Wiederkehrenden Termin ändern', delete: 'Wiederkehrenden Termin löschen', cancel: 'Wiederkehrenden Termin absagen' }[pending.kind];
     return (
-      <Modal title={deleting ? 'Wiederkehrenden Termin löschen' : 'Wiederkehrenden Termin ändern'} onClose={onClose}>
+      <Modal title={title} onClose={onClose}>
         <div className="scope-choice">
           <button className="button" disabled={busy} onClick={() => finish(pending, 'one')}>Nur dieser Termin</button>
           {deleting && (
@@ -104,6 +115,7 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
   return (
     <Modal title={readOnly ? 'Termin' : event ? 'Termin bearbeiten' : 'Neuer Termin'} onClose={onClose}>
       <form onSubmit={submit} className="form">
+        {cancelled && <p className="cancelled-banner">❌ Dieser Termin ist abgesagt</p>}
         <fieldset className="plain-fieldset" disabled={readOnly}>
         <label>
           Titel
@@ -192,6 +204,18 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
               Löschen
             </button>
           )}
+          {onCancel && !readOnly && (cancelled ? (
+            <button type="button" className="button" disabled={busy} onClick={uncancel}>Findet doch statt</button>
+          ) : (
+            <button
+              type="button"
+              className="button"
+              disabled={busy}
+              onClick={() => (isSeries ? setPending({ kind: 'cancel' }) : finish({ kind: 'cancel' }, 'all'))}
+            >
+              Absagen
+            </button>
+          ))}
           <span className="spacer" />
           <button type="button" className="button" onClick={onClose}>{readOnly ? 'Schließen' : 'Abbrechen'}</button>
           {!readOnly && <button className="button primary" disabled={busy}>Speichern</button>}

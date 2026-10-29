@@ -10,6 +10,8 @@ import { RESOURCES } from './resources.js';
 import { TuyaError } from './tuya.js';
 
 const EVENTS = RESOURCES.find((r) => r.path === 'events');
+/** abgesagt: der ganze Termin oder nur dieser Tag einer Serie */
+export const isCancelled = (o) => Boolean(o.event.cancelled || o.event.cancelled_dates?.includes(localKey(o.start)));
 const VACATIONS = RESOURCES.find((r) => r.path === 'vacations');
 const RAINY = 50;
 // Näherungs-/Lichtsensor am Display: auswählbare Werte in der App
@@ -170,13 +172,14 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
           location: o.event.location,
           member_ids: o.event.member_ids,
           icons: icon.get(o.event.title),
+          cancelled: isCancelled(o),
         };
       });
     };
 
     // Großes Spiel: nächster noch nicht beendeter Termin heute/morgen mit einem hervorgehobenen Stichwort (z. B. Fenerbahçe)
     const highlights = rules.filter((r) => r.highlight).map((r) => normalize(r.keyword).trim()).filter(Boolean);
-    const big = occ.filter((o) => o.end > now && highlights.some((k) => normalize(o.event.title).includes(k)))
+    const big = occ.filter((o) => o.end > now && !isCancelled(o) && highlights.some((k) => normalize(o.event.title).includes(k)))
       .sort((a, b) => a.start - b.start)[0];
     const match = big ? {
       title: big.event.title,
@@ -243,7 +246,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
     if (family.weather_lat !== null && family.weather_lon !== null) {
       try {
         const f = await weather.forecast(family.weather_lat, family.weather_lon);
-        const todays = occ.filter((o) => localKey(o.start) === localKey(now));
+        const todays = occ.filter((o) => localKey(o.start) === localKey(now) && !isCancelled(o));
         forecast = { place: family.weather_place, current: f.current, days: f.days, hints: weatherHints(f, now, todays) };
       } catch {
         forecast = null;

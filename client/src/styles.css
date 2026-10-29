@@ -308,6 +308,12 @@ textarea { resize: vertical; }
 .event-main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .event-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-main small { display: flex; align-items: center; gap: 4px; }
+/* Abgesagt: bleibt sichtbar, aber durchgestrichen */
+.event-row.cancelled { opacity: 0.6; border-left-style: dashed; }
+.event-row.cancelled .event-title, .event-row.cancelled .event-time { text-decoration: line-through; }
+.cancelled-badge { margin-left: 6px; background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); text-decoration: none; vertical-align: 1px; }
+.day-event.cancelled { opacity: 0.45; text-decoration: line-through; }
+.cancelled-banner { margin: 0; padding: 8px 12px; border-radius: 10px; font-weight: 600; color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
 /* --- Listen & Aufgaben ---------------------------------------------------- */
 

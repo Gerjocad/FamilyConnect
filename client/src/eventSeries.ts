@@ -25,7 +25,7 @@ export async function saveEvent(
   if (scope === 'one') {
     // Vorkommen aus der Serie nehmen und als eigenen Termin anlegen
     await api.update(event.id, { exdates: [...event.exdates, toDateKey(occurrence.start)] });
-    return api.create({ ...data, recurrence: 'none', exdates: [], until: null });
+    return api.create({ ...data, recurrence: 'none', exdates: [], until: null, cancelled: isCancelled(event, occurrence), cancelled_dates: [] });
   }
 
   // Ganze Serie: die Verschiebung dieses Vorkommens auf den Serienbeginn übertragen
@@ -51,4 +51,18 @@ export async function deleteEvent(api: EventsApi, event: CalendarEvent, occurren
   // "Dieser und alle folgenden": Serie am Vortag enden lassen
   if (occKey <= event.start.slice(0, 10)) return api.remove(event.id);
   return api.update(event.id, { until: toDateKey(addDays(occurrence.start, -1)) });
+}
+
+/** Ist dieses Vorkommen abgesagt? (ganzer Termin oder nur dieser Tag einer Serie) */
+export const isCancelled = (event: CalendarEvent, occurrence?: Occurrence) =>
+  event.cancelled || (occurrence ? (event.cancelled_dates ?? []).includes(toDateKey(occurrence.start)) : false);
+
+/** Sagt einen Termin ab (oder nimmt die Absage zurück) – er bleibt durchgestrichen im Kalender stehen */
+export function cancelEvent(api: EventsApi, event: CalendarEvent, occurrence: Occurrence | undefined, scope: Scope, cancelled: boolean) {
+  if (!isSeries(event) || !occurrence || scope === 'all') {
+    return api.update(event.id, { cancelled, ...(isSeries(event) && !cancelled ? { cancelled_dates: [] } : {}) });
+  }
+  const occKey = toDateKey(occurrence.start);
+  const others = (event.cancelled_dates ?? []).filter((d) => d !== occKey);
+  return api.update(event.id, { cancelled_dates: cancelled ? [...others, occKey] : others });
 }

@@ -58,6 +58,9 @@
   .time { width: 64px; font-weight: 700; font-size: 17px; flex-shrink: 0; }
   .time.allday { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
   .time small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .event.cancelled { opacity: 0.5; border-left-style: dashed; }
+  .event.cancelled .title .t, .event.cancelled .time { text-decoration: line-through; }
+  .cancel-chip { font-size: 12px; font-weight: 700; color: #fff; background: #d6336c; border-radius: 6px; padding: 1px 6px; vertical-align: 2px; }
   .title { -webkit-box-flex: 1; flex: 1; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .title small { color: var(--muted); font-size: 14px; }
   .logo { width: 28px; height: 28px; object-fit: contain; margin-left: 8px; flex-shrink: 0; }
@@ -252,7 +255,8 @@
       var e = day.events[i];
       var first = e.member_ids.length ? member(e.member_ids[0]) : null;
       var cls = 'event';
-      if (isToday && !e.all_day) {
+      if (e.cancelled) cls += ' cancelled';
+      else if (isToday && !e.all_day) {
         if (e.end <= nowStamp) cls += ' past';
         else if (e.start <= nowStamp) cls += ' now';
       }
@@ -261,7 +265,7 @@
       var end = !e.all_day && e.start.slice(0, 10) === day.date && e.end.slice(0, 10) === day.date ? '<small>' + hm(e.end) + '</small>' : '';
       html += '<div class="' + cls + '"' + (first ? ' style="border-left-color:' + esc(first.color) + '"' : '') + '>' +
         '<span class="time' + (e.all_day ? ' allday' : '') + '">' + time + end + '</span>' +
-        '<span class="title">' + esc(e.title) + (e.location ? ' <small>· ' + esc(e.location) + '</small>' : '') + '</span>' +
+        '<span class="title">' + (e.cancelled ? '<b class="cancel-chip">abgesagt</b> ' : '') + '<span class="t">' + esc(e.title) + '</span>' + (e.location ? ' <small>· ' + esc(e.location) + '</small>' : '') + '</span>' +
         logos(e.icons) +
         dots(e.member_ids) + '</div>';
     }
