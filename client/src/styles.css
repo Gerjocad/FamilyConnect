@@ -1313,3 +1313,39 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .kniffel-online-players { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .kniffel .segmented { margin-bottom: 4px; }
 .game-tile-emoji.small { font-size: 1.6rem; width: 32px; text-align: center; }
+
+/* --- Finanzen (Haushaltskasse) -------------------------------------------- */
+.finance-transfer { display: flex; flex-direction: column; gap: 10px; }
+.finance-transfer h2 { margin: 0; }
+.finance-transfer > .hint { margin: 0; }
+.finance-people { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.finance-people li { border: 1.5px solid var(--border); border-left-width: 5px; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; background: var(--surface-2); }
+.finance-person { display: flex; align-items: center; gap: 8px; }
+.finance-person small { margin-left: auto; }
+.finance-amount { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.finance-sums { margin: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.finance-sums > div { display: flex; justify-content: space-between; gap: 12px; }
+.finance-sums dt { color: var(--muted); }
+.finance-sums dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.finance-sums .total { border-top: 1px solid var(--border); padding-top: 4px; }
+.finance-sums .total dt { color: var(--text); font-weight: 700; }
+.finance-transfer > .link-button { align-self: flex-start; padding-left: 0; }
+.finance-compare { overflow-x: auto; }
+.finance-compare table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.finance-compare th, .finance-compare td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.finance-compare tbody th { text-align: left; font-weight: 600; }
+.finance-compare tbody tr { cursor: pointer; }
+.finance-compare tr.active { background: var(--accent-soft); }
+.finance-tabs { margin-top: 4px; }
+.finance-section { display: flex; flex-direction: column; gap: 6px; }
+.finance-section > .link-button { align-self: flex-start; padding-left: 0; display: inline-flex; align-items: center; gap: 4px; }
+.finance-section-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.finance-section-header h3 { margin: 0; font-size: 1rem; }
+.finance-list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+.finance-list li + li { border-top: 1px solid var(--border); }
+.finance-entry { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.finance-entry:hover { background: var(--surface-2); }
+.finance-entry-main { display: flex; flex-direction: column; min-width: 0; }
+.finance-entry-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.finance-entry-amount { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.finance-first { align-self: center; }

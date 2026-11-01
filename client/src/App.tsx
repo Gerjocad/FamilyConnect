@@ -5,6 +5,7 @@ import { AuthPage } from './pages/AuthPage';
 import { BirthdaysPage } from './pages/BirthdaysPage';
 import { WishesPage } from './pages/WishesPage';
 import { LoansPage } from './pages/LoansPage';
+import { FinancePage } from './pages/FinancePage';
 import { MusicPage } from './pages/MusicPage';
 import { MusicPlayPage } from './pages/MusicPlayPage';
 import { MusicCoversPage } from './pages/MusicCoversPage';
@@ -74,6 +75,7 @@ export function App() {
           <Route path="geburtstage" element={<BirthdaysPage />} />
           <Route path="wuensche" element={<WishesPage />} />
           <Route path="ausgeliehen" element={<LoansPage />} />
+          <Route path="finanzen" element={<FinancePage />} />
           <Route path="musik" element={<MusicPage />} />
           <Route path="musik/spielen/:token" element={<MusicPlayPage />} />
           <Route path="musik/cover" element={<MusicCoversPage />} />

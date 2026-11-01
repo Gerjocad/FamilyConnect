@@ -24,6 +24,7 @@ Ein Familien-Organizer nach dem Vorbild von FamilyWall: ein privater, gemeinsame
 - **Gewohnheiten**: z. B. „Duschen alle 2 Tage“ pro Person, mit Serien, Wochenpunkten und Erinnerung; abhaken in der App oder per **NFC-Aufkleber** (`familyconnect://h/<code>`, z. B. mit der App „NFC Tools“ beschreiben). Admins können für Kinder abhaken
 - **Pinnwand**: Nachrichten an die ganze Familie
 - **Essensplan**: Wochenplan für Frühstück, Mittag- und Abendessen; die Zutaten lassen sich per Klick auf eine Einkaufsliste übernehmen
+- **Finanzen** (nur Erwachsene): eigene und gemeinsame Einnahmen und Ausgaben eintragen; die App rechnet aus, wer monatlich wie viel aufs Gemeinschaftskonto überweist (nach Einkommen, nach Verfügbarem, gleicher Rest oder halbe-halbe)
 - **Kontakte**: wichtige Nummern (Ärzte, Schule, Babysitter …) nach Kategorien, mit Anruf- und Mail-Links
 - **Familien & Gruppen**: Beitritt per Einladungscode, mehrere Gruppen pro Person (z. B. Großeltern, WG), Rollen (Admin/Mitglied)
 - **Live-Synchronisierung**: Änderungen erscheinen sofort bei allen Familienmitgliedern (Server-Sent Events)

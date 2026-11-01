@@ -22,6 +22,7 @@ import { SpotifyClient, spotifyRouter } from './spotify.js';
 import { Geocoder, placesRouter } from './places.js';
 import { LogoFinder, logoSearchRouter } from './logoSearch.js';
 import { feedbackRouter } from './feedback.js';
+import { financeRouter } from './finance.js';
 import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
 import { Formula1Service } from './formula1.js';
@@ -422,6 +423,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
+  app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
