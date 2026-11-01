@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.67',
+    date: '2026-11-01',
+    title: 'Neuer Bereich: Finanzen',
+    changes: [
+      'Nur für Eltern und Admins: Einkommen und eigene Ausgaben je Person, dazu Ausgaben und Einnahmen (z. B. Kindergeld) des gemeinsamen Kontos – monatlich, vierteljährlich oder jährlich',
+      'Die App rechnet aus, wer monatlich wie viel aufs gemeinsame Konto überweist: nach Einkommen, nach dem, was übrig bleibt, oder mit eigenen Prozenten',
+      'Manuelle Beträge je Person (+ zahlt mehr / − zahlt weniger) kommen obendrauf; fehlt dadurch Geld auf dem Konto, zeigt die App das an',
+      'Eigene Ausgaben lassen sich als privat markieren – die sieht dann nur man selbst',
+    ],
+  },
+  {
     version: '1.66',
     date: '2026-11-01',
     title: 'Familien-Umfrage: Essen und Ausflüge abstimmen',

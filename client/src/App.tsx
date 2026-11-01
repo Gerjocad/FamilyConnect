@@ -12,6 +12,7 @@ import { BoardPage } from './pages/BoardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ChoresPage } from './pages/ChoresPage';
 import { PointsPage } from './pages/PointsPage';
+import { FinancePage } from './pages/FinancePage';
 import { LocatePage } from './pages/LocatePage';
 import { GamesPage } from './pages/GamesPage';
 import { BoardGamePage } from './pages/BoardGamePage';
@@ -80,6 +81,7 @@ export function App() {
           <Route path="gewohnheiten" element={<HabitsPage />} />
           <Route path="dienste" element={<ChoresPage />} />
           <Route path="punkte" element={<PointsPage />} />
+          <Route path="finanzen" element={<FinancePage />} />
           <Route path="spiele" element={<GamesPage />} />
           <Route path="spiele/memory" element={<MemoryPage />} />
           <Route path="spiele/woerter" element={<WordGamePage />} />

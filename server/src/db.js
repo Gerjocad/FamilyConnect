@@ -173,6 +173,28 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+-- Finanzen (nur Eltern/Admins): owner_id NULL = gemeinsames Konto; Beträge in Cent
+CREATE TABLE IF NOT EXISTS finance_entries (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  interval TEXT NOT NULL DEFAULT 'monthly',
+  category TEXT NOT NULL DEFAULT '',
+  private INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS finance_entries_family ON finance_entries(family_id);
+
+-- Wie wird aufgeteilt: income (nach Einkommen), remaining (nach dem, was übrig bleibt), custom (eigene Prozente)
+CREATE TABLE IF NOT EXISTS finance_settings (
+  family_id INTEGER PRIMARY KEY REFERENCES families(id) ON DELETE CASCADE,
+  mode TEXT NOT NULL DEFAULT 'income',
+  shares TEXT NOT NULL DEFAULT '{}'
+);
 -- Umfrage mit Ziel: Ergebnis kommt in den Essensplan (meal) oder als Termin in den Kalender (trip)
 CREATE TABLE IF NOT EXISTS poll_plans (
   post_id INTEGER PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,

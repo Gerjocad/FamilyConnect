@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router';
 import { useComplaints } from '../pages/ComplaintsPage';
 import { useRequests } from '../pages/RequestsPage';
 import { useFeatures } from '../features';
+import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
 import { Avatar } from './Avatar';
 import { CLOSE_DRAWER_EVENT } from './drawer';
@@ -14,7 +15,7 @@ import { UpdateBanner } from './UpdateBanner';
 import { TOPBAR_ACTIONS_ID } from './TopbarActions';
 import { ActivityBell } from './ActivityBell';
 
-const NAV: { to: string; label: string; icon: IconName; feature?: 'points' }[] = [
+const NAV: { to: string; label: string; icon: IconName; feature?: 'points'; managers?: boolean }[] = [
   { to: '/', label: 'Übersicht', icon: 'home' },
   { to: '/kalender', label: 'Kalender', icon: 'calendar' },
   { to: '/listen', label: 'Listen', icon: 'list' },
@@ -24,6 +25,7 @@ const NAV: { to: string; label: string; icon: IconName; feature?: 'points' }[] =
   { to: '/dienste', label: 'Dienste', icon: 'chore' },
   { to: '/punkte', label: 'Punkte', icon: 'star', feature: 'points' },
   { to: '/spiele', label: 'Spiele', icon: 'game' },
+  { to: '/finanzen', label: 'Finanzen', icon: 'wallet', managers: true },
   { to: '/essen', label: 'Essensplan', icon: 'meal' },
   { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
   { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },
@@ -78,6 +80,7 @@ function useDrawerSwipe(open: boolean, setOpen: (open: boolean) => void) {
 export function Layout() {
   const { family, user, selectFamily } = useFamily();
   const features = useFeatures();
+  const { isManager } = usePermissions();
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Ab 900 px gibt es statt der oberen Leiste die Seitenleiste – die Glocke wandert mit
@@ -133,7 +136,7 @@ export function Layout() {
           <div className="family-name">{family.name}</div>
         )}
         <nav>
-          {NAV.filter((item) => !item.feature || features[item.feature]).map((item) => (
+          {NAV.filter((item) => (!item.feature || features[item.feature]) && (!item.managers || isManager)).map((item) => (
             <NavLink key={item.to} to={item.to} end={item.to === '/'} className="nav-link">
               <Icon name={item.icon} />
               {item.label}

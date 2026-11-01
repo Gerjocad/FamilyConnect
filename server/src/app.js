@@ -26,6 +26,7 @@ import { habitsRouter } from './habits.js';
 import { HolidayService, STATES } from './holidays.js';
 import { Formula1Service } from './formula1.js';
 import { pointsForTaskChange, pointsRouter } from './points.js';
+import { financeRouter } from './finance.js';
 import { locateRouter } from './locate.js';
 import { gamesRouter } from './games.js';
 import { kniffelRouter } from './kniffel.js';
@@ -416,6 +417,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }));
   app.use(pointsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
+  app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(kniffelRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(gamesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
