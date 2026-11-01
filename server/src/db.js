@@ -652,6 +652,35 @@ CREATE TABLE IF NOT EXISTS kniffel_matches (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Haushaltskasse: Einnahmen und Ausgaben je Person (owner_id) oder gemeinsam (owner_id NULL).
+-- Beträge in Cent; interval_months = 1 (monatlich), 3, 6 oder 12 (jährlich)
+CREATE TABLE IF NOT EXISTS finance_entries (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('income', 'expense')),
+  title TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  interval_months INTEGER NOT NULL DEFAULT 1,
+  category TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS finance_entries_family ON finance_entries(family_id);
+
+-- Wie die gemeinsamen Kosten aufgeteilt werden (eine Zeile je Familie)
+CREATE TABLE IF NOT EXISTS finance_settings (
+  family_id INTEGER PRIMARY KEY REFERENCES families(id) ON DELETE CASCADE,
+  method TEXT NOT NULL DEFAULT 'income',
+  -- JSON-Liste der Personen, die aufs Gemeinschaftskonto einzahlen; leer = alle Erwachsenen
+  member_ids TEXT NOT NULL DEFAULT '[]',
+  -- Überweisung aufrunden auf volle … Euro (0 = centgenau)
+  round_to INTEGER NOT NULL DEFAULT 10,
+  -- Aufschlag als Polster auf dem Gemeinschaftskonto
+  buffer_percent INTEGER NOT NULL DEFAULT 0
+);
 `;
 
 function migrate(db) {

@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.67',
+    date: '2026-11-01',
+    title: 'Finanzen: wer überweist wie viel aufs Gemeinschaftskonto?',
+    changes: [
+      'Neuer Bereich „Finanzen“ (nur für Erwachsene): jeder trägt seine Einnahmen und eigenen Ausgaben ein, dazu die gemeinsamen Ausgaben und Einnahmen (z. B. Miete, Strom, Kindergeld)',
+      'Beträge monatlich, vierteljährlich, halbjährlich oder jährlich – Jahresbeiträge werden als monatliche Rücklage eingerechnet',
+      'Daraus steht oben, wie viel jede Person monatlich aufs Gemeinschaftskonto überweist und wie viel ihr danach bleibt',
+      'Vier Aufteilungen zur Wahl: nach Einkommen, nach dem, was nach den eigenen Ausgaben übrig bleibt, „gleicher Rest“ (beiden bleibt gleich viel) oder halbe-halbe – mit Vergleich aller vier',
+      'Unter „Berechnung“: wer einzahlt, Aufrunden auf volle Beträge und ein Puffer für schwankende Kosten',
+    ],
+  },
+  {
     version: '1.66',
     date: '2026-11-01',
     title: 'Familien-Umfrage: Essen und Ausflüge abstimmen',
