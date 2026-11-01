@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { api } from '../api';
 import { Avatar } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
 import { useAsync } from '../components/useAsync';
-import { formatTimestamp } from '../dates';
+import { formatDay, formatTimestamp, parseLocal } from '../dates';
 import { onLiveChange } from '../live';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -17,6 +18,32 @@ export interface Poll {
   post_id: number;
   options: { id: number; text: string }[];
   votes: { option_id: number; user_id: number }[];
+  /** Umfrage mit Ziel: Ergebnis kommt in den Essensplan bzw. in den Kalender */
+  plan: PollPlan | null;
+}
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner';
+export interface PollPlan {
+  kind: 'meal' | 'trip';
+  date: string;
+  slot: MealSlot | null;
+  start_time: string | null;
+  end_time: string | null;
+  result_option_id: number | null;
+  /** eingetragene Mahlzeit bzw. eingetragener Termin */
+  result_ref: number | null;
+  closed_at: string | null;
+}
+export type NewPollPlan = Pick<PollPlan, 'kind' | 'date'> & Partial<Pick<PollPlan, 'slot' | 'start_time' | 'end_time'>>;
+
+export const SLOT_NAMES: Record<MealSlot, string> = { breakfast: 'Frühstück', lunch: 'Mittagessen', dinner: 'Abendessen' };
+
+/** „🍽️ Abendessen · Samstag, 7. November“ bzw. „🚗 Ausflug · Sonntag, 8. November, 10:00–16:00“ */
+export function planLabel(plan: Pick<PollPlan, 'kind' | 'date' | 'slot' | 'start_time' | 'end_time'>) {
+  const day = formatDay(parseLocal(plan.date));
+  if (plan.kind === 'meal') return `🍽️ ${SLOT_NAMES[plan.slot ?? 'dinner']} · ${day}`;
+  const time = plan.start_time ? `, ${plan.start_time}${plan.end_time ? `–${plan.end_time}` : ''} Uhr` : '';
+  return `🚗 Ausflug · ${day}${time}`;
 }
 
 /** Abstimmungen der Familie; lädt bei neuen Stimmen und Beiträgen neu */
@@ -39,21 +66,48 @@ export function usePolls() {
     const updated = await api<Poll>(`${base}/${poll.post_id}/vote`, { method: 'PUT', body: { option_id: optionId } });
     setPolls((prev) => prev.map((p) => (p.post_id === poll.post_id ? updated : p)));
   };
-  const create = async (text: string, options: string[]) => {
-    await api(base, { method: 'POST', body: { text, options } });
+  const create = async (text: string, options: string[], plan?: NewPollPlan) => {
+    await api(base, { method: 'POST', body: { text, options, plan } });
     await reload();
   };
+  /** Umfrage beenden und eintragen; optionId bei Gleichstand */
+  const close = async (poll: Poll, optionId?: number) => {
+    const updated = await api<Poll>(`${base}/${poll.post_id}/close`, { method: 'POST', body: { option_id: optionId } });
+    setPolls((prev) => prev.map((p) => (p.post_id === poll.post_id ? updated : p)));
+  };
   const forPost = (postId: number) => polls.find((p) => p.post_id === postId);
-  return { forPost, vote, create };
+  return { polls, forPost, vote, create, close };
 }
 
-function PollView({ poll, onVote }: { poll: Poll; onVote(optionId: number | null): void }) {
-  const { user, member } = useFamily();
+export function PollView({ poll, onVote, onClose }: {
+  poll: Poll;
+  onVote(optionId: number | null): void;
+  /** Umfrage mit Ziel beenden (nur wer gefragt hat bzw. Eltern) */
+  onClose?(optionId?: number): Promise<unknown>;
+}) {
+  const { user, member, family } = useFamily();
+  const { busy, error, run } = useAsync();
+  const [choosing, setChoosing] = useState(false);
   const mine = poll.votes.find((v) => v.user_id === user.id)?.option_id ?? null;
   const total = poll.votes.length;
-  const leader = Math.max(0, ...poll.options.map((o) => poll.votes.filter((v) => v.option_id === o.id).length));
+  const countOf = (id: number) => poll.votes.filter((v) => v.option_id === id).length;
+  const leader = Math.max(0, ...poll.options.map((o) => countOf(o.id)));
+  const plan = poll.plan;
+  const result = plan?.closed_at ? poll.options.find((o) => o.id === plan.result_option_id) : undefined;
+  const tied = poll.options.filter((o) => leader > 0 && countOf(o.id) === leader);
+  const missing = family.members.length - total;
+  const finish = (optionId?: number) => void run(async () => {
+    await onClose!(optionId);
+    setChoosing(false);
+  });
   return (
-    <div className="poll" role="group" aria-label="Abstimmung">
+    <div className={`poll ${result ? 'decided' : ''}`} role="group" aria-label="Abstimmung">
+      {plan && <span className="poll-plan">{planLabel(plan)}</span>}
+      {result && (
+        <Link className="poll-result" to={plan!.kind === 'meal' ? '/essen' : `/kalender?tag=${plan!.date}&termin=${plan!.result_ref}`}>
+          ✅ <strong>{result.text}</strong> – {plan!.kind === 'meal' ? 'steht im Essensplan' : 'steht im Kalender'} ›
+        </Link>
+      )}
       {poll.options.map((o) => {
         const voters = poll.votes.filter((v) => v.option_id === o.id);
         const share = total ? Math.round((voters.length / total) * 100) : 0;
@@ -61,7 +115,8 @@ function PollView({ poll, onVote }: { poll: Poll; onVote(optionId: number | null
           <button
             key={o.id}
             className={`poll-option ${mine === o.id ? 'mine' : ''} ${voters.length > 0 && voters.length === leader ? 'leading' : ''}`}
-            onClick={() => onVote(mine === o.id ? null : o.id)}
+            onClick={() => (choosing ? finish(o.id) : onVote(mine === o.id ? null : o.id))}
+            disabled={Boolean(result) || busy}
             aria-pressed={mine === o.id}
           >
             <span className="poll-bar" style={{ width: `${share}%` }} />
@@ -76,21 +131,42 @@ function PollView({ poll, onVote }: { poll: Poll; onVote(optionId: number | null
           </button>
         );
       })}
-      <small className="muted">{total === 0 ? 'Noch keine Stimmen – tipp auf eine Antwort' : `${total} ${total === 1 ? 'Stimme' : 'Stimmen'} · nochmal tippen nimmt deine Stimme zurück`}</small>
+      {!result && !choosing && (
+        <small className="muted">
+          {total === 0 ? 'Noch keine Stimmen – tipp auf eine Antwort' : `${total} ${total === 1 ? 'Stimme' : 'Stimmen'} · nochmal tippen nimmt deine Stimme zurück`}
+          {plan && missing > 0 && ` · wenn alle ${family.members.length} abgestimmt haben, wird es eingetragen`}
+        </small>
+      )}
+      {choosing && <small className="poll-choose">Gleichstand – tipp auf die Antwort, die eingetragen werden soll</small>}
+      {plan && !result && onClose && (
+        <div className="form-actions">
+          {choosing
+            ? <button type="button" className="link-button" onClick={() => setChoosing(false)}>Abbrechen</button>
+            : (
+              <button type="button" className="button small" disabled={busy || total === 0}
+                onClick={() => (tied.length > 1 ? setChoosing(true) : finish())}>
+                🗳️ Beenden & eintragen
+              </button>
+            )}
+        </div>
+      )}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 }
 
-export function PostCard({ post, poll, onVote, onDelete, extras, compact }: {
+export function PostCard({ post, poll, onVote, onClosePoll, onDelete, extras, compact }: {
   post: Post;
   poll?: Poll;
   onVote?(optionId: number | null): void;
+  onClosePoll?(optionId?: number): Promise<unknown>;
   onDelete?(): void;
   extras?: PostExtras;
   /** Übersicht: Kommentare erst auf Antippen */
   compact?: boolean;
 }) {
-  const { member } = useFamily();
+  const { member, user } = useFamily();
+  const { isManager } = usePermissions();
   const author = member(post.created_by) ?? { name: 'Ehemaliges Mitglied', color: '#868e96' };
   return (
     <article className="post">
@@ -106,8 +182,11 @@ export function PostCard({ post, poll, onVote, onDelete, extras, compact }: {
             </button>
           )}
         </header>
-        <p>{poll && '📊 '}{post.text}</p>
-        {poll && onVote && <PollView poll={poll} onVote={onVote} />}
+        <p>{poll && (poll.plan ? '🗳️ ' : '📊 ')}{post.text}</p>
+        {poll && onVote && (
+          <PollView poll={poll} onVote={onVote}
+            onClose={onClosePoll && (post.created_by === user.id || isManager) ? onClosePoll : undefined} />
+        )}
         {extras && <PostInteractions postId={post.id} extras={extras} compact={compact} />}
       </div>
     </article>
@@ -199,6 +278,7 @@ export function BoardPage() {
                 const poll = polls.forPost(p.id);
                 if (poll) void run(() => polls.vote(poll, optionId));
               }}
+              onClosePoll={(optionId) => polls.close(polls.forPost(p.id)!, optionId)}
               onDelete={p.created_by === user.id || isManager ? () => confirm('Beitrag löschen?') && void posts.remove(p.id) : undefined}
             />
           ))

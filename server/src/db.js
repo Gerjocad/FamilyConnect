@@ -173,6 +173,18 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+-- Umfrage mit Ziel: Ergebnis kommt in den Essensplan (meal) oder als Termin in den Kalender (trip)
+CREATE TABLE IF NOT EXISTS poll_plans (
+  post_id INTEGER PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  date TEXT NOT NULL,
+  slot TEXT,
+  start_time TEXT,
+  end_time TEXT,
+  result_option_id INTEGER,
+  result_ref INTEGER,
+  closed_at TEXT
+);
 CREATE TABLE IF NOT EXISTS habits (
   id INTEGER PRIMARY KEY,
   family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,

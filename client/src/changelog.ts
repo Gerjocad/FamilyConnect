@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.66',
+    date: '2026-11-01',
+    title: 'Familien-Umfrage: Essen und Ausflüge abstimmen',
+    changes: [
+      'Startseite: „Umfrage starten“ – Essen oder Ausflug wählen, Tag aussuchen, Antworten eintragen (bei Essen mit Vorschlägen aus den Rezepten)',
+      'Haben alle abgestimmt und eine Antwort liegt vorne, wird das Ergebnis automatisch eingetragen: Essen in den Essensplan, Ausflüge als Termin in den Kalender (ganztägig oder mit Uhrzeit)',
+      'Wer gefragt hat (oder die Eltern) kann die Umfrage auch vorher beenden; bei Gleichstand wählt man die Antwort aus',
+      'Alle bekommen eine Nachricht mit dem Ergebnis; die Umfrage steht auch auf der Pinnwand',
+    ],
+  },
+  {
     version: '1.65',
     date: '2026-10-29',
     title: 'Chat bleibt beim Verschieben erhalten',

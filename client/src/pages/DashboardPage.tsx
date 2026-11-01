@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
@@ -5,6 +6,7 @@ import { WeatherCard } from '../components/WeatherCard';
 import { NavCard } from '../components/NavCard';
 import { WhereCard } from '../components/WhereCard';
 import { LocateCard } from '../components/LocateCard';
+import { PlanPollDialog } from '../components/PlanPollDialog';
 import { addDays, formatDay, occurrencesInRange, parseLocal, sameDay, startOfDay, toDateKey } from '../dates';
 import { usePermissions } from '../permissions';
 import { useFamily } from '../session';
@@ -104,8 +106,16 @@ export function DashboardPage() {
   const choresSoon = allOccurrences(chores.chores.items, toDateKey(today), toDateKey(addDays(today, 1)), chores.days);
   const upcoming = occurrencesInRange(events.items, today, addDays(today, 7));
   const myTasks = tasks.items.filter((t) => !t.done && (t.assignee_id === user.id || t.assignee_id === null)).slice(0, 6);
-  const latestPosts = [...posts.items].sort((a, b) => b.id - a.id).slice(0, 3);
   const todaysMeals = meals.items.filter((m) => m.date === toDateKey(today));
+  // Familien-Umfragen (Essen/Ausflug): offene und die seit gestern entschiedenen
+  const [startingPoll, setStartingPoll] = useState(false);
+  const planPolls = polls.polls
+    .filter((p) => p.plan && (!p.plan.closed_at || Date.now() - new Date(`${p.plan.closed_at.replace(' ', 'T')}Z`).getTime() < 86_400_000))
+    .map((poll) => ({ poll, post: posts.items.find((p) => p.id === poll.post_id) }))
+    .filter((x) => x.post)
+    .sort((a, b) => Number(Boolean(a.poll.plan!.closed_at)) - Number(Boolean(b.poll.plan!.closed_at)) || b.poll.post_id - a.poll.post_id);
+  // Pinnwand-Karte: ohne die Umfragen, die schon oben stehen
+  const latestPosts = [...posts.items].filter((p) => !planPolls.some((x) => x.poll.post_id === p.id)).sort((a, b) => b.id - a.id).slice(0, 3);
 
   // Termine nach Tag gruppieren
   const groups: { day: Date; items: typeof upcoming }[] = [];
@@ -176,6 +186,32 @@ export function DashboardPage() {
             ))
           )}
         </NavCard>
+
+        <section className="card span-2 plan-polls">
+          <header className="section-header">
+            <h2>🗳️ Familien-Umfrage</h2>
+            <span className="spacer" />
+            <button type="button" className="button small primary" onClick={() => setStartingPoll(true)}>Umfrage starten</button>
+          </header>
+          {planPolls.length === 0 ? (
+            <p className="muted">Was essen wir am Samstag? Wohin geht der Ausflug? Alle stimmen ab, und das Ergebnis kommt direkt in den Essensplan oder in den Kalender.</p>
+          ) : (
+            planPolls.map(({ poll, post }) => (
+              <PostCard key={poll.post_id} post={post!} poll={poll} extras={postExtras} compact
+                onVote={(optionId) => void polls.vote(poll, optionId)}
+                onClosePoll={(optionId) => polls.close(poll, optionId)} />
+            ))
+          )}
+        </section>
+        {startingPoll && (
+          <PlanPollDialog
+            onClose={() => setStartingPoll(false)}
+            onCreate={async (text, options, plan) => {
+              await polls.create(text, options, plan);
+              await posts.reload();
+            }}
+          />
+        )}
 
         <NavCard to="/aufgaben">
           <header className="section-header">
@@ -312,7 +348,7 @@ export function DashboardPage() {
               <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} extras={postExtras} compact onVote={(optionId) => {
                 const poll = polls.forPost(p.id);
                 if (poll) void polls.vote(poll, optionId);
-              }} />
+              }} onClosePoll={(optionId) => polls.close(polls.forPost(p.id)!, optionId)} />
             ))
           )}
         </NavCard>

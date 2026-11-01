@@ -729,6 +729,18 @@ textarea { resize: vertical; }
 .poll-count { font-weight: 700; min-width: 1.2em; text-align: right; }
 .poll-editor { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; padding-left: 48px; }
 .poll-toggle { flex-basis: 100%; text-align: left; padding-left: 48px; }
+.poll-plan { align-self: flex-start; font-size: 0.8rem; font-weight: 700; color: var(--accent-strong); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; }
+.poll-result { padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, #2f9e44 14%, transparent); color: inherit; text-decoration: none; }
+.poll.decided .poll-option { cursor: default; opacity: 0.75; }
+.poll-option:disabled { color: inherit; }
+.poll-choose { font-weight: 600; color: var(--accent-strong); }
+.poll .form-actions { margin-top: 2px; }
+.plan-polls .post:first-of-type { border-top: 0; }
+.plan-poll legend { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; padding: 0; }
+.plan-poll .poll-editor { padding-left: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chips input[type=date] { width: auto; flex: 1; min-width: 140px; }
+.chips .chip { text-transform: capitalize; }
 
 /* --- Raumklima -------------------------------------------------------------- */
 .climate-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
