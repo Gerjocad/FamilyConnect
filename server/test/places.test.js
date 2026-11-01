@@ -113,3 +113,22 @@ describe('Orte', () => {
     assert.equal(inWindow({ from_time: '22:00', to_time: '06:00' }, new Date(2026, 9, 19, 23, 30)), true, 'über Mitternacht');
   });
 });
+
+describe('Adresse zum Standort', () => {
+  test('Koordinaten → Straße, Ort', async () => {
+    const answers = [
+      { address: { road: 'Königsallee', house_number: '12', suburb: 'Stadtmitte', postcode: '40212', city: 'Düsseldorf' } },
+      { address: { amenity: 'Spielplatz Rheinpark', road: 'Rheinallee', postcode: '40476', city: 'Düsseldorf' } },
+      { display_name: 'Irgendwo, Feldweg, Nirgendwo, Deutschland' },
+    ];
+    const geocoder = new Geocoder({
+      fetchImpl: async (url) => {
+        assert.match(url, /\/reverse\?format=jsonv2.*&lat=51\.2&lon=6\.7$/);
+        return Response.json(answers.shift());
+      },
+    });
+    assert.equal(await geocoder.reverse(51.2, 6.7), 'Königsallee 12, Stadtmitte, 40212 Düsseldorf');
+    assert.equal(await geocoder.reverse(51.2, 6.7), 'Spielplatz Rheinpark, Rheinallee, 40476 Düsseldorf');
+    assert.equal(await geocoder.reverse(51.2, 6.7), 'Irgendwo, Feldweg, Nirgendwo');
+  });
+});

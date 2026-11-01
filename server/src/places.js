@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { isManager } from './permissions.js';
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM = 'https://nominatim.openstreetmap.org';
 const MIN_RADIUS = 30;
 const MAX_RADIUS = 2000;
 // gleiche Meldung (Person, Ort, angekommen/verlassen) frühestens nach so vielen Minuten erneut
@@ -24,14 +24,29 @@ export class Geocoder {
     this.#fetch = fetchImpl;
   }
 
-  async search(query) {
+  async #get(path, timeoutMs = 10_000) {
     const wait = this.#last + 1100 - Date.now();
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     this.#last = Date.now();
-    const url = `${NOMINATIM}?format=jsonv2&limit=5&accept-language=de&q=${encodeURIComponent(query)}`;
-    const res = await this.#fetch(url, { headers: { 'User-Agent': 'FamilyConnect (private Familien-App)', Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+    const res = await this.#fetch(`${NOMINATIM}${path}`, { headers: { 'User-Agent': 'FamilyConnect (private Familien-App)', Accept: 'application/json' }, signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok) throw new Error(`Adresssuche antwortet mit ${res.status}`);
-    const data = await res.json();
+    return res.json();
+  }
+
+  /** Koordinaten → „Hauptstraße 5, 12345 Musterstadt“ (null, wenn nichts gefunden) */
+  async reverse(lat, lon) {
+    const data = await this.#get(`/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=de&lat=${lat}&lon=${lon}`, 5_000);
+    const a = data?.address;
+    if (!a) return data?.display_name ? data.display_name.split(', ').slice(0, 3).join(', ') : null;
+    const street = [a.road ?? a.pedestrian ?? a.footway ?? a.path, a.house_number].filter(Boolean).join(' ');
+    const what = a.amenity ?? a.shop ?? a.leisure ?? a.tourism ?? a.building ?? null;
+    const city = [a.postcode, a.city ?? a.town ?? a.village ?? a.municipality].filter(Boolean).join(' ');
+    const district = a.suburb ?? a.city_district ?? a.neighbourhood;
+    return [what, street, district && district !== (a.city ?? a.town) ? district : null, city].filter(Boolean).join(', ') || null;
+  }
+
+  async search(query) {
+    const data = await this.#get(`/search?format=jsonv2&limit=5&accept-language=de&q=${encodeURIComponent(query)}`);
     return (Array.isArray(data) ? data : []).map((r) => ({
       label: r.display_name,
       lat: Math.round(Number(r.lat) * 1e6) / 1e6,

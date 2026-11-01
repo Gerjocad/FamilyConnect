@@ -33,7 +33,14 @@ export function LocatePage() {
       <div className="page locate-page">
         <section className="card locate-question">
           <h1>📍 {asker} fragt: Wo bist du?</h1>
-          <p className="muted">Gefragt {ago(request.created_at)}. Dein Standort geht nur an {asker} und wird nach 24 Stunden gelöscht.</p>
+          <p className="muted">Gefragt {ago(request.created_at)}. Dein genauer Standort geht nur an {asker} und wird nach 24 Stunden gelöscht.</p>
+          <div className="locate-or">Nachricht dazu (freiwillig):</div>
+          <div className="radius-chips">
+            {QUICK_ANSWERS.map((q) => (
+              <button key={q} type="button" className={`chip ${message === q ? 'chip-active' : ''}`} onClick={() => setMessage(message === q ? '' : q)}>{q}</button>
+            ))}
+          </div>
+          <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={120} placeholder="Eigene Nachricht" aria-label="Nachricht" />
           <button
             className="button primary big"
             disabled={busy}
@@ -47,16 +54,6 @@ export function LocatePage() {
           >
             {busy ? 'Suche Standort …' : '📍 Standort senden'}
           </button>
-          <div className="locate-or">oder nur kurz antworten:</div>
-          <div className="radius-chips">
-            {QUICK_ANSWERS.map((q) => (
-              <button key={q} type="button" className={`chip ${message === q ? 'chip-active' : ''}`} onClick={() => setMessage(q)}>{q}</button>
-            ))}
-          </div>
-          <div className="row">
-            <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength={120} placeholder="Eigene Antwort" aria-label="Antwort" />
-            <button className="button" disabled={busy || !message.trim()} onClick={() => void answer({ message: message.trim() })}>Nur Text</button>
-          </div>
           <button className="link-button" disabled={busy} onClick={() => void answer({ declined: true, message: message.trim() || undefined })}>Nicht jetzt</button>
           {error && <p className="error">{error}</p>}
         </section>
@@ -74,11 +71,12 @@ export function LocatePage() {
         {request.status === 'declined' && <p>{mine ? 'Du hast „Nicht jetzt“ geantwortet.' : `${asked} möchte gerade nicht.`}{request.message && <> „{request.message}“</>}</p>}
         {request.status === 'answered' && (
           <>
-            <p className="locate-result">
-              {request.place && <b>bei {request.place.icon} {request.place.name}</b>}
-              {request.message && <> „{request.message}“</>}
-              <span className="muted"> · {ago(request.answered_at ?? request.created_at)}{request.accuracy !== null && ` · genau auf ca. ${request.accuracy} m`}</span>
-            </p>
+            <div className="locate-result">
+              {request.place && <b className="locate-place">{request.place.icon} {request.place.name}</b>}
+              <p className="locate-address">{request.address ?? `${request.lat?.toFixed(5)}, ${request.lon?.toFixed(5)}`}</p>
+              {request.message && <p>„{request.message}“</p>}
+              <small className="muted">{ago(request.answered_at ?? request.created_at)}{request.accuracy !== null && ` · genau auf ca. ${request.accuracy} m`}</small>
+            </div>
             {request.lat !== null && request.lon !== null && (
               <>
                 <Suspense fallback={<div className="place-map-placeholder" />}>

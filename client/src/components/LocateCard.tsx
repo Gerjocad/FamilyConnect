@@ -58,7 +58,7 @@ export function LocateCard() {
                   {r.status === 'declined' && <span className="muted">gerade nicht{r.message ? ` · „${r.message}“` : ''}</span>}
                   {r.status === 'answered' && (
                     <span>
-                      {r.place ? <>bei {r.place.icon} {r.place.name}</> : r.lat !== null ? '📍 Standort' : ''}
+                      📍 {r.place && <>{r.place.icon} {r.place.name} · </>}{r.address ?? 'Standort'}
                       {r.message && <> · „{r.message}“</>}
                       <span className="muted"> · {ago(r.answered_at ?? r.created_at)}</span>
                     </span>

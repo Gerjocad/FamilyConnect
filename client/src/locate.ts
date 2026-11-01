@@ -14,11 +14,14 @@ export interface LocateRequest {
   lat: number | null;
   lon: number | null;
   accuracy: number | null;
+  /** Adresse zum Standort, z. B. „Königsallee 12, 40212 Düsseldorf“ */
+  address: string | null;
   message: string | null;
   place: { id: number; name: string; icon: string } | null;
 }
 
-export const QUICK_ANSWERS = ['Bin auf dem Heimweg', 'Bei Freunden', 'In der Schule', 'Komme gleich', 'Alles gut 👍'];
+/** Kurze Nachricht, die man zum Standort dazuschreiben kann */
+export const QUICK_ANSWERS = ['Bin auf dem Heimweg', 'Bei Freunden', 'Komme gleich', 'Hol mich bitte ab', 'Alles gut 👍'];
 
 export const mapsLink = (r: Pick<LocateRequest, 'lat' | 'lon'>) => `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}`;
 

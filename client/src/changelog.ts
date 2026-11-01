@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.69',
+    date: '2026-11-01',
+    title: '„Wo bist du?“ schickt immer den genauen Standort',
+    changes: [
+      'Antworten geht nur noch mit Standort – die kurzen Sätze („Komme gleich“, „Hol mich bitte ab“ …) gibt es weiter als Nachricht dazu',
+      'Wer gefragt hat, sieht die Adresse (Straße, Hausnummer, Ort), die Karte und die Genauigkeit – auch direkt auf der Übersicht und in der Benachrichtigung',
+      '„Nicht jetzt“ bleibt möglich: Niemand wird ohne Zustimmung geortet',
+    ],
+  },
+  {
     version: '1.68',
     date: '2026-11-01',
     title: 'Punkte und „Wo bist du?“ für alle',

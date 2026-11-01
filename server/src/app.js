@@ -414,7 +414,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(kniffelRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(gamesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
-  app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
+  app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

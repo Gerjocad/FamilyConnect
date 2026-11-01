@@ -1,7 +1,7 @@
 // „📍 Wo bist du?“ – einmalige Standort-Abfrage mit Zustimmung.
-// Wer fragt, löst eine Push-Nachricht aus; die gefragte Person entscheidet selbst: Standort senden, kurze
-// Antwort („Bin bei Oma“) oder „Nicht jetzt“. Kein Live-Tracking: ein Standort, nur für den Fragenden
-// sichtbar, nach 24 Stunden gelöscht.
+// Wer fragt, löst eine Push-Nachricht aus; die gefragte Person entscheidet selbst: Standort senden (mit Adresse
+// und optional einer kurzen Nachricht wie „Bin bei Oma“) oder „Nicht jetzt“. Kein Live-Tracking: ein Standort,
+// nur für den Fragenden sichtbar, nach 24 Stunden gelöscht.
 import { Router } from 'express';
 
 const KEEP_HOURS = 24;
@@ -23,7 +23,7 @@ export function cleanupLocateRequests(db) {
   db.prepare(`DELETE FROM locate_requests WHERE created_at < datetime('now', '-${KEEP_HOURS} hours')`).run();
 }
 
-export function locateRouter(db, { auth, member, publish, push }) {
+export function locateRouter(db, { auth, member, publish, push, geocoder }) {
   const router = Router();
   const base = '/api/families/:familyId/locate';
   const nameOf = (userId) => db.prepare('SELECT name FROM users WHERE id = ?').get(userId)?.name.split(' ')[0] ?? '';
@@ -40,7 +40,7 @@ export function locateRouter(db, { auth, member, publish, push }) {
     }
     return {
       id: r.id, from_user: r.from_user, to_user: r.to_user, status: r.status, created_at: r.created_at, answered_at: r.answered_at,
-      lat: r.lat, lon: r.lon, accuracy: r.accuracy, message: r.message, place,
+      lat: r.lat, lon: r.lon, accuracy: r.accuracy, address: r.address ?? null, message: r.message, place,
     };
   };
   const find = (req) => db.prepare('SELECT * FROM locate_requests WHERE family_id = ? AND id = ?').get(req.familyId, Number(req.params.id));
@@ -74,8 +74,8 @@ export function locateRouter(db, { auth, member, publish, push }) {
     res.status(201).json(serialize(db.prepare('SELECT * FROM locate_requests WHERE id = ?').get(lastInsertRowid)));
   });
 
-  // Antworten: { lat, lon, accuracy } und/oder { message }, oder { declined: true }
-  router.post(`${base}/:id/answer`, auth, member, (req, res) => {
+  // Antworten: { lat, lon, accuracy, message? } oder { declined: true, message? }
+  router.post(`${base}/:id/answer`, auth, member, async (req, res) => {
     const r = find(req);
     if (!r || r.to_user !== req.user.id) return res.status(404).json({ error: 'Diese Abfrage gibt es nicht (mehr)' });
     const b = req.body ?? {};
@@ -89,15 +89,17 @@ export function locateRouter(db, { auth, member, publish, push }) {
       accuracy = b.accuracy === undefined ? null : Math.round(Number(b.accuracy));
       if (!(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180) || (accuracy !== null && !(accuracy >= 0))) return res.status(400).json({ error: 'Ungültiger Standort' });
     }
-    if (!b.declined && lat === null && !message) return res.status(400).json({ error: 'Standort oder kurze Antwort fehlt' });
+    if (!b.declined && lat === null) return res.status(400).json({ error: 'Bitte den Standort mitschicken' });
     const status = b.declined ? 'declined' : 'answered';
-    db.prepare("UPDATE locate_requests SET status = ?, lat = ?, lon = ?, accuracy = ?, message = ?, answered_at = datetime('now') WHERE id = ?")
-      .run(status, lat, lon, accuracy, message || null, r.id);
+    // Adresse dazu, damit man nicht erst die Karte öffnen muss (ohne Internet/Treffer einfach ohne)
+    const address = lat === null ? null : await geocoder?.reverse(lat, lon).catch(() => null) ?? null;
+    db.prepare("UPDATE locate_requests SET status = ?, lat = ?, lon = ?, accuracy = ?, address = ?, message = ?, answered_at = datetime('now') WHERE id = ?")
+      .run(status, lat, lon, accuracy, address, message || null, r.id);
     const answer = serialize(db.prepare('SELECT * FROM locate_requests WHERE id = ?').get(r.id));
     const who = nameOf(req.user.id);
     push?.notify?.([r.from_user], {
       title: status === 'declined' ? `📍 ${who}: gerade nicht` : `📍 ${who} hat geantwortet`,
-      body: [answer.place ? `bei ${answer.place.icon} ${answer.place.name}` : lat !== null ? 'Standort gesendet' : '', message].filter(Boolean).join(' · ') || 'Nicht jetzt',
+      body: [answer.place && `${answer.place.icon} ${answer.place.name}`, address ?? (lat !== null ? 'Standort gesendet' : ''), message].filter(Boolean).join(' · ') || 'Nicht jetzt',
       path: `/standort/${r.id}`,
     });
     publish(req.familyId, 'locate');

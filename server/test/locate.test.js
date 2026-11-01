@@ -9,7 +9,8 @@ let server;
 let base;
 before(async () => {
   const push = { notify: (ids, m) => sent.push([ids, m]), handleChange() {} };
-  const app = createApp(openDatabase(':memory:'), { push });
+  const geocoder = { reverse: async (lat) => (lat > 50 ? 'Schulstraße 1, 40210 Düsseldorf' : null), search: async () => [] };
+  const app = createApp(openDatabase(':memory:'), { push, geocoder });
   await new Promise((resolve) => { server = app.listen(0, resolve); });
   base = `http://127.0.0.1:${server.address().port}/api`;
 });
@@ -51,11 +52,13 @@ describe('Wo bist du?', () => {
     assert.equal((await api(`${f}/locate/${q.id}/answer`, { token: mama, method: 'POST', body: { lat: 1, lon: 1 } })).status, 404, 'nur Lea antwortet');
     assert.equal((await api(`${f}/locate/${q.id}/answer`, { token: lea, method: 'POST', body: {} })).status, 400);
     assert.equal((await api(`${f}/locate/${q.id}/answer`, { token: lea, method: 'POST', body: { lat: 200, lon: 1 } })).status, 400);
+    assert.equal((await api(`${f}/locate/${q.id}/answer`, { token: lea, method: 'POST', body: { message: 'Bin zuhause' } })).status, 400, 'nur Text reicht nicht');
 
     const { data: a } = await api(`${f}/locate/${q.id}/answer`, { token: lea, method: 'POST', body: { lat: 51.2280, lon: 6.7740, accuracy: 25, message: 'Hole gleich ab' } });
     assert.equal(a.status, 'answered');
     assert.deepEqual(a.place, { id: a.place.id, name: 'Schule', icon: '🏫' });
-    assert.deepEqual(sent.at(-1), [[id('Mama')], { title: '📍 Lea hat geantwortet', body: 'bei 🏫 Schule · Hole gleich ab', path: `/standort/${q.id}` }]);
+    assert.equal(a.address, 'Schulstraße 1, 40210 Düsseldorf');
+    assert.deepEqual(sent.at(-1), [[id('Mama')], { title: '📍 Lea hat geantwortet', body: '🏫 Schule · Schulstraße 1, 40210 Düsseldorf · Hole gleich ab', path: `/standort/${q.id}` }]);
     assert.equal((await api(`${f}/locate/${q.id}`, { token: mama })).data.accuracy, 25);
 
     // Tom sagt „nicht jetzt“
