@@ -1,13 +1,15 @@
-// Testfunktionen: neue Bereiche sieht zuerst nur, wer sie unter „Familie & Profil → Testfunktionen“ für sich
-// eingeschaltet hat (nur Admins). Freigegeben für die ganze Familie werden sie im jeweiligen Bereich.
+// Welche Bereiche sieht die angemeldete Person? Neue Bereiche können hier zuerst nur für Testerinnen und Tester
+// (user.beta, „Familie & Profil → Testfunktionen“) eingeschaltet werden.
+import { usePermissions } from './permissions';
 import { useFamily } from './session';
 
 export function useFeatures() {
-  const { user, family } = useFamily();
+  const { family } = useFamily();
+  const { isManager } = usePermissions();
   return {
-    /** Punkte & Belohnungen */
-    points: user.beta || family.points_released,
-    /** „Wo bist du?“ fragen (antworten kann man immer) */
-    locate: user.beta || family.locate_released,
+    /** Punkte & Belohnungen: Eltern immer (zum Einschalten), Kinder sobald eingeschaltet */
+    points: isManager || family.points_enabled,
+    /** „Wo bist du?“ fragen */
+    locate: true,
   };
 }

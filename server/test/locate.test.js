@@ -68,7 +68,5 @@ describe('Wo bist du?', () => {
     assert.deepEqual((await api(`${f}/locate`, { token: lea })).data.map((r) => r.id), [q.id], 'Lea sieht nur ihre');
     assert.equal((await api(`${f}/locate`, { token: mama })).data.length, 2);
 
-    // Freigabe für alle
-    assert.equal((await api(f, { token: mama, method: 'PATCH', body: { locate_released: true } })).data.locate_released, true);
   });
 });

@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.68',
+    date: '2026-11-01',
+    title: 'Punkte und „Wo bist du?“ für alle',
+    changes: [
+      '„Wo bist du?“ steht jetzt für die ganze Familie auf der Übersicht: Person antippen – sie entscheidet selbst, ob sie ihren Standort schickt',
+      'Punkte & Belohnungen sind keine Testfunktion mehr: Eltern sehen „Punkte“ im Menü und schalten es dort ein, danach sehen es auch die Kinder',
+    ],
+  },
+  {
     version: '1.67',
     date: '2026-11-01',
     title: 'Neuer Bereich: Finanzen',

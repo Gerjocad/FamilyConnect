@@ -11,10 +11,9 @@ export const DEFAULT_POINTS = { task: 5, habit: 2, chore: 5 };
 const MAX_POINTS = 1000;
 
 const settingsOf = (db, familyId) => {
-  const f = db.prepare('SELECT points_enabled, points_released, points_task, points_habit, points_chore FROM families WHERE id = ?').get(familyId);
+  const f = db.prepare('SELECT points_enabled, points_task, points_habit, points_chore FROM families WHERE id = ?').get(familyId);
   return {
     enabled: Boolean(f?.points_enabled),
-    released: Boolean(f?.points_released),
     task: f?.points_task ?? DEFAULT_POINTS.task,
     habit: f?.points_habit ?? DEFAULT_POINTS.habit,
     chore: f?.points_chore ?? DEFAULT_POINTS.chore,
@@ -114,20 +113,19 @@ export function pointsRouter(db, { auth, member, publish, push }) {
     });
   });
 
-  // Einstellungen: an/aus, für alle freigeben, Punkte je Art, wer sammelt
+  // Einstellungen: an/aus, Punkte je Art, wer sammelt
   router.put(`${base}/settings`, auth, member, managers, (req, res) => {
     const b = req.body ?? {};
     const current = settingsOf(db, req.familyId);
     const next = {
       enabled: typeof b.enabled === 'boolean' ? b.enabled : current.enabled,
-      released: typeof b.released === 'boolean' ? b.released : current.released,
       task: b.task === undefined ? current.task : int(b.task, 0, 100),
       habit: b.habit === undefined ? current.habit : int(b.habit, 0, 100),
       chore: b.chore === undefined ? current.chore : int(b.chore, 0, 100),
     };
     if ([next.task, next.habit, next.chore].includes(null)) return res.status(400).json({ error: 'Punkte je Art: 0 bis 100' });
-    db.prepare('UPDATE families SET points_enabled = ?, points_released = ?, points_task = ?, points_habit = ?, points_chore = ? WHERE id = ?')
-      .run(next.enabled ? 1 : 0, next.released ? 1 : 0, next.task, next.habit, next.chore, req.familyId);
+    db.prepare('UPDATE families SET points_enabled = ?, points_task = ?, points_habit = ?, points_chore = ? WHERE id = ?')
+      .run(next.enabled ? 1 : 0, next.task, next.habit, next.chore, req.familyId);
     if (b.collectors !== undefined) {
       if (!Array.isArray(b.collectors)) return res.status(400).json({ error: 'collectors muss eine Liste sein' });
       db.prepare('UPDATE memberships SET collects_points = 0 WHERE family_id = ?').run(req.familyId);
@@ -149,7 +147,7 @@ export function pointsRouter(db, { auth, member, publish, push }) {
     if (!reason) return res.status(400).json({ error: 'Bitte einen Grund angeben' });
     db.prepare('INSERT INTO points_ledger (family_id, user_id, amount, reason, source, created_by) VALUES (?, ?, ?, ?, ?, ?)')
       .run(req.familyId, userId, amount, reason, 'bonus', req.user.id);
-    if (settingsOf(db, req.familyId).released) {
+    if (settingsOf(db, req.familyId).enabled) {
       push?.notify?.([userId], {
         title: amount > 0 ? `⭐ +${amount} Punkte` : `${amount} Punkte`,
         body: `${reason} – von ${nameOf(req.user.id)}`,

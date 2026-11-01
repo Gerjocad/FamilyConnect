@@ -102,7 +102,7 @@ describe('Punkte & Belohnungen', () => {
   test('Bonus, Belohnungen einlösen, genehmigen, ablehnen, zurückziehen', async () => {
     const { mama, lea, tom, fid, ids } = await family();
     const f = `/families/${fid}`;
-    await api(`${f}/points/settings`, { token: mama, method: 'PUT', body: { enabled: true, released: true } });
+    await api(`${f}/points/settings`, { token: mama, method: 'PUT', body: { enabled: true } });
     assert.equal((await api(`${f}/points/bonus`, { token: lea, method: 'POST', body: { user_id: ids.lea, amount: 100, reason: 'Ich' } })).status, 403);
     assert.equal((await api(`${f}/points/bonus`, { token: mama, method: 'POST', body: { user_id: ids.lea, amount: 50 } })).status, 400, 'Grund fehlt');
     assert.equal((await api(`${f}/points/bonus`, { token: mama, method: 'POST', body: { user_id: ids.lea, amount: 50, reason: 'Oma geholfen' } })).data.balance, 50);

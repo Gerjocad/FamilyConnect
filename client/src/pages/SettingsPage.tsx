@@ -322,25 +322,7 @@ export function SettingsPage() {
               <input type="checkbox" checked={user.beta} disabled={profile.busy} onChange={(e) => saveProfile({ beta: e.target.checked })} />
               🧪 Testfunktionen für mich einschalten
             </label>
-            {user.beta && (
-              <ul className="beta-list">
-                <li>
-                  <b>📍 Wo bist du?</b> – auf der Übersicht eine Person antippen; sie bekommt eine Nachricht und entscheidet selbst, ob sie ihren Standort schickt.
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={family.locate_released}
-                      disabled={fam.busy || !isAdmin}
-                      onChange={(e) => void fam.run(async () => setFamily(await api<Family>(`/families/${family.id}`, { method: 'PATCH', body: { locate_released: e.target.checked } })))}
-                    />
-                    Für die ganze Familie freigeben
-                  </label>
-                </li>
-                <li>
-                  <b>⭐ Punkte & Belohnungen</b> – im Menü unter „Punkte“. Einschalten, Belohnungen anlegen und für die Familie freigeben geht dort.
-                </li>
-              </ul>
-            )}
+            {user.beta && <p className="hint">Gerade gibt es nichts zum Testen – „Wo bist du?“ und „Punkte & Belohnungen“ sind für alle freigegeben.</p>}
           </SettingsGroup>
         )}
 

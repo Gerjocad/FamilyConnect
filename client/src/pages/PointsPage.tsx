@@ -36,7 +36,6 @@ function ManagerView({ data, base }: { data: PointsData; base: string }) {
     <div className="page points-page">
       <header className="page-header">
         <h1>Punkte</h1>
-        {!data.settings.released && <span className="badge beta-badge">🧪 Test – nur für dich sichtbar</span>}
       </header>
 
       {!data.settings.enabled && (
@@ -144,10 +143,6 @@ function ManagerView({ data, base }: { data: PointsData; base: string }) {
                 );
               })}
             </fieldset>
-            <label className="checkbox">
-              <input type="checkbox" checked={data.settings.released} disabled={busy} onChange={(e) => void settings({ released: e.target.checked })} />
-              Für die ganze Familie freigeben (Kinder sehen dann „Punkte“ im Menü)
-            </label>
           </div>
         )}
       </section>

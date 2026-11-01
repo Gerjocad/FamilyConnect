@@ -40,8 +40,8 @@ export interface Family {
   /** Formel-1-Rennsonntage im Kalender */
   show_f1: boolean;
   /** Testfunktionen, die für die ganze Familie freigegeben sind */
-  points_released: boolean;
-  locate_released: boolean;
+  /** Punkte & Belohnungen eingeschaltet */
+  points_enabled: boolean;
   members: Member[];
 }
 

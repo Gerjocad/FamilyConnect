@@ -96,12 +96,11 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
 
   const familyDetails = (familyId) => {
     const family = db.prepare(
-      'SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, show_f1, points_released, locate_released, created_at FROM families WHERE id = ?'
+      'SELECT id, name, invite_code, state, weather_place, weather_lat, weather_lon, show_f1, points_enabled, created_at FROM families WHERE id = ?'
     ).get(familyId);
     family.show_f1 = Boolean(family.show_f1);
-    // Testfunktionen, die für die ganze Familie freigegeben sind
-    family.points_released = Boolean(family.points_released);
-    family.locate_released = Boolean(family.locate_released);
+    // Punkte & Belohnungen: im Menü für alle, sobald die Eltern sie eingeschaltet haben
+    family.points_enabled = Boolean(family.points_enabled);
     family.members = db.prepare(
       `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
@@ -246,11 +245,6 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     }
     db.prepare('UPDATE families SET name = ?, state = ? WHERE id = ?').run(name, state, req.familyId);
     if (weather) db.prepare('UPDATE families SET weather_place = ?, weather_lat = ?, weather_lon = ? WHERE id = ?').run(...weather, req.familyId);
-    // „Wo bist du?“ für alle freigeben
-    if (req.body?.locate_released !== undefined) {
-      if (typeof req.body.locate_released !== 'boolean') return res.status(400).json({ error: 'locate_released muss true/false sein' });
-      db.prepare('UPDATE families SET locate_released = ? WHERE id = ?').run(req.body.locate_released ? 1 : 0, req.familyId);
-    }
     // Formel-1-Rennen im Kalender
     if (req.body?.show_f1 !== undefined) {
       if (typeof req.body.show_f1 !== 'boolean') return res.status(400).json({ error: 'show_f1 muss true/false sein' });

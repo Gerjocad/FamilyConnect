@@ -4,7 +4,7 @@ import { api } from './api';
 import { onLiveChange } from './live';
 import { useFamily } from './session';
 
-export interface PointsSettings { enabled: boolean; released: boolean; task: number; habit: number; chore: number }
+export interface PointsSettings { enabled: boolean; task: number; habit: number; chore: number }
 export interface PointsPerson { user_id: number; collects: boolean; balance: number; reserved: number; week: number }
 export interface Reward { id: number; title: string; emoji: string; cost: number }
 export interface Redemption {
