@@ -11,6 +11,8 @@ export interface User {
   name: string;
   email: string;
   color: string;
+  /** eigenes Kürzel im runden Bild; null = aus dem Namen */
+  initials?: string | null;
   /** Farbschema der App, siehe themes.ts */
   theme: string;
   /** Testfunktionen für sich eingeschaltet (nur Admins) */
@@ -22,6 +24,8 @@ export interface Member {
   id: number;
   name: string;
   color: string;
+  /** eigenes Kürzel im runden Bild; null = aus dem Namen */
+  initials?: string | null;
   birthday: string | null;
   role: Role;
   joined_at: string;

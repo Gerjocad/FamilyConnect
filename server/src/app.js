@@ -44,6 +44,15 @@ const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 // Farbschemata der App – gleiche Namen wie in client/src/themes.ts
 const THEMES = ['orange', 'ocean', 'forest', 'berry', 'lavender', 'teal'];
 
+/** Kürzel: bis zu 3 Zeichen (Buchstaben groß); leer → null = automatisch aus dem Namen; ungültig → undefined */
+function cleanInitials(value) {
+  if (value === null) return null;
+  if (typeof value !== 'string') return undefined;
+  const chars = Array.from(value.replace(/\s+/g, ''));
+  if (chars.length > 3) return undefined;
+  return chars.length ? chars.join('').toLocaleUpperCase('de-DE') : null;
+}
+
 function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
@@ -102,7 +111,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     // Punkte & Belohnungen: im Menü für alle, sobald die Eltern sie eingeschaltet haben
     family.points_enabled = Boolean(family.points_enabled);
     family.members = db.prepare(
-      `SELECT u.id, u.name, u.color, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
+      `SELECT u.id, u.name, u.color, u.initials, u.birthday, u.managed, m.role, m.joined_at FROM memberships m
        JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id`
     ).all(familyId).map((m) => ({ ...m, managed: Boolean(m.managed) }));
     return family;
@@ -173,9 +182,11 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     if (!name) return res.status(400).json({ error: 'Bitte gib deinen Namen an' });
     if (typeof color !== 'string' || !COLOR_RE.test(color)) return res.status(400).json({ error: 'Ungültige Farbe' });
     if (!THEMES.includes(theme)) return res.status(400).json({ error: 'Unbekanntes Farbschema' });
-    db.prepare('UPDATE users SET name = ?, color = ?, theme = ?, beta = ? WHERE id = ?').run(name, color, theme, beta, req.user.id);
+    const initials = req.body?.initials === undefined ? req.user.initials : cleanInitials(req.body.initials);
+    if (initials === undefined) return res.status(400).json({ error: 'Kürzel: höchstens 3 Zeichen' });
+    db.prepare('UPDATE users SET name = ?, color = ?, initials = ?, theme = ?, beta = ? WHERE id = ?').run(name, color, initials, theme, beta, req.user.id);
     for (const f of familiesOf(req.user.id)) hub.publish(f.id, 'family');
-    res.json(meOf({ ...req.user, name, color, theme, beta }));
+    res.json(meOf({ ...req.user, name, color, initials, theme, beta }));
   });
 
   // --- Geräte für Push-Benachrichtigungen ----------------------------------
@@ -325,12 +336,21 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     res.json(familyDetails(req.familyId));
   });
 
-  // Rolle ändern (Admin, Eltern, Kind) – nur Admins; bei Mitgliedern ohne Konto auch Name und Farbe
+  // Rolle ändern (Admin, Eltern, Kind) – nur Admins; bei Mitgliedern ohne Konto auch Name und Farbe; Kürzel bei allen
   app.patch('/api/families/:familyId/members/:userId', auth, member, (req, res) => {
     if (req.role !== 'admin') return res.status(403).json({ error: 'Nur Admins dürfen Rollen vergeben' });
     const userId = Number(req.params.userId);
     const target = membershipOf(req.familyId, userId);
     if (!target) return res.status(404).json({ error: 'Kein Mitglied dieser Familie' });
+    if (req.body?.initials !== undefined) {
+      const initials = cleanInitials(req.body.initials);
+      if (initials === undefined) return res.status(400).json({ error: 'Kürzel: höchstens 3 Zeichen' });
+      db.prepare('UPDATE users SET initials = ? WHERE id = ?').run(initials, userId);
+      if (req.body.name === undefined && req.body.color === undefined && req.body.role === undefined) {
+        hub.publish(req.familyId, 'family');
+        return res.json(familyDetails(req.familyId));
+      }
+    }
     const managed = db.prepare('SELECT managed FROM users WHERE id = ?').get(userId).managed;
     if (req.body?.name !== undefined || req.body?.color !== undefined) {
       if (!managed) return res.status(400).json({ error: 'Name und Farbe ändert jede Person selbst' });

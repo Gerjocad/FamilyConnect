@@ -119,6 +119,8 @@ CREATE TABLE IF NOT EXISTS contacts (
 // Spalten, die nach der ersten Version dazugekommen sind. Bestehende Datenbanken werden beim Start ergänzt.
 const ADDED_COLUMNS = [
   ['users', 'beta', 'INTEGER NOT NULL DEFAULT 0'],
+  // eigenes Kürzel im runden Bild (z. B. „SA“ und „SE“ statt zweimal „S“); NULL = aus dem Namen
+  ['users', 'initials', 'TEXT'],
   // NULL = Standard nach Rolle (Kinder sammeln Punkte)
   ['memberships', 'collects_points', 'INTEGER'],
   ['families', 'points_enabled', 'INTEGER NOT NULL DEFAULT 0'],

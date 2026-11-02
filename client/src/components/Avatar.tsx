@@ -9,14 +9,18 @@ export function initials(name: string) {
     .join('');
 }
 
-export function Avatar({ member, size = 32 }: { member: Pick<Member, 'name' | 'color'>; size?: number }) {
+/** Kürzel im runden Bild: selbst gewählt (Familie & Profil) oder aus dem Namen */
+export const avatarText = (member: Pick<Member, 'name' | 'initials'>) => member.initials || initials(member.name);
+
+export function Avatar({ member, size = 32 }: { member: Pick<Member, 'name' | 'color' | 'initials'>; size?: number }) {
+  const text = avatarText(member);
   return (
     <span
       className="avatar"
       title={member.name}
-      style={{ background: member.color, width: size, height: size, fontSize: size * 0.4 }}
+      style={{ background: member.color, width: size, height: size, fontSize: size * (text.length > 2 ? 0.32 : 0.4) }}
     >
-      {initials(member.name)}
+      {text}
     </span>
   );
 }

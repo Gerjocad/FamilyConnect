@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Avatar, initials as nameInitials } from './Avatar';
 import { api } from '../api';
 import { useFamily } from '../session';
 import type { Family, Member } from '../types';
@@ -7,11 +8,12 @@ import { useAsync } from './useAsync';
 
 const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599'];
 
-/** Mitglied ohne eigenes Handy: Name/Farbe ändern oder später einen Zugang einrichten (nur Admins) */
+/** Mitglied bearbeiten (nur Admins): Kürzel bei allen; ohne eigenes Handy auch Name/Farbe und später einen Zugang einrichten */
 export function ManagedMemberDialog({ member, onClose }: { member: Member; onClose(): void }) {
   const { family, setFamily } = useFamily();
   const [name, setName] = useState(member.name);
   const [color, setColor] = useState(member.color);
+  const [short, setShort] = useState(member.initials ?? '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'edit' | 'account'>('edit');
@@ -24,10 +26,18 @@ export function ManagedMemberDialog({ member, onClose }: { member: Member; onClo
         <form className="form" onSubmit={(e) => {
           e.preventDefault();
           void run(async () => {
-            setFamily(await api<Family>(path, { method: 'PATCH', body: { name, color } }));
+            setFamily(await api<Family>(path, { method: 'PATCH', body: { initials: short.trim() || null, ...(member.managed && { name, color }) } }));
             onClose();
           });
         }}>
+          <div className="row align-end initials-row">
+            <Avatar member={{ name, color, initials: short.trim().toUpperCase() || null }} size={40} />
+            <label>
+              Kürzel <span className="hint">(bis 3 Zeichen, leer = „{nameInitials(name)}“)</span>
+              <input value={short} onChange={(e) => setShort(e.target.value.slice(0, 3))} placeholder={nameInitials(name)} maxLength={3} aria-label="Kürzel" autoFocus={!member.managed} />
+            </label>
+          </div>
+          {member.managed && <>
           <label>Name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required /></label>
           <div className="field">
             <span>Farbe</span>
@@ -45,6 +55,7 @@ export function ManagedMemberDialog({ member, onClose }: { member: Member; onClo
           <button type="button" className="link-button align-start" onClick={() => setMode('account')}>
             Hat jetzt ein Handy? Zugang einrichten
           </button>
+          </>}
           {error && <p className="error">{error}</p>}
           <div className="form-actions">
             <span className="spacer" />

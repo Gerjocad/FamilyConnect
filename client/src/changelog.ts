@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.70',
+    date: '2026-11-02',
+    title: 'Eigene Kürzel im runden Bild',
+    changes: [
+      'Familie & Profil → Mein Profil: eigenes Kürzel (bis 3 Zeichen) statt nur dem Anfangsbuchstaben – praktisch, wenn zwei mit „S“ anfangen',
+      'Admins können das Kürzel bei jedem Mitglied über den Stift in der Mitgliederliste ändern',
+      'Das Kürzel erscheint überall in der App und auf dem Wanddisplay; leer lassen = automatisch aus dem Namen',
+    ],
+  },
+  {
     version: '1.69',
     date: '2026-11-01',
     title: '„Wo bist du?“ schickt immer den genauen Standort',

@@ -149,7 +149,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
     const dayAfter = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
     const family = db.prepare('SELECT name, state, weather_place, weather_lat, weather_lon, show_f1 FROM families WHERE id = ?').get(familyId);
     const members = db.prepare(
-      'SELECT u.id, u.name, u.color, u.birthday FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id'
+      'SELECT u.id, u.name, u.color, u.initials, u.birthday FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.family_id = ? ORDER BY m.joined_at, u.id'
     ).all(familyId);
 
     // Termine heute und morgen, mit Logo

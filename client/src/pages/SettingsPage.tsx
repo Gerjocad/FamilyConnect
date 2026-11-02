@@ -3,7 +3,7 @@ import { api, isNativeApp } from '../api';
 import { availableUpdate, installUpdate, installedVersion, type AppVersion } from '../appUpdate';
 import { CHANGELOG, CURRENT_VERSION, hasUnseenChanges } from '../changelog';
 import { Link } from 'react-router';
-import { Avatar } from '../components/Avatar';
+import { Avatar, initials as nameInitials } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
 import { WallDisplays } from '../components/WallDisplays';
@@ -27,6 +27,7 @@ export function SettingsPage() {
   const me = family.members.find((m) => m.id === user.id);
   const isAdmin = me?.role === 'admin';
   const [name, setName] = useState(user.name);
+  const [myInitials, setMyInitials] = useState(user.initials ?? '');
   const [familyName, setFamilyName] = useState(family.name);
   const [newFamily, setNewFamily] = useState('');
   const [code, setCode] = useState('');
@@ -54,7 +55,7 @@ export function SettingsPage() {
     }
   };
 
-  const saveProfile = (patch: { name?: string; color?: string; theme?: string; beta?: boolean }) =>
+  const saveProfile = (patch: { name?: string; color?: string; initials?: string | null; theme?: string; beta?: boolean }) =>
     void profile.run(async () => {
       await api('/me', { method: 'PATCH', body: patch });
       await refreshUser();
@@ -88,6 +89,15 @@ export function SettingsPage() {
           <div className="row align-end">
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
             <button className="button" disabled={profile.busy || name === user.name}>Speichern</button>
+          </div>
+          <div className="row align-end initials-row">
+            <Avatar member={{ ...user, initials: myInitials.trim().toUpperCase() || null }} size={40} />
+            <label>
+              Mein Kürzel <span className="hint">(bis 3 Zeichen, leer = automatisch „{nameInitials(user.name)}“)</span>
+              <input value={myInitials} onChange={(e) => setMyInitials(e.target.value.slice(0, 3))} placeholder={nameInitials(user.name)} maxLength={3} aria-label="Mein Kürzel" />
+            </label>
+            <button type="button" className="button" disabled={profile.busy || myInitials.trim().toUpperCase() === (user.initials ?? '')}
+              onClick={() => saveProfile({ initials: myInitials.trim() || null })}>Speichern</button>
           </div>
           <div className="field">
             <span>Meine Farbe</span>
@@ -209,7 +219,7 @@ export function SettingsPage() {
                 {m.managed && <small className="badge managed-badge">ohne Handy</small>}
               </span>
               <span className="spacer" />
-              {isAdmin && m.managed && (
+              {isAdmin && (
                 <button className="icon-button subtle" aria-label={`${m.name} bearbeiten`} onClick={() => setEditingMember(m)}>
                   <Icon name="edit" size={16} />
                 </button>
