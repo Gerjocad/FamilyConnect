@@ -29,7 +29,7 @@ ch_wall = 1.2;              // Wände des Kartenschachts (dünn → gute Leserei
 // ---------------- Bauteile ----------------
 rc522 = [60.4, 40.2];       // RC522-Platine (B × H), wird hinter dem Schacht eingesetzt
 rc522_t = 1.7;
-esp = [69.5, 25.8];         // ESP32-S3-DevKitC-1
+esp = [63.2, 25.8];         // ESP32-S3-DevKitC-1: 62,7 × 25,4 mm + Luft
 esp_h = 22;                 // Höhe der Auflage über dem Boden (Platz für die Steckkabel unten)
 enc_hole = 7.4;             // Drehgeber EC11: Gewinde M7
 // Welle des Drehgebers: "riffel" = runde, geriffelte Welle (Ø ≈ 5,9 mm, z. B. Modul mit runder Platine) · "d" = abgeflachte D-Welle
@@ -48,7 +48,7 @@ floor_z = H - inside;                // hier steht die Karte auf
 // ESP32 liegt hinter den Bedienelementen, USB-Ende an der rechten Wand
 esp_cx = W / 2 - wall - 1.2 - esp[0] / 2;
 esp_cy = -D / 2 + 30;
-esp_end = 3;                // so weit liegt die Platine an jedem Ende auf (dort sind keine Pins)
+esp_pad = [10, 12];         // Auflagen unter der Platinenmitte (zwischen den beiden Pinreihen ist Platz)
 boss = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 boss_x = W / 2 - wall - 3.6;
 boss_y = D / 2 - wall - 3.6;
@@ -185,15 +185,15 @@ module boden() {
     }
     for (x = [-25, 0, 25]) translate([x, 0, -0.01]) cube([12, 2, wall + 1], center = true);  // Lüftung
   }
-  // Auflagen für den ESP32: die Platine liegt nur an den beiden kurzen Enden auf (dort sind keine Pins),
-  // die Pins zeigen nach unten in den freien Raum für die Steckkabel. Links ein Anschlag, rechts die Wand.
+  // Halter für den ESP32: Die Pinleisten laufen fast über die ganze Länge und zeigen nach unten (Steckkabel),
+  // deshalb liegt die Platine auf zwei Säulen in der Mitte zwischen den Pinreihen. Vier Eckpfosten außen neben der
+  // Platine halten sie seitlich, links ein Anschlag, rechts die Gehäusewand (dort ist die USB-Buchse).
   translate([esp_cx, esp_cy, wall]) {
-    for (s = [-1, 1]) translate([s * (esp[0] / 2 - esp_end / 2), 0, 0]) {
-      translate([-esp_end / 2, -esp[1] / 2 - 2, 0]) cube([esp_end, esp[1] + 4, esp_h]);        // Auflage
-      for (t = [-1, 1]) translate([-esp_end / 2, t > 0 ? esp[1] / 2 : -esp[1] / 2 - 2, 0])
-        cube([esp_end, 2, esp_h + 3]);                                                           // seitliche Führung
-    }
-    translate([-esp[0] / 2 - 2.5, -esp[1] / 2 - 2, 0]) cube([2.5, esp[1] + 4, esp_h + 4]);       // Anschlag links
+    for (s = [-1, 1]) translate([s * (esp[0] / 2 - 8) - esp_pad[0] / 2, -esp_pad[1] / 2, 0])
+      cube([esp_pad[0], esp_pad[1], esp_h]);                                                     // Auflage
+    for (sx = [-1, 1], sy = [-1, 1]) translate([sx * (esp[0] / 2 - 4) - 1.5, sy > 0 ? esp[1] / 2 : -esp[1] / 2 - 2, 0])
+      cube([3, 2, esp_h + 3]);                                                                   // Eckpfosten
+    translate([-esp[0] / 2 - 2.5, -8, 0]) cube([2.5, 16, esp_h + 4]);                            // Anschlag links
   }
 }
 
