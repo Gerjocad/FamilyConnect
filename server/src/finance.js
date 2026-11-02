@@ -2,17 +2,25 @@
 // Jede erwachsene Person trägt Einkommen und eigene Ausgaben ein, dazu kommen die Ausgaben (und Einnahmen, z. B.
 // Kindergeld) des gemeinsamen Kontos. Daraus berechnet der Server, wer monatlich wie viel aufs gemeinsame Konto
 // überweist: prozentual nach Einkommen, nach dem, was übrig bleibt, oder mit festen Prozenten – plus manuelle
-// Zu- oder Abschläge je Person. Beträge sind ganze Cent; vierteljährlich/jährlich wird auf den Monat umgerechnet.
+// Zu- oder Abschläge je Person. Beträge sind ganze Cent; vierteljährlich/jährlich wird auf den Monat umgerechnet,
+// einmalige Zahlungen (z. B. Urlaub, Klassenfahrt) zählen voll in ihrem Monat – berechnet wird immer für einen Monat.
 // Private Ausgaben sieht nur, wem sie gehören (in der Berechnung „nach Rest“ zählen sie trotzdem mit).
 import { Router } from 'express';
 import { isManager } from './permissions.js';
 
 export const KINDS = ['income', 'expense', 'adjustment'];
-export const INTERVALS = { monthly: 1, quarterly: 3, yearly: 12 };
+export const INTERVALS = { monthly: 1, quarterly: 3, yearly: 12, once: null };
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 export const MODES = ['income', 'remaining', 'custom'];
 const MAX_AMOUNT = 100_000_000; // 1 Mio. € in Cent
 
-export const monthly = (e) => Math.round(e.amount / INTERVALS[e.interval]);
+/** Betrag dieses Eintrags im Monat `month` (JJJJ-MM) */
+export const monthly = (e, month) => (e.interval === 'once' ? (e.month === month ? e.amount : 0) : Math.round(e.amount / INTERVALS[e.interval]));
+
+const currentMonth = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
 
 /** Die Erwachsenen der Familie (Eltern und Admins) */
 const participantsOf = (db, familyId) => db.prepare(
@@ -28,8 +36,8 @@ const settingsOf = (db, familyId) => {
  * Wer zahlt wie viel aufs gemeinsame Konto (alles pro Monat, in Cent).
  * needed = gemeinsame Ausgaben − gemeinsame Einnahmen; aufgeteilt nach Anteil, danach die manuellen Beträge.
  */
-export function calculate(entries, people, settings) {
-  const sum = (list) => list.reduce((a, e) => a + monthly(e), 0);
+export function calculate(entries, people, settings, month = currentMonth()) {
+  const sum = (list) => list.reduce((a, e) => a + monthly(e, month), 0);
   const shared = entries.filter((e) => e.owner_id === null);
   const sharedExpenses = sum(shared.filter((e) => e.kind === 'expense'));
   const sharedIncome = sum(shared.filter((e) => e.kind === 'income'));
@@ -57,7 +65,7 @@ export function calculate(entries, people, settings) {
     const transfer = part + r.adjustments;
     return { ...r, share: shareOf(r), part, transfer, left: r.income - r.expenses - transfer };
   });
-  return { shared_expenses: sharedExpenses, shared_income: sharedIncome, needed, people: result };
+  return { month, shared_expenses: sharedExpenses, shared_income: sharedIncome, needed, people: result };
 }
 
 export function financeRouter(db, { auth, member, publish }) {
@@ -79,11 +87,13 @@ export function financeRouter(db, { auth, member, publish }) {
     const amount = Number(b.amount);
     if (!Number.isInteger(amount) || Math.abs(amount) > MAX_AMOUNT) return { error: 'Ungültiger Betrag' };
     if (amount < 0 && b.kind !== 'adjustment') return { error: 'Der Betrag muss positiv sein' };
-    if (!INTERVALS[b.interval]) return { error: 'Ungültiger Zeitraum' };
+    if (!(b.interval in INTERVALS)) return { error: 'Ungültiger Zeitraum' };
+    const month = b.interval === 'once' ? b.month : null;
+    if (b.interval === 'once' && !(typeof month === 'string' && MONTH_RE.test(month))) return { error: 'Bitte den Monat der Zahlung angeben' };
     // Privat geht nur bei eigenen Ausgaben (Einkommen braucht die Berechnung sichtbar)
     const priv = Boolean(b.private) && b.kind === 'expense' && owner !== null && owner === req.user.id;
     const category = typeof b.category === 'string' ? b.category.trim().slice(0, 50) : '';
-    return { row: { owner_id: owner, kind: b.kind, title, amount, interval: b.interval, category, private: priv ? 1 : 0 } };
+    return { row: { owner_id: owner, kind: b.kind, title, amount, interval: b.interval, month, category, private: priv ? 1 : 0 } };
   };
 
   const find = (req) => {
@@ -95,15 +105,16 @@ export function financeRouter(db, { auth, member, publish }) {
     const people = participantsOf(db, req.familyId);
     const all = db.prepare('SELECT * FROM finance_entries WHERE family_id = ? ORDER BY kind, amount DESC, id').all(req.familyId);
     const settings = settingsOf(db, req.familyId);
-    res.json({ people, settings, entries: all.filter(visible(req)).map(serialize), summary: calculate(all, people, settings) });
+    const month = MONTH_RE.test(String(req.query.month)) ? String(req.query.month) : currentMonth();
+    res.json({ people, settings, entries: all.filter(visible(req)).map(serialize), summary: calculate(all, people, settings, month) });
   });
 
   router.post(`${base}/entries`, auth, member, managers, (req, res) => {
     const { row, error } = parse(req, {});
     if (error) return res.status(400).json({ error });
     const { lastInsertRowid } = db.prepare(
-      'INSERT INTO finance_entries (family_id, owner_id, kind, title, amount, interval, category, private, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(req.familyId, row.owner_id, row.kind, row.title, row.amount, row.interval, row.category, row.private, req.user.id);
+      'INSERT INTO finance_entries (family_id, owner_id, kind, title, amount, interval, month, category, private, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(req.familyId, row.owner_id, row.kind, row.title, row.amount, row.interval, row.month, row.category, row.private, req.user.id);
     publish(req.familyId, 'finance');
     res.status(201).json(serialize(db.prepare('SELECT * FROM finance_entries WHERE id = ?').get(lastInsertRowid)));
   });
@@ -113,8 +124,8 @@ export function financeRouter(db, { auth, member, publish }) {
     if (!existing) return res.status(404).json({ error: 'Nicht gefunden' });
     const { row, error } = parse(req, { ...existing, private: Boolean(existing.private) });
     if (error) return res.status(400).json({ error });
-    db.prepare('UPDATE finance_entries SET owner_id = ?, kind = ?, title = ?, amount = ?, interval = ?, category = ?, private = ? WHERE id = ?')
-      .run(row.owner_id, row.kind, row.title, row.amount, row.interval, row.category, row.private, existing.id);
+    db.prepare('UPDATE finance_entries SET owner_id = ?, kind = ?, title = ?, amount = ?, interval = ?, month = ?, category = ?, private = ? WHERE id = ?')
+      .run(row.owner_id, row.kind, row.title, row.amount, row.interval, row.month, row.category, row.private, existing.id);
     publish(req.familyId, 'finance');
     res.json(serialize(db.prepare('SELECT * FROM finance_entries WHERE id = ?').get(existing.id)));
   });

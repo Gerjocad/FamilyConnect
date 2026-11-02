@@ -143,6 +143,8 @@ const ADDED_COLUMNS = [
   ['event_comments', 'moved_from', 'TEXT'],
   // „Wo bist du?“: Adresse zum gesendeten Standort (OpenStreetMap)
   ['locate_requests', 'address', 'TEXT'],
+  // Finanzen: einmalige Zahlung in diesem Monat (JJJJ-MM)
+  ['finance_entries', 'month', 'TEXT'],
   ['events', 'cancelled_dates', "TEXT NOT NULL DEFAULT '[]'"],
   // Aus einer Kalenderdatei (.ics) importiert: Name des Kalenders und UID des Termins (für erneuten Import)
   ['events', 'source', "TEXT NOT NULL DEFAULT ''"],

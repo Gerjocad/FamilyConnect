@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.71',
+    date: '2026-11-02',
+    title: 'Finanzen: einmalige Zahlungen',
+    changes: [
+      'Bei „Wie oft“ gibt es jetzt „einmalig“ mit Monat – z. B. Urlaub im Juli, Klassenfahrt, Autoreparatur',
+      'Oben lässt sich der Monat wechseln (‹ November 2026 ›): Überweisungen, Summen und was übrig bleibt werden für genau diesen Monat berechnet',
+      'Einmalige Zahlungen späterer Monate stehen als Hinweis unter der Liste',
+    ],
+  },
+  {
     version: '1.70',
     date: '2026-11-02',
     title: 'Eigene Kürzel im runden Bild',

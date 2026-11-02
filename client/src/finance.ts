@@ -5,7 +5,7 @@ import { onLiveChange } from './live';
 import { useFamily } from './session';
 
 export type FinanceKind = 'income' | 'expense' | 'adjustment';
-export type FinanceInterval = 'monthly' | 'quarterly' | 'yearly';
+export type FinanceInterval = 'monthly' | 'quarterly' | 'yearly' | 'once';
 export type FinanceMode = 'income' | 'remaining' | 'custom';
 
 export interface FinanceEntry {
@@ -17,6 +17,8 @@ export interface FinanceEntry {
   /** Cent; Zu-/Abschläge auch negativ */
   amount: number;
   interval: FinanceInterval;
+  /** nur bei einmaligen Zahlungen: in diesem Monat (JJJJ-MM) */
+  month: string | null;
   category: string;
   /** nur für mich sichtbar */
   private: boolean;
@@ -24,6 +26,8 @@ export interface FinanceEntry {
 }
 
 export interface FinanceSummary {
+  /** berechneter Monat (JJJJ-MM) */
+  month: string;
   shared_expenses: number;
   shared_income: number;
   /** was monatlich aufs gemeinsame Konto muss */
@@ -38,9 +42,23 @@ export interface FinanceState {
   summary: FinanceSummary;
 }
 
-export const INTERVAL_LABELS: Record<FinanceInterval, string> = { monthly: 'monatlich', quarterly: 'vierteljährlich', yearly: 'jährlich' };
-const MONTHS: Record<FinanceInterval, number> = { monthly: 1, quarterly: 3, yearly: 12 };
-export const perMonth = (e: Pick<FinanceEntry, 'amount' | 'interval'>) => Math.round(e.amount / MONTHS[e.interval]);
+export const INTERVAL_LABELS: Record<FinanceInterval, string> = { monthly: 'monatlich', quarterly: 'vierteljährlich', yearly: 'jährlich', once: 'einmalig' };
+const MONTHS: Record<Exclude<FinanceInterval, 'once'>, number> = { monthly: 1, quarterly: 3, yearly: 12 };
+/** Betrag im Monat `month` (JJJJ-MM): einmalige Zahlungen voll in ihrem Monat, sonst umgerechnet */
+export const perMonth = (e: Pick<FinanceEntry, 'amount' | 'interval' | 'month'>, month: string) =>
+  e.interval === 'once' ? (e.month === month ? e.amount : 0) : Math.round(e.amount / MONTHS[e.interval]);
+
+export const thisMonth = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+/** „2026-11“ → „November 2026“ */
+export const monthName = (month: string) =>
+  new Date(Number(month.slice(0, 4)), Number(month.slice(5)) - 1, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+export const shiftMonth = (month: string, by: number) => {
+  const d = new Date(Number(month.slice(0, 4)), Number(month.slice(5)) - 1 + by, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
 
 const euroFmt = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 /** 123456 → „1.234,56 €“ */
@@ -54,19 +72,20 @@ export function parseEuro(text: string): number | null {
   return Math.round(Number(t) * 100);
 }
 
-export function useFinance() {
+/** Finanzen, berechnet für den Monat `month` (JJJJ-MM) */
+export function useFinance(month: string) {
   const { family } = useFamily();
   const base = `/families/${family.id}/finance`;
   const [state, setState] = useState<FinanceState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reload = useCallback(async () => {
     try {
-      setState(await api<FinanceState>(base));
+      setState(await api<FinanceState>(`${base}?month=${month}`));
       setError(null);
     } catch (err) {
       setError((err as Error).message);
     }
-  }, [base]);
+  }, [base, month]);
   useEffect(() => {
     void reload();
     return onLiveChange((resource) => resource === 'finance' && void reload());

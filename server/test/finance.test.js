@@ -44,6 +44,9 @@ describe('Finanzen: Berechnung', () => {
     assert.equal(rest.people[0].part + rest.people[1].part, rest.needed);
     const custom = calculate(entries, people, { mode: 'custom', shares: { 1: 50, 2: 50 } });
     assert.deepEqual(custom.people.map((p) => p.part), [52250, 52250]);
+    const once = [...entries, { owner_id: null, kind: 'expense', amount: 240000, interval: 'once', month: '2026-07' }];
+    assert.equal(calculate(once, people, { mode: 'income', shares: {} }, '2026-07').needed, 104500 + 240000, 'Urlaub im Juli voll');
+    assert.equal(calculate(once, people, { mode: 'income', shares: {} }, '2026-08').needed, 104500, 'im August nicht');
     const empty = calculate([e(null, 'expense', 1001)], people, { mode: 'income', shares: {} });
     assert.deepEqual(empty.people.map((p) => p.part), [501, 500], 'ohne Einkommen halb/halb');
   });
@@ -83,6 +86,13 @@ describe('Finanzen: API', () => {
     assert.equal((await api(`${f}/entries/${secret.id}`, { token: papa, method: 'DELETE' })).status, 404);
     assert.deepEqual(forPapa.summary.people.map((p) => [p.part, p.transfer]), [[75000, 75000], [25000, 23000]]);
 
+    assert.equal((await add(mama, { owner_id: null, kind: 'expense', title: 'Urlaub', amount: 200000, interval: 'once' })).status, 400, 'Monat fehlt');
+    const { data: trip } = await add(mama, { owner_id: null, kind: 'expense', title: 'Urlaub', amount: 200000, interval: 'once', month: '2027-07' });
+    assert.equal(trip.month, '2027-07');
+    assert.equal((await api(`${f}?month=2027-07`, { token: mama })).data.summary.needed, 300000);
+    assert.equal((await api(`${f}?month=2027-08`, { token: mama })).data.summary.month, '2027-08');
+    assert.equal((await api(`${f}?month=2027-08`, { token: mama })).data.summary.needed, 100000);
+    await api(`${f}/entries/${trip.id}`, { token: mama, method: 'DELETE' });
     assert.equal((await api(`${f}/settings`, { token: papa, method: 'PUT', body: { mode: 'quatsch' } })).status, 400);
     await api(`${f}/settings`, { token: papa, method: 'PUT', body: { mode: 'custom', shares: { [id('Mama')]: 50, [id('Papa')]: 50 } } });
     const { data: after50 } = await api(f, { token: mama });
