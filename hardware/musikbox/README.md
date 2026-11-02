@@ -7,7 +7,7 @@ Karte heraus → Pause, wieder hinein → weiter. Drehknopf = Lautstärke (drüc
 
 | Ordner | Inhalt |
 | --- | --- |
-| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, Drehknopf |
+| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, Drehknopf, `knopf_test.stl` (nur die Nabe zum Ausprobieren) |
 | `firmware/` | PlatformIO-Projekt für den ESP32-S3-DevKitC-1 (RC522, EC11, 2 Tasten). `include/config.example.h` → `include/config.h` kopieren und ausfüllen |
 
 ## Kurz: Verkabelung
@@ -27,6 +27,11 @@ anschließen, sonst bekommen die ESP32-Eingänge 5 V. Eingebaut wird es wie der 
 Loch vorne, Mutter außen. Die Platine (Ø ca. 25 mm) passt hinter die Front. Die Lötpins **nach unten** drehen, dann laufen
 die Kabel unter dem ESP32 durch statt gegen ihn zu stoßen. Sitzt die kleine Metallnase am Gewinde dann nicht in der
 Kerbe, die Nase mit einer Zange abbiegen – die Mutter hält den Drehgeber allein.
+
+**Drehknopf:** Der Knopf ist für die runde, geriffelte Welle (Ø 5,9 mm) gemacht – sechs Klemmrippen drücken sich beim
+Aufstecken in die Riffelung. Am besten zuerst `knopf_test.stl` drucken (wenige Minuten): Sitzt es zu stramm, in
+`musikbox.scad` `welle_klemm` kleiner stellen (z. B. 0.1), wackelt es, größer (z. B. 0.3); für eine abgeflachte
+D-Welle `welle = "d"`.
 
 ## Karten
 

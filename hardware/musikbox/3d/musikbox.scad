@@ -1,6 +1,6 @@
 // Musik-Box für FamilyConnect – zum 3D-Druck (OpenSCAD 2021+)
 // Teile einzeln exportieren:  openscad -D 'part="gehaeuse"' -o gehaeuse.stl musikbox.scad
-//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "drehknopf" | "alles" (Vorschau)
+//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "drehknopf" | "knopf_test" | "alles" (Vorschau)
 //
 // Alle Maße in mm. Vor dem Druck die Werte unter „Bauteile“ mit deinen Teilen vergleichen
 // (Schieblehre) – besonders Taster und Drehgeber gibt es in leicht unterschiedlichen Größen.
@@ -32,6 +32,11 @@ rc522_t = 1.7;
 esp = [69.5, 25.8];         // ESP32-S3-DevKitC-1
 esp_h = 22;                 // Höhe der Auflage über dem Boden (Platz für die Steckkabel unten)
 enc_hole = 7.4;             // Drehgeber EC11: Gewinde M7
+// Welle des Drehgebers: "riffel" = runde, geriffelte Welle (Ø ≈ 5,9 mm, z. B. Modul mit runder Platine) · "d" = abgeflachte D-Welle
+welle = "riffel";
+welle_d = 5.9;              // gemessener Durchmesser der Welle
+welle_spiel = 0.25;         // Luft der Bohrung um die Welle (gedruckte Löcher werden etwas kleiner)
+welle_klemm = 0.2;          // so weit drücken die Klemmrippen in die Riffelung (fester: größer, lockerer: kleiner)
 btn_hole = 10.2;            // Loch für die Tastenkappe
 btn_body = 12.3;            // Omron-Taster 12 × 12 mm
 ctrl_z = 18;                // Höhe der Bedienelemente
@@ -216,12 +221,32 @@ module drehknopf() {
       cylinder(d = 24, h = 13);
       for (a = [0 : 20 : 359]) rotate(a) translate([12, 0, 0]) cylinder(d = 2, h = 13, $fn = 12);
     }
-    translate([0, 0, -0.01]) difference() {             // D-Welle 6 mm
-      cylinder(d = 6.15, h = 11);
-      translate([1.6, -4, -0.1]) cube([4, 8, 12]);
-    }
+    translate([0, 0, -0.01]) welle_loch(11);
     translate([0, 0, 12.2]) difference() { cylinder(d = 18, h = 1); cylinder(d = 16.5, h = 1); }  // Zierring
     translate([0, 9.5, 12.4]) cylinder(d = 2, h = 1);  // Markierung
+  }
+}
+
+// Bohrung für die Welle. Riffelwelle: rund mit 6 schmalen Klemmrippen, die sich beim Aufstecken in die Riffelung
+// drücken – hält ohne Kleber und rutscht nicht durch.
+module welle_loch(h) {
+  if (welle == "d") difference() {
+    cylinder(d = 6.15, h = h);
+    translate([1.6, -4, -0.1]) cube([4, 8, h + 1]);
+  } else difference() {
+    cylinder(d = welle_d + welle_spiel, h = h);
+    // Klemmrippe Ø 1,6 mm (breit genug für eine 0,4-mm-Düse), ragt welle_klemm über die Welle hinein
+    for (a = [0 : 60 : 359]) rotate(a) translate([welle_d / 2 - welle_klemm + 0.8, 0, 1.2]) cylinder(d = 1.6, h = h, $fn = 16);
+    // die ersten 1,2 mm ohne Rippen und mit Fase → lässt sich gerade ansetzen
+  }
+  cylinder(d1 = welle_d + 1.2, d2 = welle_d + welle_spiel, h = 0.6);
+}
+
+// Probestück: nur die Nabe des Knopfs – in wenigen Minuten gedruckt, um den Sitz auf der Welle zu testen
+module knopf_test() {
+  difference() {
+    cylinder(d = 11, h = 8);
+    translate([0, 0, -0.01]) welle_loch(8.1);
   }
 }
 
@@ -232,6 +257,7 @@ else if (part == "karte_vorne") karte_vorne();
 else if (part == "karte_hinten") karte_hinten();
 else if (part == "tastenkappe") rotate([180, 0, 0]) tastenkappe();
 else if (part == "drehknopf") rotate([180, 0, 0]) drehknopf();
+else if (part == "knopf_test") knopf_test();
 else if (part == "alles") {
   color("#4a4a4a") gehaeuse();
   color("#d9d4cc") translate([0, 0, 0]) boden();
