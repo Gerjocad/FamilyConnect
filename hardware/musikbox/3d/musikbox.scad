@@ -29,7 +29,10 @@ ch_wall = 1.2;              // Wände des Kartenschachts (dünn → gute Leserei
 // ---------------- Bauteile ----------------
 rc522 = [60.4, 40.2];       // RC522-Platine (B × H), wird hinter dem Schacht eingesetzt
 rc522_t = 1.7;
-esp = [63.2, 25.8];         // ESP32-S3-DevKitC-1: 62,7 × 25,4 mm + Luft
+esp_pcb = [56.7, 28.2];     // ESP32-S3-DevKitC-1 (Nachbau, gemessen): Platine L × B – Antenne und USB-Buchsen stehen über
+esp = [esp_pcb[0] + 0.5, esp_pcb[1] + 0.6];   // mit Luft
+esp_usb = 2.8;              // so weit stehen die USB-C-Buchsen über die Platinenkante (Gesamtlänge 64 mm)
+esp_ant = 18.5;             // Breite der Antenne, die vorne übersteht (der Anschlag lässt sie durch)
 esp_h = 22;                 // Höhe der Auflage über dem Boden (Platz für die Steckkabel unten)
 enc_hole = 7.4;             // Drehgeber EC11: Gewinde M7
 // Welle des Drehgebers: "riffel" = runde, geriffelte Welle (Ø ≈ 5,9 mm, z. B. Modul mit runder Platine) · "d" = abgeflachte D-Welle
@@ -46,7 +49,7 @@ slot_w = card + 2 * slot_side;
 slot_t = 2 * card_half + slot_clear;
 floor_z = H - inside;                // hier steht die Karte auf
 // ESP32 liegt hinter den Bedienelementen, USB-Ende an der rechten Wand
-esp_cx = W / 2 - wall - 1.2 - esp[0] / 2;
+esp_cx = W / 2 - wall - 0.8 - esp_usb - esp[0] / 2;   // USB-Buchsen enden knapp vor der Wand
 esp_cy = -D / 2 + 30;
 esp_pad = [10, 12];         // Auflagen unter der Platinenmitte (zwischen den beiden Pinreihen ist Platz)
 boss = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
@@ -193,7 +196,8 @@ module boden() {
       cube([esp_pad[0], esp_pad[1], esp_h]);                                                     // Auflage
     for (sx = [-1, 1], sy = [-1, 1]) translate([sx * (esp[0] / 2 - 4) - 1.5, sy > 0 ? esp[1] / 2 : -esp[1] / 2 - 2, 0])
       cube([3, 2, esp_h + 3]);                                                                   // Eckpfosten
-    translate([-esp[0] / 2 - 2.5, -8, 0]) cube([2.5, 16, esp_h + 4]);                            // Anschlag links
+    for (sy = [-1, 1]) translate([-esp[0] / 2 - 2.5, sy > 0 ? esp_ant / 2 + 0.5 : -esp[1] / 2 - 2, 0])
+      cube([2.5, esp[1] / 2 + 2 - esp_ant / 2 - 0.5, esp_h + 4]);                                 // Anschlag links (neben der Antenne)
   }
 }
 
