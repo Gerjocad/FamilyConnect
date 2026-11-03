@@ -20,7 +20,8 @@ export function watchForNewVersion() {
       const res = await fetch('/', { cache: 'no-store' });
       const latest = scriptName(await res.text());
       // Nur neu laden, wenn gerade nichts bearbeitet wird (kein Fenster offen, kein Eingabefeld aktiv)
-      const busy = document.querySelector('dialog[open]') || document.activeElement?.matches('input, textarea, select');
+      // (und nie auf Seiten, die das ausdrücklich verbieten – z. B. während eine Musik-Box per USB eingerichtet wird)
+      const busy = document.querySelector('dialog[open], [data-no-reload]') || document.activeElement?.matches('input, textarea, select');
       if (latest && latest !== current && !busy) window.location.reload();
     } catch {
       // offline – beim nächsten Mal

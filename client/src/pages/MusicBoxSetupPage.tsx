@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Component, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { api, getServerUrl, isNativeApp } from '../api';
 import { BoxConsole, flashFirmware, serialSupported, type BoxStatus } from '../musicBoxSerial';
@@ -7,8 +7,33 @@ import { useFamily } from '../session';
 interface MusicBox { id: number; name: string; token: string }
 type Step = 'idle' | 'flashing' | 'flashed' | 'sending' | 'done';
 
+/** Fängt Abstürze der Seite ab und zeigt den Fehler, statt eine leere Seite zu hinterlassen */
+class SetupErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="page narrow">
+        <section className="card">
+          <h2>Da ist etwas schiefgegangen</h2>
+          <p className="error">{this.state.error.message}</p>
+          <pre className="serial-log">{this.state.error.stack}</pre>
+          <button type="button" className="button" onClick={() => location.reload()}>Seite neu laden</button>
+        </section>
+      </div>
+    );
+  }
+}
+
 /** Musik-Box per USB: Firmware aufspielen und WLAN, Server und Box-Code übertragen (Chrome/Edge am PC) */
 export function MusicBoxSetupPage() {
+  return <SetupErrorBoundary><MusicBoxSetup /></SetupErrorBoundary>;
+}
+
+function MusicBoxSetup() {
   const { id } = useParams();
   const { family } = useFamily();
   const [box, setBox] = useState<MusicBox | null>(null);
@@ -33,6 +58,18 @@ export function MusicBoxSetupPage() {
   }, [family.id, id]);
   useEffect(() => () => void consoleRef.current?.close(), []);
   useEffect(() => logRef.current?.scrollTo(0, logRef.current.scrollHeight), [log]);
+  useEffect(() => {
+    const onError = (e: ErrorEvent | PromiseRejectionEvent) => {
+      const reason = 'reason' in e ? e.reason : e.error ?? e.message;
+      setLog((l) => [...l, `Fehler: ${reason instanceof Error ? reason.message : String(reason)}`]);
+    };
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onError);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onError);
+    };
+  }, []);
 
   const addLog = (line: string) => setLog((l) => [...l.slice(-300), line]);
   const attempt = async (fn: () => Promise<void>) => {
@@ -120,7 +157,7 @@ export function MusicBoxSetupPage() {
   }
 
   return (
-    <div className="page narrow box-setup">
+    <div className="page narrow box-setup" data-no-reload>
       <header className="page-header">
         <h1>Musik-Box einrichten{box && `: ${box.name}`}</h1>
         <Link to="/musik" className="link-button">Zurück zu Musik</Link>
