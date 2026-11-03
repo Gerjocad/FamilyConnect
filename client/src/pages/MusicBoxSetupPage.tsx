@@ -57,7 +57,10 @@ function MusicBoxSetup() {
     void api<MusicBox[]>(`/families/${family.id}/music-boxes`).then((list) => setBox(list.find((b) => b.id === Number(id)) ?? null), (e: Error) => setError(e.message));
   }, [family.id, id]);
   useEffect(() => () => void consoleRef.current?.close(), []);
-  useEffect(() => logRef.current?.scrollTo(0, logRef.current.scrollHeight), [log]);
+  // Klammern nötig: neuere Browser geben bei scrollTo ein Promise zurück – React hielte das für eine Aufräumfunktion
+  useEffect(() => {
+    logRef.current?.scrollTo(0, logRef.current.scrollHeight);
+  }, [log]);
   useEffect(() => {
     const onError = (e: ErrorEvent | PromiseRejectionEvent) => {
       const reason = 'reason' in e ? e.reason : e.error ?? e.message;
