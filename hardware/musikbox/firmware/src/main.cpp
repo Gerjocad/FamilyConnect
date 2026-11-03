@@ -11,7 +11,7 @@
 // Einstellungen (WLAN, Server, Box-Code …) liegen im Flash des ESP32 und werden über USB gesetzt – am einfachsten in
 // der App unter Musik → Musik-Box → „Per USB einrichten“ (Chrome/Edge am PC). Zeilen über die serielle Schnittstelle
 // (115200 Baud):  fc:set ssid=…  ·  fc:set pass=…  ·  fc:set server=https://…  ·  fc:set code=…  ·  fc:set led=48|38
-//                 fc:set invert=0|1  ·  fc:set pause=0|1  ·  fc:set step=5  ·  fc:status  ·  fc:restart  ·  fc:reset
+//                 fc:set invert=0|1  ·  fc:set pause=0|1  ·  fc:set step=5  ·  fc:connect  ·  fc:status  ·  fc:restart  ·  fc:reset
 // Wer lieber mit PlatformIO baut, kann die Startwerte weiter in include/config.h eintragen (optional).
 #include <Arduino.h>
 #include <HTTPClient.h>
@@ -47,7 +47,19 @@
 #ifndef RGB_LED_PIN
 #define RGB_LED_PIN 48
 #endif
-#define FIRMWARE_VERSION "2.0"
+#define FIRMWARE_VERSION "2.1"
+
+// --- Ausgabe auf beide USB-Buchsen ---------------------------------------------------------------
+// Das DevKitC-1 hat zwei: „COM/UART“ (USB-Seriell-Wandler → Serial) und „USB“ (im ESP32-S3 eingebaut → USBSerial).
+// Befehle kommen von beiden, Meldungen gehen an beide – egal, an welcher Buchse der PC hängt.
+struct BothPorts : public Print {
+  size_t write(uint8_t c) override { return write(&c, 1); }
+  size_t write(const uint8_t *buf, size_t len) override {
+    Serial.write(buf, len);
+    if (USBSerial) USBSerial.write(buf, len);  // nur, wenn ein PC dran ist (sonst würde es warten)
+    return len;
+  }
+} out;
 
 // --- Einstellungen (Flash, Namensraum „musikbox“) --------------------------------------------
 Preferences prefs;
@@ -99,7 +111,7 @@ void flash(uint8_t r, uint8_t g, uint8_t b, uint32_t ms) {
 // --- WLAN ---------------------------------------------------------------------------------
 void ensureWifi() {
   if (WiFi.status() == WL_CONNECTED || !cfg.ssid.length()) return;
-  Serial.printf("WLAN %s verbinden …\n", cfg.ssid.c_str());
+  out.printf("WLAN %s verbinden …\n", cfg.ssid.c_str());
   WiFi.mode(WIFI_STA);
   WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
   for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
@@ -107,8 +119,8 @@ void ensureWifi() {
     delay(250);
   }
   led(0, 0, 0);
-  if (WiFi.status() == WL_CONNECTED) Serial.printf("Verbunden, IP %s\n", WiFi.localIP().toString().c_str());
-  else Serial.println("WLAN nicht erreichbar – neuer Versuch später");
+  if (WiFi.status() == WL_CONNECTED) out.printf("Verbunden, IP %s\n", WiFi.localIP().toString().c_str());
+  else out.println("WLAN nicht erreichbar – neuer Versuch später");
 }
 
 // --- Server -------------------------------------------------------------------------------
@@ -116,7 +128,7 @@ void ensureWifi() {
 // (setInsecure), damit es ohne Zertifikatspflege läuft – der Box-Code gilt nur für Musik.
 int post(const char *path, const String &body) {
   if (!configured()) {
-    Serial.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
+    out.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
     flash(70, 0, 40, 1500);
     return -1;
   }
@@ -136,7 +148,7 @@ int post(const char *path, const String &body) {
   int code = http.POST(body);
   String answer = http.getString();
   http.end();
-  Serial.printf("%s → %d %s\n", path, code, answer.c_str());
+  out.printf("%s → %d %s\n", path, code, answer.c_str());
   if (code == 200) flash(0, 50, 0, 800);
   else flash(70, 0, 0, 2500);
   return code;
@@ -222,9 +234,11 @@ String jsonEscape(const String &s) {
 }
 
 byte rc522Version = 0;
+bool connectNow = false;     // nach dem Einrichten gleich mit dem WLAN verbinden
+uint32_t lastWifiTry = 0;
 void printStatus() {
   bool rcOk = rc522Version == 0x91 || rc522Version == 0x92 || rc522Version == 0xB2;
-  Serial.printf("fc:status {\"version\":\"%s\",\"ssid\":\"%s\",\"pass\":%s,\"server\":\"%s\",\"code\":\"%s\",\"led\":%d,"
+  out.printf("fc:status {\"version\":\"%s\",\"ssid\":\"%s\",\"pass\":%s,\"server\":\"%s\",\"code\":\"%s\",\"led\":%d,"
                 "\"invert\":%d,\"pause\":%d,\"step\":%d,\"wifi\":%s,\"ip\":\"%s\",\"rc522\":%s}\n",
                 FIRMWARE_VERSION, jsonEscape(cfg.ssid).c_str(), cfg.pass.length() ? "true" : "false", jsonEscape(cfg.server).c_str(),
                 cfg.code.length() > 4 ? (cfg.code.substring(0, 4) + "…").c_str() : cfg.code.c_str(), cfg.ledPin, cfg.invert,
@@ -237,8 +251,14 @@ void handleCommand(String line) {
   if (!line.startsWith("fc:")) return;
   line = line.substring(3);
   if (line == "status") return printStatus();
+  if (line == "connect") {  // neue WLAN-Daten ausprobieren (ohne Neustart – die USB-Verbindung bleibt bestehen)
+    WiFi.disconnect();
+    connectNow = true;
+    out.println("fc:ok connect");
+    return;
+  }
   if (line == "restart") {
-    Serial.println("fc:ok restart");
+    out.println("fc:ok restart");
     delay(200);
     ESP.restart();
   }
@@ -246,17 +266,17 @@ void handleCommand(String line) {
     prefs.begin("musikbox", false);
     prefs.clear();
     prefs.end();
-    Serial.println("fc:ok reset");
+    out.println("fc:ok reset");
     delay(200);
     ESP.restart();
   }
   if (!line.startsWith("set ")) {
-    Serial.println("fc:err unbekannter Befehl");
+    out.println("fc:err unbekannter Befehl");
     return;
   }
   int eq = line.indexOf('=');
   if (eq < 0) {
-    Serial.println("fc:err ohne =");
+    out.println("fc:err ohne =");
     return;
   }
   String key = line.substring(4, eq);
@@ -275,26 +295,28 @@ void handleCommand(String line) {
   else ok = false;
   prefs.end();
   if (!ok) {
-    Serial.printf("fc:err %s\n", key.c_str());
+    out.printf("fc:err %s\n", key.c_str());
     return;
   }
-  bool wifiChanged = key == "ssid" || key == "pass";
   loadSettings();
-  if (wifiChanged) WiFi.disconnect();
-  Serial.printf("fc:ok %s\n", key.c_str());
+  out.printf("fc:ok %s\n", key.c_str());
 }
 
-String serialLine;
-void readSerial() {
-  while (Serial.available()) {
-    char c = Serial.read();
+void readLines(Stream &in, String &line) {
+  while (in.available()) {
+    char c = in.read();
     if (c == '\n' || c == '\r') {
-      if (serialLine.length()) handleCommand(serialLine);
-      serialLine = "";
-    } else if (serialLine.length() < 200) {
-      serialLine += c;
+      if (line.length()) handleCommand(line);
+      line = "";
+    } else if (line.length() < 200) {
+      line += c;
     }
   }
+}
+String uartLine, usbLine;
+void readSerial() {
+  readLines(Serial, uartLine);
+  readLines(USBSerial, usbLine);
 }
 
 // --- Ablauf ---------------------------------------------------------------------------------
@@ -304,9 +326,11 @@ uint32_t lastPoll = 0, lastVolume = 0;
 
 void setup() {
   Serial.begin(115200);
+  USBSerial.setTxTimeoutMs(0);
+  USBSerial.begin();
   loadSettings();
   led(0, 0, 0);
-  Serial.printf("FamilyConnect Musik-Box %s\n", FIRMWARE_VERSION);
+  out.printf("FamilyConnect Musik-Box %s\n", FIRMWARE_VERSION);
   pinMode(PIN_ENC_A, INPUT_PULLUP);
   pinMode(PIN_ENC_B, INPUT_PULLUP);
   pinMode(PIN_ENC_SW, INPUT_PULLUP);
@@ -319,10 +343,10 @@ void setup() {
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);  // liest besser durch die Karte und die Gehäusewand
   rc522Version = rfid.PCD_ReadRegister(MFRC522::VersionReg);
-  Serial.printf("RC522 Version 0x%02X %s\n", rc522Version,
+  out.printf("RC522 Version 0x%02X %s\n", rc522Version,
                 (rc522Version == 0x91 || rc522Version == 0x92 || rc522Version == 0xB2) ? "(ok)" : "(nicht gefunden? Verkabelung prüfen)");
   if (!configured()) {
-    Serial.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
+    out.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
     return;
   }
   ensureWifi();
@@ -334,6 +358,13 @@ void loop() {
   uint32_t now = millis();
   // nicht eingerichtet: langsam lila blinken
   if (!configured() && !ledOffAt) led(now / 700 % 2 ? 30 : 0, 0, now / 700 % 2 ? 20 : 0);
+  // kein WLAN: nach „fc:connect“ sofort, sonst alle 30 s neu versuchen
+  if (configured() && WiFi.status() != WL_CONNECTED && (connectNow || now - lastWifiTry > 30000)) {
+    connectNow = false;
+    lastWifiTry = now;
+    ensureWifi();
+    if (WiFi.status() == WL_CONNECTED) flash(0, 30, 30, 600);  // türkis: bereit
+  }
   if (ledOffAt && now > ledOffAt) {
     led(0, 0, 0);
     ledOffAt = 0;
@@ -350,17 +381,17 @@ void loop() {
         String token = readToken();
         rfid.PICC_HaltA();
         if (token.length()) {
-          Serial.printf("Karte %s → %s\n", uid.c_str(), token.c_str());
+          out.printf("Karte %s → %s\n", uid.c_str(), token.c_str());
           post("card", "{\"token\":\"" + token + "\"}");
         } else {
-          Serial.printf("Karte %s ohne FamilyConnect-Adresse – in der App beschreiben\n", uid.c_str());
+          out.printf("Karte %s ohne FamilyConnect-Adresse – in der App beschreiben\n", uid.c_str());
           flash(70, 0, 40, 2500);  // lila: Karte unbekannt
         }
       } else {
         rfid.PICC_HaltA();
       }
     } else if (currentUid.length() && ++misses >= 4) {
-      Serial.println("Karte entfernt");
+      out.println("Karte entfernt");
       currentUid = "";
       if (cfg.pauseOnRemove) post("removed", "{}");
     }

@@ -66,11 +66,8 @@ export class BoxConsole {
   }
 
   async open() {
+    // Ohne Reset öffnen: An der eingebauten USB-Buchse würde ein Neustart die Verbindung trennen
     await this.#port.open({ baudRate: 115200 });
-    // ESP32 sauber neu starten (EN über RTS kurz auf low, IO0 nicht festhalten)
-    await this.#port.setSignals({ dataTerminalReady: false, requestToSend: true });
-    await new Promise((r) => setTimeout(r, 120));
-    await this.#port.setSignals({ dataTerminalReady: false, requestToSend: false });
     const decoder = new TextDecoderStream();
     this.#closed = this.#port.readable!.pipeTo(decoder.writable as WritableStream<Uint8Array>).catch(() => undefined);
     this.#reader = decoder.readable.getReader();

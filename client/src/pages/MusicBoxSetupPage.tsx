@@ -118,16 +118,16 @@ function MusicBoxSetup() {
           await con.open();
           consoleRef.current = con;
         }
-        if (!(await con.status())) throw new Error('Die Box antwortet nicht. Ist die Firmware aufgespielt? Sonst die andere USB-Buchse („COM“/„UART“) versuchen.');
+        if (!(await con.status())) throw new Error('Die Box antwortet nicht. USB-Kabel kurz aus- und wieder einstecken, „anderen Anschluss wählen“ und nochmal übertragen. Hilft das nicht: Firmware nochmal aufspielen (die neue Version antwortet an beiden USB-Buchsen).');
+        await con.set('led', ledPin);
+        await con.set('invert', invert ? '1' : '0');
         await con.set('ssid', ssid.trim());
         if (pass) await con.set('pass', pass);
         await con.set('server', server);
         await con.set('code', box!.token);
-        await con.set('led', ledPin);
-        await con.set('invert', invert ? '1' : '0');
-        await con.send('fc:restart');
-        addLog('Einstellungen übertragen – die Box startet neu und verbindet sich …');
-        // nach dem Neustart: warten, bis das WLAN steht
+        await con.send('fc:connect');
+        addLog('Einstellungen übertragen – die Box verbindet sich mit dem WLAN …');
+        // warten, bis das WLAN steht (die Box braucht bis zu 15 s)
         let s: BoxStatus | null = null;
         for (let i = 0; i < 8 && !s?.wifi; i++) {
           await new Promise((r) => setTimeout(r, 2500));
@@ -232,7 +232,7 @@ function MusicBoxSetup() {
             const s = await consoleRef.current.status();
             if (s) setStatus(s);
             addLog(s ? `Zustand: WLAN ${s.wifi ? `verbunden (${s.ip})` : 'nicht verbunden'}, Kartenleser ${s.rc522 ? 'ok' : 'nicht gefunden'}` : 'Keine Antwort von der Box');
-          })}>Box neu starten und Zustand abfragen</button>
+          })}>Zustand abfragen</button>
         )}
       </details>
     </div>

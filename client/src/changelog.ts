@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.73',
+    date: '2026-11-03',
+    title: 'Musik-Box: Einrichten über beide USB-Buchsen',
+    changes: [
+      'Musik-Box-Firmware 2.1 antwortet an beiden USB-C-Buchsen des ESP32 – WLAN und Code kommen jetzt an, egal wo das Kabel steckt',
+      'Die Box verbindet sich nach dem Übertragen sofort mit dem WLAN, ohne Neustart',
+      'Behoben: Absturz der Einrichtungsseite beim Aufspielen in neueren Chrome-Versionen',
+    ],
+  },
+  {
     version: '1.72',
     date: '2026-11-03',
     title: 'Musik-Box im Browser aufspielen und einrichten',
