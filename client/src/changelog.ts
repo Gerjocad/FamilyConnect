@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.72',
+    date: '2026-11-03',
+    title: 'Musik-Box im Browser aufspielen und einrichten',
+    changes: [
+      'Musik → Musik-Box → „Per USB einrichten“: am PC in Chrome oder Edge die Firmware aufspielen – ohne Programme zu installieren',
+      'WLAN-Name und Passwort eintippen, Server und Box-Code kommen automatisch dazu; das Passwort geht nur über das USB-Kabel an die Box',
+      'Danach zeigt die Seite, ob die Box im WLAN ist und der Kartenleser gefunden wurde',
+    ],
+  },
+  {
     version: '1.71',
     date: '2026-11-02',
     title: 'Finanzen: einmalige Zahlungen',

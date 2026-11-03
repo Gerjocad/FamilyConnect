@@ -9,7 +9,7 @@ Karte heraus → Pause, wieder hinein → weiter. Drehknopf = Lautstärke (drüc
 | Ordner | Inhalt |
 | --- | --- |
 | `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, Drehknopf, `knopf_test.stl` (nur die Nabe zum Ausprobieren) |
-| `firmware/` | PlatformIO-Projekt für den ESP32-S3-DevKitC-1 (RC522, EC11, 2 Tasten). `include/config.example.h` → `include/config.h` kopieren und ausfüllen |
+| `firmware/` | PlatformIO-Projekt für den ESP32-S3-DevKitC-1 (RC522, Drehgeber, 2 Tasten). Aufspielen und Einrichten am einfachsten in der App: **Musik → Musik-Box → „Per USB einrichten“** (Chrome/Edge am PC). `web-firmware.sh` baut die Datei dafür (`client/public/firmware/musikbox/`); `include/config.h` ist nur noch optional |
 
 ## Kurz: Verkabelung
 

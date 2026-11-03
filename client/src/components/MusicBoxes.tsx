@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { api, getServerUrl } from '../api';
 import { formatTimestamp } from '../dates';
 import { useFamily } from '../session';
@@ -7,7 +8,7 @@ import { useAsync } from './useAsync';
 
 interface MusicBox { id: number; name: string; token: string; created_at: string; last_seen_at: string | null }
 
-/** Musik: Codes für Musik-Boxen (ESP32 mit Kartenleser) – kommen in die config.h der Box */
+/** Musik: Codes für Musik-Boxen (ESP32 mit Kartenleser) – per USB auf die Box übertragen (MusicBoxSetupPage) */
 export function MusicBoxes() {
   const { family } = useFamily();
   const base = `/families/${family.id}/music-boxes`;
@@ -24,7 +25,7 @@ export function MusicBoxes() {
   return (
     <section className="card music-boxes">
       <h2>📦 Musik-Box</h2>
-      <p className="muted">Für die selbstgebaute Box mit Kartenleser: Karte rein → Playlist läuft, Karte raus → Pause. Code und Adresse kommen in die Datei <code>config.h</code> der Box.</p>
+      <p className="muted">Für die selbstgebaute Box mit Kartenleser: Karte rein → Playlist läuft, Karte raus → Pause. Code erstellen, dann am PC „Per USB einrichten“ – das spielt die Firmware auf und überträgt WLAN und Code.</p>
       {items?.map((b) => (
         <div key={b.id} className="wall-display">
           <span className="wall-display-info">
@@ -32,6 +33,7 @@ export function MusicBoxes() {
             <code className="wall-code">{b.token}</code>
             <small className="muted">{b.last_seen_at ? `zuletzt aktiv ${formatTimestamp(b.last_seen_at)}` : 'noch nicht verbunden'}</small>
           </span>
+          <Link to={`/musik/box/${b.id}`} className="button small">Per USB einrichten</Link>
           <button type="button" className="link-button danger-link" disabled={busy}
             onClick={() => confirm(`„${b.name}“ entfernen? Die Box funktioniert danach nicht mehr.`) && void run(async () => {
               await api(`${base}/${b.id}`, { method: 'DELETE' });
@@ -42,7 +44,7 @@ export function MusicBoxes() {
         </div>
       ))}
       {items && items.length > 0 && (
-        <small className="hint">In <code>config.h</code>: <code>SERVER_URL "{server}"</code> und <code>BOX_CODE "{items[0].token}"</code></small>
+        <small className="hint">Mit PlatformIO statt im Browser? In <code>config.h</code>: <code>SERVER_URL "{server}"</code> und <code>BOX_CODE "{items[0].token}"</code></small>
       )}
       <form className="row align-end" onSubmit={(e) => {
         e.preventDefault();

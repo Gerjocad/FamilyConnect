@@ -7,13 +7,72 @@
 //   RC522: SDA/SS 10 · SCK 12 · MOSI 11 · MISO 13 · RST 9 · 3.3V · GND   (nur 3,3 V!)
 //   Drehgeber EC11: A/CLK 4 · B/DT 5 · Taster SW 6 · C und zweiter Taster-Pin an GND
 //   Taste „zurück“ 15 · Taste „vor“ 16 · jeweils anderer Pin an GND
+//
+// Einstellungen (WLAN, Server, Box-Code …) liegen im Flash des ESP32 und werden über USB gesetzt – am einfachsten in
+// der App unter Musik → Musik-Box → „Per USB einrichten“ (Chrome/Edge am PC). Zeilen über die serielle Schnittstelle
+// (115200 Baud):  fc:set ssid=…  ·  fc:set pass=…  ·  fc:set server=https://…  ·  fc:set code=…  ·  fc:set led=48|38
+//                 fc:set invert=0|1  ·  fc:set pause=0|1  ·  fc:set step=5  ·  fc:status  ·  fc:restart  ·  fc:reset
+// Wer lieber mit PlatformIO baut, kann die Startwerte weiter in include/config.h eintragen (optional).
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <MFRC522.h>
+#include <Preferences.h>
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#if __has_include("config.h")
 #include "config.h"
+#endif
+#ifndef WIFI_SSID
+#define WIFI_SSID ""
+#endif
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD ""
+#endif
+#ifndef SERVER_URL
+#define SERVER_URL ""
+#endif
+#ifndef BOX_CODE
+#define BOX_CODE ""
+#endif
+#ifndef PAUSE_ON_REMOVE
+#define PAUSE_ON_REMOVE 1
+#endif
+#ifndef VOLUME_STEP
+#define VOLUME_STEP 5
+#endif
+#ifndef ENCODER_INVERT
+#define ENCODER_INVERT 0
+#endif
+#ifndef RGB_LED_PIN
+#define RGB_LED_PIN 48
+#endif
+#define FIRMWARE_VERSION "2.0"
+
+// --- Einstellungen (Flash, Namensraum „musikbox“) --------------------------------------------
+Preferences prefs;
+struct Settings {
+  String ssid, pass, server, code;
+  uint8_t ledPin;
+  bool invert, pauseOnRemove;
+  int step;
+} cfg;
+
+void loadSettings() {
+  prefs.begin("musikbox", true);
+  cfg.ssid = prefs.getString("ssid", WIFI_SSID);
+  cfg.pass = prefs.getString("pass", WIFI_PASSWORD);
+  cfg.server = prefs.getString("server", SERVER_URL);
+  cfg.code = prefs.getString("code", BOX_CODE);
+  cfg.ledPin = prefs.getUChar("led", RGB_LED_PIN);
+  cfg.invert = prefs.getBool("invert", ENCODER_INVERT);
+  cfg.pauseOnRemove = prefs.getBool("pause", PAUSE_ON_REMOVE);
+  cfg.step = prefs.getInt("step", VOLUME_STEP);
+  prefs.end();
+  while (cfg.server.endsWith("/")) cfg.server.remove(cfg.server.length() - 1);
+}
+
+bool configured() { return cfg.ssid.length() && cfg.server.length() && cfg.code.length(); }
 
 // --- Pins ---------------------------------------------------------------------------------
 constexpr uint8_t PIN_RC522_SS = 10;
@@ -30,7 +89,7 @@ constexpr uint8_t PIN_BTN_NEXT = 16;
 MFRC522 rfid(PIN_RC522_SS, PIN_RC522_RST);
 
 // --- Status-LED -------------------------------------------------------------------------------
-void led(uint8_t r, uint8_t g, uint8_t b) { neopixelWrite(RGB_LED_PIN, r, g, b); }
+void led(uint8_t r, uint8_t g, uint8_t b) { neopixelWrite(cfg.ledPin, r, g, b); }
 uint32_t ledOffAt = 0;
 void flash(uint8_t r, uint8_t g, uint8_t b, uint32_t ms) {
   led(r, g, b);
@@ -39,10 +98,10 @@ void flash(uint8_t r, uint8_t g, uint8_t b, uint32_t ms) {
 
 // --- WLAN ---------------------------------------------------------------------------------
 void ensureWifi() {
-  if (WiFi.status() == WL_CONNECTED) return;
-  Serial.printf("WLAN %s verbinden …\n", WIFI_SSID);
+  if (WiFi.status() == WL_CONNECTED || !cfg.ssid.length()) return;
+  Serial.printf("WLAN %s verbinden …\n", cfg.ssid.c_str());
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.begin(cfg.ssid.c_str(), cfg.pass.c_str());
   for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) {
     led(i % 2 ? 40 : 0, i % 2 ? 25 : 0, 0);  // gelb blinken
     delay(250);
@@ -56,6 +115,11 @@ void ensureWifi() {
 // Antwort-Code (200 = ok); bei Fehlern rote LED. Hinweis: Das Zertifikat wird hier nicht geprüft
 // (setInsecure), damit es ohne Zertifikatspflege läuft – der Box-Code gilt nur für Musik.
 int post(const char *path, const String &body) {
+  if (!configured()) {
+    Serial.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
+    flash(70, 0, 40, 1500);
+    return -1;
+  }
   ensureWifi();
   if (WiFi.status() != WL_CONNECTED) {
     flash(60, 0, 0, 2000);
@@ -64,7 +128,7 @@ int post(const char *path, const String &body) {
   WiFiClientSecure tls;
   tls.setInsecure();
   HTTPClient http;
-  String url = String(SERVER_URL) + "/api/music-box/" + BOX_CODE + "/" + path;
+  String url = cfg.server + "/api/music-box/" + cfg.code + "/" + path;
   http.setTimeout(10000);
   if (!http.begin(tls, url)) return -1;
   http.addHeader("Content-Type", "application/json");
@@ -147,6 +211,92 @@ struct Button {
 };
 Button btnPrev(PIN_BTN_PREV), btnNext(PIN_BTN_NEXT), btnEnc(PIN_ENC_SW);
 
+// --- Einrichten über USB (Zeilen „fc:…“) -----------------------------------------------------------
+String jsonEscape(const String &s) {
+  String out;
+  for (char c : s) {
+    if (c == '"' || c == '\\') out += '\\';
+    if ((uint8_t)c >= 0x20) out += c;
+  }
+  return out;
+}
+
+byte rc522Version = 0;
+void printStatus() {
+  bool rcOk = rc522Version == 0x91 || rc522Version == 0x92 || rc522Version == 0xB2;
+  Serial.printf("fc:status {\"version\":\"%s\",\"ssid\":\"%s\",\"pass\":%s,\"server\":\"%s\",\"code\":\"%s\",\"led\":%d,"
+                "\"invert\":%d,\"pause\":%d,\"step\":%d,\"wifi\":%s,\"ip\":\"%s\",\"rc522\":%s}\n",
+                FIRMWARE_VERSION, jsonEscape(cfg.ssid).c_str(), cfg.pass.length() ? "true" : "false", jsonEscape(cfg.server).c_str(),
+                cfg.code.length() > 4 ? (cfg.code.substring(0, 4) + "…").c_str() : cfg.code.c_str(), cfg.ledPin, cfg.invert,
+                cfg.pauseOnRemove, cfg.step, WiFi.status() == WL_CONNECTED ? "true" : "false",
+                WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString().c_str() : "", rcOk ? "true" : "false");
+}
+
+void handleCommand(String line) {
+  line.trim();
+  if (!line.startsWith("fc:")) return;
+  line = line.substring(3);
+  if (line == "status") return printStatus();
+  if (line == "restart") {
+    Serial.println("fc:ok restart");
+    delay(200);
+    ESP.restart();
+  }
+  if (line == "reset") {
+    prefs.begin("musikbox", false);
+    prefs.clear();
+    prefs.end();
+    Serial.println("fc:ok reset");
+    delay(200);
+    ESP.restart();
+  }
+  if (!line.startsWith("set ")) {
+    Serial.println("fc:err unbekannter Befehl");
+    return;
+  }
+  int eq = line.indexOf('=');
+  if (eq < 0) {
+    Serial.println("fc:err ohne =");
+    return;
+  }
+  String key = line.substring(4, eq);
+  String value = line.substring(eq + 1);
+  key.trim();
+  prefs.begin("musikbox", false);
+  bool ok = true;
+  if (key == "ssid" && value.length() <= 32) prefs.putString("ssid", value);
+  else if (key == "pass" && value.length() <= 64) prefs.putString("pass", value);
+  else if (key == "server" && value.startsWith("http")) prefs.putString("server", value);
+  else if (key == "code" && value.length() >= 4 && value.length() <= 64) prefs.putString("code", value);
+  else if (key == "led" && (value == "48" || value == "38")) prefs.putUChar("led", value.toInt());
+  else if (key == "invert") prefs.putBool("invert", value == "1");
+  else if (key == "pause") prefs.putBool("pause", value == "1");
+  else if (key == "step" && value.toInt() >= 1 && value.toInt() <= 25) prefs.putInt("step", value.toInt());
+  else ok = false;
+  prefs.end();
+  if (!ok) {
+    Serial.printf("fc:err %s\n", key.c_str());
+    return;
+  }
+  bool wifiChanged = key == "ssid" || key == "pass";
+  loadSettings();
+  if (wifiChanged) WiFi.disconnect();
+  Serial.printf("fc:ok %s\n", key.c_str());
+}
+
+String serialLine;
+void readSerial() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (serialLine.length()) handleCommand(serialLine);
+      serialLine = "";
+    } else if (serialLine.length() < 200) {
+      serialLine += c;
+    }
+  }
+}
+
 // --- Ablauf ---------------------------------------------------------------------------------
 String currentUid;
 uint8_t misses = 0;
@@ -154,7 +304,9 @@ uint32_t lastPoll = 0, lastVolume = 0;
 
 void setup() {
   Serial.begin(115200);
+  loadSettings();
   led(0, 0, 0);
+  Serial.printf("FamilyConnect Musik-Box %s\n", FIRMWARE_VERSION);
   pinMode(PIN_ENC_A, INPUT_PULLUP);
   pinMode(PIN_ENC_B, INPUT_PULLUP);
   pinMode(PIN_ENC_SW, INPUT_PULLUP);
@@ -166,14 +318,22 @@ void setup() {
   SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_RC522_SS);
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);  // liest besser durch die Karte und die Gehäusewand
-  byte version = rfid.PCD_ReadRegister(MFRC522::VersionReg);
-  Serial.printf("RC522 Version 0x%02X %s\n", version, (version == 0x91 || version == 0x92 || version == 0xB2) ? "(ok)" : "(nicht gefunden? Verkabelung prüfen)");
+  rc522Version = rfid.PCD_ReadRegister(MFRC522::VersionReg);
+  Serial.printf("RC522 Version 0x%02X %s\n", rc522Version,
+                (rc522Version == 0x91 || rc522Version == 0x92 || rc522Version == 0xB2) ? "(ok)" : "(nicht gefunden? Verkabelung prüfen)");
+  if (!configured()) {
+    Serial.println("Noch nicht eingerichtet – in der App unter Musik → Musik-Box → „Per USB einrichten“");
+    return;
+  }
   ensureWifi();
   flash(0, 30, 30, 600);  // türkis: bereit
 }
 
 void loop() {
+  readSerial();
   uint32_t now = millis();
+  // nicht eingerichtet: langsam lila blinken
+  if (!configured() && !ledOffAt) led(now / 700 % 2 ? 30 : 0, 0, now / 700 % 2 ? 20 : 0);
   if (ledOffAt && now > ledOffAt) {
     led(0, 0, 0);
     ledOffAt = 0;
@@ -202,7 +362,7 @@ void loop() {
     } else if (currentUid.length() && ++misses >= 4) {
       Serial.println("Karte entfernt");
       currentUid = "";
-      if (PAUSE_ON_REMOVE) post("removed", "{}");
+      if (cfg.pauseOnRemove) post("removed", "{}");
     }
   }
 
@@ -215,7 +375,7 @@ void loop() {
     encoderTicks -= detents * 4;
     interrupts();
     if (detents) {
-      int delta = detents * VOLUME_STEP * (ENCODER_INVERT ? -1 : 1);
+      int delta = detents * cfg.step * (cfg.invert ? -1 : 1);
       post("control", "{\"action\":\"volume\",\"delta\":" + String(delta) + "}");
     }
   }

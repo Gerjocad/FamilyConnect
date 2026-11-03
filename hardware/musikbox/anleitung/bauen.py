@@ -222,7 +222,7 @@ story = [
     KeepTogether([P('Gut zu wissen', 'h2'), P('• <b>Taster</b> (4 Beinchen): Je zwei Beinchen sind innen verbunden. Nimm zwei <b>diagonal gegenüberliegende</b> – dann passt es immer. '
       'An jedes der beiden ein Stück Litze oder ein abgeschnittenes Dupont-Kabel löten (Buchse am anderen Ende behalten).')]),
     P('• <b>Drehgeber-Modul:</b> Die Beschriftung auf der Platine lautet von links: 5V, KEY, S2, S1, GND. Widerstände sind schon '
-      'drauf. Ist lauter/leiser vertauscht: in <b>config.h</b> <b>ENCODER_INVERT 1</b> – oder S1 und S2 tauschen.'),
+      'drauf. Ist lauter/leiser vertauscht: beim Einrichten „Drehknopf andersherum“ wählen – oder S1 und S2 tauschen.'),
     P('• <b>RC522:</b> Die Stiftleiste wird so eingelötet, dass die Pins auf der Bauteilseite herauskommen (die flache Rückseite liegt '
       'später an der Wand des Kartenschachts).'),
     P('• Weitere Widerstände brauchst du nicht – die Software schaltet die inneren Pull-ups des ESP32 ein.'),
@@ -283,26 +283,30 @@ story = [
     ]),
     PageBreak(),
 
-    P('6. Software aufspielen', 'h1'),
+    P('6. Software aufspielen und einrichten – direkt im Browser', 'h1'),
+    P('Dafür brauchst du nichts zu installieren: einen <b>PC oder Laptop mit Chrome oder Edge</b> (Firefox, Safari und die '
+      'Handy-App können nicht per USB mit dem ESP32 sprechen).'),
     steps([
-        'Visual Studio Code installieren und darin die Erweiterung <b>PlatformIO IDE</b>.',
-        'Den Ordner <b>hardware/musikbox/firmware</b> öffnen (aus dem FamilyConnect-Repository).',
-        '<b>include/config.example.h</b> nach <b>include/config.h</b> kopieren und ausfüllen: WLAN (2,4 GHz), Server-Adresse und '
-        'Box-Code (Kapitel 7). Die Datei bleibt auf deinem PC.',
-        'ESP32 per USB an die Buchse „COM“/„UART“ anstecken, in PlatformIO auf <b>Upload</b> (Pfeil) klicken.',
-        'Im <b>Serial Monitor</b> nachsehen: „RC522 Version 0x92 (ok)“, „Verbunden, IP …“ und danach jede gelesene Karte.',
+        'In FamilyConnect <b>Musik</b> öffnen (Spotify muss verbunden sein), unten bei <b>Musik-Box</b> einen Namen eingeben '
+        '(z. B. „Kinderzimmer“) → <b>Code erstellen</b>.',
+        'Bei der Box auf <b>„Per USB einrichten“</b> tippen. Am Handy zeigt die App die Adresse, die du am PC öffnest.',
+        'ESP32 per USB-C an den PC: Buchse <b>„COM“/„UART“</b> (unbeschriftet: erst eine probieren, sonst die andere). '
+        '→ <b>ESP32 auswählen</b> und im Fenster den USB-Eintrag wählen.',
+        '<b>Firmware aufspielen</b> – dauert etwa eine Minute. Klappt es nicht: BOOT-Taste am ESP32 gedrückt halten, kurz RESET '
+        'drücken, BOOT loslassen, nochmal.',
+        'WLAN-Name (2,4 GHz) und Passwort eintragen → <b>Auf die Box übertragen</b>. Server-Adresse und Box-Code kommen automatisch '
+        'dazu. Das Passwort geht nur über das Kabel an die Box.',
+        'Die Seite zeigt danach, ob die Box im WLAN ist und ob der Kartenleser gefunden wurde. Unter „Protokoll der Box“ steht, was '
+        'die Box meldet.',
     ]),
-    Paragraph('#define WIFI_SSID     "MeinWLAN"<br/>#define WIFI_PASSWORD "MeinPasswort"<br/>'
-              '#define SERVER_URL    "https://…sslip.io"<br/>#define BOX_CODE      "ABCDEFGHJKLM"<br/>'
-              '#define ENCODER_INVERT 0   // 1, wenn lauter/leiser vertauscht ist<br/>'
-              '#define RGB_LED_PIN   48   // leuchtet die LED nicht: 38', st['code']),
-    P('7. In FamilyConnect einrichten', 'h1'),
+    P('7. In FamilyConnect einstellen', 'h1'),
     steps([
-        'In der App <b>Musik</b> öffnen (Spotify muss verbunden sein).',
-        'Unten bei <b>Musik-Box</b> einen Namen eingeben (z. B. „Kinderzimmer“) → <b>Code erstellen</b>.',
-        'Code und Server-Adresse in config.h eintragen, neu aufspielen.',
-        'Lautsprecher unter „Lautsprecher: … ändern“ festlegen – sonst spielt es auf dem zuletzt aktiven Gerät.',
+        'Lautsprecher unter Musik → „Lautsprecher: … ändern“ festlegen – sonst spielt es auf dem zuletzt aktiven Gerät.',
+        'LED-Farbe falsch oder Drehknopf andersherum? Auf der Einrichtungsseite „LED am ESP32“ bzw. „Drehknopf andersherum“ '
+        'ändern und nochmal übertragen.',
     ]),
+    P('Lieber selbst bauen? Mit PlatformIO den Ordner hardware/musikbox/firmware öffnen und hochladen; die Startwerte können '
+      'weiter in include/config.h stehen (Vorlage config.example.h), WLAN und Code lassen sich aber auch danach im Browser setzen.'),
     P('Karten bauen', 'h2'),
     img('karte.png', 95, 'Vorderseite (für das Cover) und Rückseite mit Vertiefung für den NFC-Aufkleber – 64 × 64 × 2 mm'),
     steps([
@@ -335,11 +339,12 @@ story = [
         ['Problem', 'Lösung'],
         ['„RC522 … nicht gefunden?“ im Monitor', 'Kabel prüfen: SDA = 10, SCK = 12, MOSI = 11, MISO = 13, RST = 9 (nicht der RST-Pin des ESP32!), 3,3 V'],
         ['Drehen tut nichts', 'S1/S2 an GPIO 4/5? „5V“-Pin des Moduls an 3V3, GND verbunden?'],
-        ['Lauter/leiser vertauscht', 'ENCODER_INVERT 1 in config.h oder S1 und S2 tauschen'],
+        ['Lauter/leiser vertauscht', 'auf der Einrichtungsseite „Drehknopf andersherum“ – oder S1 und S2 tauschen'],
         ['Taste reagiert nicht', 'diagonale Beinchen verwenden; Kappe drückt nicht → Klebeband unterlegen'],
         ['Karte wird nicht erkannt', 'NTAG-Aufkleber verwenden, mittig aufkleben; RC522 flach an der Schachtwand'],
-        ['LED bleibt aus', 'RGB_LED_PIN 38 statt 48 in config.h'],
-        ['Box verbindet sich nicht', 'WLAN muss 2,4 GHz sein; Name/Passwort in config.h prüfen'],
+        ['LED bleibt aus', 'auf der Einrichtungsseite „LED am ESP32: GPIO 38“ wählen und übertragen'],
+        ['Box verbindet sich nicht', 'WLAN muss 2,4 GHz sein; auf der Einrichtungsseite Name/Passwort nochmal übertragen'],
+        ['„Die Box antwortet nicht“ beim Übertragen', 'andere USB-Buchse (COM/UART) nehmen; Firmware zuerst aufspielen'],
         ['LED rot nach dem Einstecken', 'Lautsprecher schläft: einmal in der Spotify-App darauf abspielen, Karte neu einstecken'],
         ['Board sitzt zu stramm / wackelt im Boden', 'in musikbox.scad esp_pcb anpassen (gemessen: 56,7 × 28,2 mm), Boden neu drucken'],
         ['Knopf zu stramm / locker', 'in musikbox.scad welle_klemm kleiner (0.1) / größer (0.3)'],
