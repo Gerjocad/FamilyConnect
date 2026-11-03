@@ -4,6 +4,7 @@ Karte mit NFC-Aufkleber in den Schlitz stecken → Spotify-Playlist läuft auf d
 Karte heraus → Pause, wieder hinein → weiter. Drehknopf = Lautstärke (drücken = Pause/Weiter), zwei Tasten = Titel zurück/vor.
 
 **Bauanleitung mit Teileliste, Verkabelungsplan und allen Schritten:** [Anleitung-Musikbox.pdf](Anleitung-Musikbox.pdf)
+(Quelle: `anleitung/bauen.py`, Bilder aus `anleitung/bilder.scad` – nach Änderungen `python3 bauen.py` im Ordner `anleitung/`)
 
 | Ordner | Inhalt |
 | --- | --- |
