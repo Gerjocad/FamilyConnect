@@ -57,7 +57,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL, locateAutoTimeoutMs } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -434,7 +434,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(kniffelRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(gamesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
-  app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
+  app.use(locateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder, autoTimeoutMs: locateAutoTimeoutMs }));
   app.use(logoSearchRouter(db, { auth, member, finder: logoFinder }));
   app.use(placesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push, geocoder }));
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

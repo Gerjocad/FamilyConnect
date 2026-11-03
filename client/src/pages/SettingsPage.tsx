@@ -55,7 +55,7 @@ export function SettingsPage() {
     }
   };
 
-  const saveProfile = (patch: { name?: string; color?: string; initials?: string | null; theme?: string; beta?: boolean }) =>
+  const saveProfile = (patch: { name?: string; color?: string; initials?: string | null; theme?: string }) =>
     void profile.run(async () => {
       await api('/me', { method: 'PATCH', body: patch });
       await refreshUser();
@@ -322,17 +322,6 @@ export function SettingsPage() {
             <ClimateSettings />
             <h3><Icon name="monitor" size={16} /> Wanddisplay</h3>
             <WallDisplays />
-          </SettingsGroup>
-        )}
-
-        {(isAdmin || user.beta) && (
-          <SettingsGroup id="test" icon="flask" title="Testfunktionen" summary={user.beta ? 'an – nur für dich' : 'aus'}>
-            <p className="muted">Neue Bereiche erst einmal allein ausprobieren – die Familie sieht davon nichts, bis du sie freigibst.</p>
-            <label className="checkbox">
-              <input type="checkbox" checked={user.beta} disabled={profile.busy} onChange={(e) => saveProfile({ beta: e.target.checked })} />
-              🧪 Testfunktionen für mich einschalten
-            </label>
-            {user.beta && <p className="hint">Gerade gibt es nichts zum Testen – „Wo bist du?“ und „Punkte & Belohnungen“ sind für alle freigegeben.</p>}
           </SettingsGroup>
         )}
 

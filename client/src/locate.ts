@@ -18,6 +18,8 @@ export interface LocateRequest {
   address: string | null;
   message: string | null;
   place: { id: number; name: string; icon: string } | null;
+  /** Das Handy antwortet automatisch (Admin fragt / Eltern fragen ein Kind) */
+  auto: boolean;
 }
 
 /** Kurze Nachricht, die man zum Standort dazuschreiben kann */

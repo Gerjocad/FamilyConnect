@@ -66,29 +66,44 @@ export class PushService {
 
   /** Schickt eine Nachricht an Geräte der angegebenen Nutzer */
   async sendToUsers(userIds, { title, body, path }) {
-    if (!this.enabled || userIds.length === 0) return;
+    await this.#deliver(userIds, (token) => ({
+      token,
+      notification: { title, body },
+      data: { path: path ?? '/' },
+      android: { priority: 'high', notification: { channel_id: 'familyconnect', color: '#e8590c' } },
+    }));
+  }
+
+  /** Stille Daten-Nachricht an die App (ohne Anzeige), z. B. „Wo bist du?“ automatisch beantworten. Liefert die Anzahl Geräte. */
+  async sendData(userIds, data) {
+    const strings = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
+    return this.#deliver(userIds, (token) => ({ token, data: strings, android: { priority: 'high', ttl: '60s' } }));
+  }
+
+  /** Android-Geräte der Person (nur die können still antworten) */
+  devicesOf(userId) {
+    return this.#db.prepare("SELECT COUNT(*) AS n FROM devices WHERE user_id = ? AND platform = 'android'").get(userId).n;
+  }
+
+  async #deliver(userIds, messageFor) {
+    if (!this.enabled || userIds.length === 0) return 0;
     const tokens = this.#db
       .prepare(`SELECT token FROM devices WHERE user_id IN (${userIds.map(() => '?').join(',')})`)
       .all(...userIds)
       .map((r) => r.token);
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) return 0;
 
     const accessToken = await this.#accessToken();
     const endpoint = this.#account.fcm_endpoint
       ?? `https://fcm.googleapis.com/v1/projects/${this.#account.project_id}/messages:send`;
+    let delivered = 0;
     await Promise.all(tokens.map(async (token) => {
       const res = await this.#fetch(endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title, body },
-            data: { path: path ?? '/' },
-            android: { priority: 'high', notification: { channel_id: 'familyconnect', color: '#e8590c' } },
-          },
-        }),
+        body: JSON.stringify({ message: messageFor(token) }),
       });
+      if (res.ok) delivered++;
       // Abgemeldete oder ungültige Geräte entfernen
       if (res.status === 404 || res.status === 400) {
         const text = await res.text();
@@ -99,6 +114,7 @@ export class PushService {
         console.error(`Push an Gerät fehlgeschlagen: ${res.status} ${await res.text()}`);
       }
     }));
+    return delivered;
   }
 
   /** Alle Familienmitglieder außer dem Auslöser */

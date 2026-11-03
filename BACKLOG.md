@@ -1,68 +1,58 @@
-# Geplant – noch nicht umgesetzt
+# Projekte und Ideen – Stand 03.11.2026
 
-Ideen und abgestimmte Vorhaben, die erst auf Zuruf umgesetzt werden.
+Was gerade läuft, was gemerkt ist und was erst auf Zuruf umgesetzt wird. Neue Ideen kommen hier dazu,
+erledigte wandern nach unten.
 
-## Offen – wartet auf Rückmeldung
+## In Arbeit
 
-- **Tuya-Thermometer**: Werte kommen inzwischen an (Wanddisplay zeigt 19,1 °C / 70 %). Falls in der App
-  noch etwas fehlt: „Werte testen“ in den Einstellungen ansehen.
+- **Musik-Box** ([hardware/musikbox](hardware/musikbox/)) – Gehäuse gedruckt, Drehknopf passt, Firmware 2.1 im
+  Browser aufspielbar (Musik → Musik-Box → „Per USB einrichten“). Als Nächstes: Firmware 2.1 aufspielen und WLAN
+  einrichten, neuen Boden drucken (ESP32-Halter für das Board 56,7 × 28,2 mm), verkabeln, zusammenbauen, erste Karte
+  testen. Mit echter Hardware noch ungetestet: Kartenlesen, Lautstärke, Tasten.
+- **„Wo bist du?“ Stufe 2 – automatische Antwort** (v1.74, braucht die neue Android-App): Fragt ein Admin, antworten
+  alle Handys automatisch; fragen Eltern ein Kind, antwortet dessen Handy automatisch. Das Handy braucht den Standort
+  „Immer erlauben“; die Person bekommt jedes Mal „… hat deinen Standort abgerufen“. Klappt es nicht, kommt nach 45 s
+  die normale Frage. Muss auf echten Handys getestet werden (auch Stufe 1 mit Adresse und Karte).
+- **Musik über Home Assistant** – laut Nutzer „sind wir dabei“; im Repo ist dazu noch nichts gebaut.
 
-## Später (abgestimmt, noch nicht umsetzen)
+## Gebaut, wartet auf dich
 
-- **ESP32-S3-Familien-Station** (Idee 1 „gefällt zum Teil, ausbaufähig“ – noch nicht umsetzen, erst weiter
-  ausdenken): rundes GC9A01-Display mit WS2812B-Ring (16 LEDs) im Flur/Küche; RC522-Anhänger je Person
-  („bin da/weg“, Gewohnheiten/Dienste abhaken auch ohne Handy), Begrüßung mit Terminen des Tages; Ring in
-  Mülltonnenfarbe am Vorabend + Omron-Taster „rausgestellt“; Radar LD2402 weckt die Anzeige, BH1750 dimmt,
-  EC11 zum Blättern. Technik: Geräte-Code wie beim Wanddisplay, aber mit festgelegten Rechten; Firmware
-  PlatformIO.
-  Vorhandene Teile: ESP32-S3-DevKitC-1 (WROOM-1), TFT 1,8" ST7735S, rund 1,28" GC9A01, Streifen 2,25"
-  ST7789P3 76×284, OLED 0,96" SSD1306, RC522, PIR HC-SR501, Radar HLK-LD2402, 2× BH1750, EC11, KY-037,
-  Omron 12 mm, TTP223, MCP23017, OV7670 (ohne FIFO, eher nicht nutzen), WS2812B 8×8 + Ring 16, SMD-LEDs
-  3528 grün/weiß, SMD-Widerstände 1206 (20/51/100 Ω), IR-Handwisch-Schalter, FTS-06, 3-Stufen-Drehschalter
-  6 A, N20-Motor.
-- **ESP32-Aufsteh-Ampel** für die Kinder – **ausgearbeiteter Plan:** [docs/plaene/aufsteh-ampel.md](docs/plaene/aufsteh-ampel.md)
-  (8×8-Matrix mit Mond/Sonnenaufgang/Sonne, Zeiten in der App, Ferien = Wochenende, „Ich bin wach“ per
-  Berührung). Wartet auf Antworten zu den offenen Fragen, dann bauen.
-- **ESP32-„Bitte lüften“-Lampe** (gefällt – merken, noch nicht umsetzen): WS2812B-Ring im Zimmer leuchtet
-  blau, solange die Luftfeuchte des Tuya-Thermometers über dem Grenzwert liegt (Werte/Grenzen kommen aus
-  dem Raumklima der App), geht nach dem Lüften wieder aus.
-- **Einkaufsliste für die drei ESP32-Geräte** (Stand 22.10.): vorhanden reicht für die Station (ESP32-S3,
-  GC9A01, 16er-Ring, RC522, LD2402, BH1750, Omron, EC11). Dazu kaufen: RFID-Anhänger 13,56 MHz (MIFARE
-  Classic 1K, je Person + Reserve), 2× ESP32-C3 SuperMini (Ampel + Lüften), 1× WS2812B-Ring 16 (Lüften),
-  3× USB-Netzteil 5 V/2 A + Kabel, 3× 1000 µF Elko, 3× 330 Ω Widerstand, Jumperkabel/Lochraster, Gehäuse
-  bzw. Milchglas-Streuscheibe. Ampel nutzt die vorhandene 8×8-Matrix + 2. BH1750.
+- **Aufsteh-Ampel** ([hardware/aufsteh-ampel](hardware/aufsteh-ampel/), Plan: [docs/plaene/aufsteh-ampel.md](docs/plaene/aufsteh-ampel.md))
+  – ESP32 + 8×8-Matrix (roter Mond, gelber Sonnenaufgang, ganze Sonne). Firmware und Verkabelung fertig; wird später
+  gebaut. Danach: Zeiten in der App einstellen (App-Einbindung erst nach dem Bau).
+- **Wandsensor** ([hardware/wandsensor](hardware/wandsensor/)) – Radar weckt das Wanddisplay, BH1750 schaltet den
+  Dark Mode. Fertig, noch nicht getestet.
+- **Zahnputzkamera** ([docs/plaene/zahnputz-kamera.md](docs/plaene/zahnputz-kamera.md)) – Kamera + KI-Auswertung,
+  ob geputzt wird, dazu Geräuscherkennung der elektrischen Zahnbürste. Firmware, sobald die Teile da sind (erst
+  Geräusch, dann Kamera); App-Einbindung („Punkt 2“) später. Keine Bilder speichern oder verschicken – Auswertung
+  nur auf dem Gerät.
 
-- **Punkte & Belohnungen** – gebaut als Testfunktion (v1.59), zuerst nur für Admins sichtbar; Freigabe auf der
-  Seite „Punkte“. Bewusst ohne Rangliste zwischen den Kindern.
-- **Taschengeld-Konto** – Idee muss noch ausgearbeitet werden (Kontostand je Kind, wöchentliche
-  Gutschrift, Ausgaben, evtl. Verbindung zu Punkten)
-- **Wochenplan-Assistent** für den Essensplan – noch nicht
-- **Familien-Dokumente** (Impfpass, Versicherungskarten, WLAN …) – nur wenn es wirklich sicher ist:
-  Verschlüsselung der Dateien auf dem Server, Zugriff nur für Eltern, PIN/zweite Bestätigung, kein
-  Vorschaubild im Cache
-- **Müllabfuhr automatisch** aus dem ICS-Kalender der Stadt – erstmal nicht (Dienste gibt es manuell)
-- **Barcode-Scanner** für die Einkaufsliste – erstmal nicht
-- **Standort-Abfrage** – Stufe 1 gebaut als Testfunktion (v1.59, „Wo bist du?“ auf der Übersicht), Freigabe unter
-  Familie & Profil → Testfunktionen. Stufe 2 (automatische Antwort) weiter nur geplant. Ursprünglicher Plan:
-  - Stufe 1 (empfohlen): „📍 Wo bist du?“ bei einer Person → Push → Person tippt „Standort senden“ (oder
-    „Nicht jetzt“) → einmaliger GPS-Standort an den Fragenden, Anzeige mit Uhrzeit, Genauigkeit und Link
-    zu Google Maps; nach 24 h automatisch gelöscht. Braucht neue APK (Standort-Berechtigung), geht auch im
-    Browser. Zusätzlich „Ich bin angekommen“-Knopf (Standort ungefragt an die Familie senden).
-  - Stufe 2 (optional, für Kinder): Antwort automatisch ohne Antippen – eigener Android-Teil, der die
-    Push-Nachricht im Hintergrund annimmt und den Standort schickt; Kind sieht jedes Mal „Mama hat deinen
-    Standort abgerufen“. Mehr Aufwand, Berechtigung „Immer erlauben“.
-  - Bewusst nicht: dauerhaftes Live-Tracking wie Life360 (Akku, Privatsphäre).
-  - Orte mit „angekommen/losgegangen“ sind umgesetzt (v1.40) – offen bleibt nur die „Wo bist du?“-Abfrage.
-  - Offene Fragen: Wer darf wen fragen bzw. wessen Orte werden gemeldet (Eltern → Kinder, Erwachsene
-    untereinander?), Stufe 1 oder gleich 2. Kein iPhone in der Familie (nur Android) – geklärt.
+## Gemerkt – erst auf Zuruf umsetzen
 
-## Erledigt aus der Ideenliste
+- **„Bitte lüften“-Lampe** – kommt noch: WS2812B-Ring leuchtet blau, solange die Luftfeuchte des Tuya-Thermometers
+  über dem Grenzwert liegt (Werte/Grenzen aus dem Raumklima der App), geht nach dem Lüften wieder aus.
+- **Wochenplan-Assistent** für den Essensplan – als Nächstes vormerken.
+- **Taschengeld-Konto** – Idee muss noch ausgearbeitet werden (Kontostand je Kind, wöchentliche Gutschrift,
+  Ausgaben, evtl. Verbindung zu Punkten).
+- **Familien-Dokumente** (Impfpass, Versicherungskarten, WLAN …) – nur mit echter Sicherheit: Dateien verschlüsselt
+  auf dem Server, Zugriff nur für Eltern, PIN/zweite Bestätigung, kein Vorschaubild im Cache.
+- **„Wo bist du?“: Karte direkt auf der Übersicht oder Familienkarte** (wer ist gerade wo) – erstmal nicht, merken.
+- **Finanzen: Sparziel** – erstmal nicht, merken.
 
-- Feste Einkaufsliste mit Warengruppen, Dienste mit Rotation (Müllabfuhr), Geburtstage mit
-  Geschenkideen, Abstimmungen auf der Pinnwand, Ferien & Feiertage nach Bundesland, Tuya-Raumklima,
-  Server-Update per Knopfdruck in der App, NFC-Aufkleber direkt in der App beschreiben,
-  Wunschliste, Wetter auf der Übersicht, Wanddisplay für das Fire 7 (Fire OS 5.7 → eigene Browser-Seite /wand),
-  Kommentare bei Beschwerden, Ausgeliehen (Bücher mit Rückgabedatum), Orte (angekommen/losgegangen),
-  aufgeräumte Seite Familie & Profil, Musik über Spotify mit NFC-Karten und Musik-Box (hardware/musikbox),
-  Wandsensor fürs Wanddisplay: Radar weckt, BH1750 schaltet Dark Mode (hardware/wandsensor),
-  Spiele (Tic-Tac-Toe, Vier gewinnt online/Computer, Memory, Wörter raten, Kniffel, Schiffe versenken)
+## Verworfen
+
+- Familien-Station (rundes Display, RFID-Anhänger) – Idee nicht mehr gewollt
+- Müllabfuhr automatisch aus dem ICS-Kalender – nicht benötigt (Dienste gibt es manuell)
+- Barcode-Scanner für die Einkaufsliste – nicht benötigt
+- iPhone-App – kein iPhone in der Familie
+
+## Erledigt (Auswahl)
+
+Feste Einkaufsliste mit Warengruppen · Dienste mit Rotation · Geburtstage mit Geschenkideen · Abstimmungen und
+Familien-Umfrage (Essen → Essensplan, Ausflug → Kalender) · Ferien & Feiertage · Tuya-Raumklima (läuft) ·
+Server-Update per Knopf · NFC-Aufkleber in der App beschreiben · Wunschliste · Wetter · Wanddisplay fürs Fire 7 mit
+Fenerbahçe-Banner · Kalender: Logos (auch beide Wappen), Gegner-Assistent, Formel 1, Wischen, Termine absagen, Chat
+bleibt beim Verschieben · Ausgeliehen · Orte mit „angekommen/losgegangen“ (Fehlmeldungen behoben) · Musik über
+Spotify mit NFC-Karten · Spiele (Tic-Tac-Toe, Vier gewinnt, Memory, Wörter raten, Kniffel online, Schiffe versenken;
+„Du bist dran“ kommt) · Punkte & Belohnungen · „Wo bist du?“ mit Adresse und Karte · Finanzen (Aufteilung aufs
+gemeinsame Konto, einmalige Zahlungen) · eigene Kürzel im Profilbild · Testfunktionen aufgelöst (alles freigegeben)

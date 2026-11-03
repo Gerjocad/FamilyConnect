@@ -1356,3 +1356,5 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .setup-result.warn { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .setup-result p { margin: 2px 0; }
 .serial-log { max-height: 260px; overflow: auto; margin: 8px 0; padding: 8px; border-radius: 8px; background: #111; color: #d4d4d4; font-size: 0.75rem; white-space: pre-wrap; }
+
+.locate-auto-note { margin: 6px 0 0; font-size: 0.82rem; color: var(--muted); }

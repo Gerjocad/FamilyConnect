@@ -1,5 +1,4 @@
-// Welche Bereiche sieht die angemeldete Person? Neue Bereiche können hier zuerst nur für Testerinnen und Tester
-// (user.beta, „Familie & Profil → Testfunktionen“) eingeschaltet werden.
+// Welche Bereiche sieht die angemeldete Person?
 import { usePermissions } from './permissions';
 import { useFamily } from './session';
 

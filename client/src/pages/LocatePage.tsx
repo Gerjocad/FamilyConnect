@@ -67,7 +67,11 @@ export function LocatePage() {
     <div className="page locate-page">
       <section className="card">
         <h1>📍 {mine ? `Deine Antwort an ${asker}` : `Wo ist ${asked}?`}</h1>
-        {request.status === 'pending' && <p className="muted">Warte auf Antwort … (gefragt {ago(request.created_at)}) – du bekommst eine Nachricht.</p>}
+        {request.status === 'pending' && (
+          <p className="muted">
+            {request.auto ? 'Das Handy schickt den Standort automatisch …' : 'Warte auf Antwort …'} (gefragt {ago(request.created_at)}) – du bekommst eine Nachricht.
+          </p>
+        )}
         {request.status === 'declined' && <p>{mine ? 'Du hast „Nicht jetzt“ geantwortet.' : `${asked} möchte gerade nicht.`}{request.message && <> „{request.message}“</>}</p>}
         {request.status === 'answered' && (
           <>

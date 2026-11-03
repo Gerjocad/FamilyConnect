@@ -10,6 +10,9 @@ export function pathFromUrl(url: string): string | null {
   // Musik-Karte: familyconnect://h/m/<token> → Playlist abspielen
   const music = /^familyconnect:\/\/h\/m\/([0-9a-f]{8,64})\/?$/i.exec(url.trim());
   if (music) return `/musik/spielen/${music[1].toLowerCase()}`;
+  // Hinweis „… hat deinen Standort abgerufen“: familyconnect://h/open/standort/<id>
+  const open = /^familyconnect:\/\/h\/open(\/standort\/\d+)$/.exec(url.trim());
+  if (open) return open[1];
   const match = /^familyconnect:\/\/h\/([0-9a-f]{8,64})\/?$/i.exec(url.trim());
   return match ? `/h/${match[1].toLowerCase()}` : null;
 }

@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.74',
+    date: '2026-11-03',
+    title: '„Wo bist du?“ antwortet automatisch',
+    apk: true,
+    changes: [
+      'Fragt ein Admin, schickt jedes Handy den Standort automatisch – fragen Eltern ein Kind, antwortet dessen Handy automatisch',
+      'Wer abgefragt wurde, bekommt jedes Mal die Nachricht „… hat deinen Standort abgerufen“',
+      'Dafür braucht die Android-App den Standort „Immer erlauben“ (Knopf „Jetzt erlauben“ in der Karte „Wo bist du?“); sonst kommt nach kurzer Zeit die normale Frage',
+      'Die Testfunktionen sind aus „Familie & Profil“ verschwunden – alles ist für alle freigegeben',
+    ],
+  },
+  {
     version: '1.73',
     date: '2026-11-03',
     title: 'Musik-Box: Einrichten über beide USB-Buchsen',

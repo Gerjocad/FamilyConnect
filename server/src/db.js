@@ -143,6 +143,9 @@ const ADDED_COLUMNS = [
   ['event_comments', 'moved_from', 'TEXT'],
   // „Wo bist du?“: Adresse zum gesendeten Standort (OpenStreetMap)
   ['locate_requests', 'address', 'TEXT'],
+  // automatische Antwort: mode 'auto' (Handy antwortet still) oder 'manual'; secret = Einmal-Schlüssel für die stille Antwort
+  ['locate_requests', 'mode', "TEXT NOT NULL DEFAULT 'manual'"],
+  ['locate_requests', 'secret', 'TEXT'],
   // Finanzen: einmalige Zahlung in diesem Monat (JJJJ-MM)
   ['finance_entries', 'month', 'TEXT'],
   ['events', 'cancelled_dates', "TEXT NOT NULL DEFAULT '[]'"],

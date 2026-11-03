@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NfcWriterPlugin.class);
         registerPlugin(GeofencePlugin.class);
+        registerPlugin(LocatePlugin.class);
         asViewIntent(getIntent());
         super.onCreate(savedInstanceState);
     }
