@@ -210,10 +210,17 @@ module karte_hinten() {
 }
 
 // ================== Tastenkappe & Drehknopf ==================
+// Tastenkappe: von innen durch das Loch, der Rand hält sie. Mit 0,5 mm Luft rundum und einer Fase vorn (die erste
+// Druckschicht wird meist etwas breiter – ohne Fase klemmt die Kappe im Loch); Rand 1 mm dünn → 0,5 mm Spiel in der
+// Mulde des Tasterhalters.
+kappe_luft = 0.5;           // Luft rundum im Loch (klemmt sie noch: größer, wackelt sie: kleiner)
 module tastenkappe() {
-  cylinder(d = btn_hole - 0.6, h = wall + 2.5);                  // sichtbarer Teil + Durchgang
-  translate([0, 0, wall + 2.5 - 0.01]) cylinder(d = 13.5, h = 1.2);  // Rand innen (hält die Kappe)
-  translate([0, 0, wall + 2.5 + 1.2 - 0.01]) cylinder(d = 5, h = 1.6); // drückt auf den Taster
+  d = btn_hole - 2 * kappe_luft;
+  h = wall + 2.5;
+  cylinder(d1 = d - 1, d2 = d, h = 0.5);                         // Fase an der Drückfläche
+  translate([0, 0, 0.5 - 0.01]) cylinder(d = d, h = h - 0.5);     // sichtbarer Teil + Durchgang
+  translate([0, 0, h - 0.01]) cylinder(d = 13, h = 1);            // Rand innen (hält die Kappe)
+  translate([0, 0, h + 1 - 0.01]) cylinder(d = 5, h = 1.6);       // drückt auf den Taster
 }
 module drehknopf() {
   difference() {
