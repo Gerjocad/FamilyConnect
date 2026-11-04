@@ -1,6 +1,6 @@
 // Musik-Box für FamilyConnect – zum 3D-Druck (OpenSCAD 2021+)
 // Teile einzeln exportieren:  openscad -D 'part="gehaeuse"' -o gehaeuse.stl musikbox.scad
-//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "taster_adapter" | "kartenanschlag" | "drehknopf" | "knopf_test" | "alles" (Vorschau)
+//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "tastenhalter" | "kartenanschlag" | "drehknopf" | "knopf_test" | "alles" (Vorschau)
 //
 // Alle Maße in mm. Vor dem Druck die Werte unter „Bauteile“ mit deinen Teilen vergleichen
 // (Schieblehre) – besonders Taster und Drehgeber gibt es in leicht unterschiedlichen Größen.
@@ -42,7 +42,8 @@ welle_spiel = 0.25;         // Luft der Bohrung um die Welle (gedruckte Löcher 
 welle_klemm = 0.2;          // so weit drücken die Klemmrippen in die Riffelung (fester: größer, lockerer: kleiner)
 btn_hole = 10.2;            // Loch für die Tastenkappe
 btn_body = 12.3;            // Omron-Taster 12 × 12 mm
-btn_small = 7.6;            // kleiner Taster 7,6 × 7,6 mm – sitzt mit taster_adapter im 12-mm-Halter
+btn_small = 7.6;            // kleiner Taster 7,6 × 7,6 mm (Stößel Ø 3,3)
+taster = "klein";           // Tasterhalter für: "klein" (7,6 mm) oder "omron" (12 × 12 mm)
 ctrl_z = 18;                // Höhe der Bedienelemente
 btn_x = 26;                 // Abstand der Tasten von der Mitte
 
@@ -143,14 +144,8 @@ module gehaeuse() {
       // Schraubdome für den Boden
       // (enden auf Höhe der Bodenplatte, die innen bündig eingesetzt wird)
       for (b = boss) translate([b[0] * boss_x, b[1] * boss_y, wall]) cylinder(d = 7.5, h = H - 2 * wall + 0.01);
-      // Halter für die beiden Taster hinter der Front
-      for (s = [-1, 1]) translate([s * btn_x, -D / 2 + wall + 1.4, ctrl_z])
-        rotate([-90, 0, 0]) difference() {
-          translate([-(btn_body + 3) / 2, -(btn_body + 3) / 2, 0]) cube([btn_body + 3, btn_body + 3, 5.5]);
-          translate([0, 0, -0.01]) cylinder(d = 8, h = 1.02);                                   // Durchgang Stößel
-          translate([-btn_body / 2, -btn_body / 2, 1]) cube([btn_body, btn_body, 5]);            // Taster von hinten
-          translate([-(btn_body + 4) / 2, -1.5, 3]) cube([btn_body + 4, 3, 3]);                  // Beinchen/Kabel
-        }
+      // Die Taster sitzen in eigenen Haltern (tastenhalter.stl), die innen an die Front geklebt werden –
+      // im Gehäuse mitgedruckt hingen sie frei in der Luft (vor dem 05.11.2026).
       if (stil == "lautsprecher") deko_add();
     }
     if (stil == "lautsprecher") deko_cut();
@@ -255,19 +250,23 @@ module knopf_test() {
   }
 }
 
-// Adapter für den kleinen Taster (7,6 × 7,6 mm) im Halter für 12-mm-Taster – das Gehäuse bleibt, wie es ist.
-// Der Taster gleitet zwischen zwei Führungen: so weit nach vorn schieben, bis der Stößel die Kappe gerade berührt
-// (er klickt noch nicht), dann mit Heißkleber festsetzen. So passt es unabhängig davon, wie hoch der Stößel ist.
-// Seitlich offen für die Beinchen und Kabel; vorn hält ein Rahmen beide Führungen zusammen (liegt beim Druck unten).
-module taster_adapter() {
-  outer = btn_body - 0.3;
-  inner = btn_small + 0.4;
-  len = 4.5;                       // so tief ist die Tasche im Halter
+// Tasterhalter zum Ankleben innen an die Front (2×). Vorn eine Mulde für den Rand der Tastenkappe – die Kappe steckt
+// darin und zentriert den Halter vor dem Loch –, dahinter die Tasche für den Taster. Der Taster gleitet in der Tasche:
+// so weit nach vorn schieben, bis der Stößel die Kappe gerade berührt (er klickt noch nicht), dann mit Heißkleber
+// festsetzen. Seitlich offen für Beinchen und Kabel. Gedruckt wird er mit der Klebefläche nach unten.
+module tastenhalter() {
+  body = taster == "omron" ? btn_body : btn_small + 0.4;
+  size = 16;                          // außen (passt zwischen Drehgeber und Schraubdom)
+  rim = 1.5;                          // Mulde für den Kappenrand (Rand 1,2 mm)
+  plate = 1.0;
+  len = rim + plate + 6;              // Tasche 6 mm tief – Platz zum Einstellen
   difference() {
-    translate([-outer / 2, -outer / 2, 0]) cube([outer, outer, len]);
-    translate([-inner / 2, -inner / 2, -0.01]) cube([inner, inner, len + 0.02]);
-    // hinter dem 1-mm-Rahmen seitlich offen (Beinchen ragen zur Seite)
-    for (sx = [-1, 1]) translate([sx > 0 ? inner / 2 - 0.01 : -outer / 2 - 0.01, -inner / 2, 1]) cube([(outer - inner) / 2 + 0.02, inner, len]);
+    translate([-size / 2, -size / 2, 0]) cube([size, size, len]);
+    translate([0, 0, -0.01]) cylinder(d = 14.2, h = rim + 0.01);                         // Kappenrand
+    translate([0, 0, rim - 0.01]) cylinder(d = 6, h = plate + 0.02);                     // Stößel + Drücker der Kappe
+    translate([-body / 2, -body / 2, rim + plate]) cube([body, body, len]);              // Taster
+    // hinter einem 1-mm-Steg seitlich offen (Beinchen ragen zur Seite)
+    for (sx = [-1, 1]) translate([sx > 0 ? body / 2 - 0.01 : -size / 2 - 0.01, -body / 2, rim + plate + 1]) cube([(size - body) / 2 + 0.02, body, len]);
   }
 }
 
@@ -284,7 +283,7 @@ else if (part == "boden") boden();
 else if (part == "karte_vorne") karte_vorne();
 else if (part == "karte_hinten") karte_hinten();
 else if (part == "tastenkappe") rotate([180, 0, 0]) tastenkappe();
-else if (part == "taster_adapter") taster_adapter();
+else if (part == "tastenhalter") tastenhalter();
 else if (part == "kartenanschlag") kartenanschlag();
 else if (part == "drehknopf") rotate([180, 0, 0]) drehknopf();
 else if (part == "knopf_test") knopf_test();

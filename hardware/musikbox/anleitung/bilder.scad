@@ -10,7 +10,12 @@ module enc_modul() {   // Drehgeber-Modul: Gewinde durch die Front, runde Platin
   color("#1f4fbf") translate([0, y0 + 6.5, ctrl_z]) rotate([-90, 0, 0]) cylinder(d = 23.5, h = 1.6);
   color("gold") for (i = [-2:2]) translate([i * 2.54 - 0.3, y0 + 8, ctrl_z - 9.5]) cube([0.6, 7, 0.6]);
 }
-module taster() { for (s = [-1, 1]) color("#222") translate([s * btn_x - 6, -D / 2 + wall + 2.6, ctrl_z - 6]) cube([12, 3.5, 12]); }
+module taster() {   // Tasterhalter (an die Front geklebt) mit kleinem Taster
+  for (s = [-1, 1]) {
+    color("#f2f2f2") translate([s * btn_x, -D / 2 + wall, ctrl_z]) rotate([-90, 0, 0]) tastenhalter();
+    color("#222") translate([s * btn_x - 3.8, -D / 2 + wall + 4.9, ctrl_z - 3.8]) cube([7.6, 2, 7.6]);
+  }
+}
 module rc522_teil() {
   color("#2f6fd6") translate([-rc522[0] / 2, rc_y, rc_bottom]) cube([rc522[0], rc522_t, rc522[1]]);
   color("gold") for (i = [0:7]) translate([rc522[0] / 2 - 3, rc_y + rc522_t, rc_bottom + 10 + i * 2.54]) cube([0.6, 8, 0.6]);

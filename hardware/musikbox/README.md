@@ -8,7 +8,7 @@ Karte heraus → Pause, wieder hinein → weiter. Drehknopf = Lautstärke (drüc
 
 | Ordner | Inhalt |
 | --- | --- |
-| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, `taster_adapter.stl` (für kleine 7,6-mm-Taster), Drehknopf, `knopf_test.stl` (nur die Nabe zum Ausprobieren) |
+| `3d/` | `musikbox.scad` (OpenSCAD, alle Maße oben anpassbar) und fertige STL-Dateien: Gehäuse im Lautsprecher-Look (`gehaeuse.stl`) oder ohne Verzierung (`gehaeuse_schlicht.stl`), Boden, Karte vorne/hinten, Tastenkappe, `tastenhalter.stl` (2×, innen an die Front kleben), Drehknopf, `knopf_test.stl` (nur die Nabe zum Ausprobieren) |
 | `firmware/` | PlatformIO-Projekt für den ESP32-S3-DevKitC-1 (RC522, Drehgeber, 2 Tasten). Aufspielen und Einrichten am einfachsten in der App: **Musik → Musik-Box → „Per USB einrichten“** (Chrome/Edge am PC). `web-firmware.sh` baut die Datei dafür (`client/public/firmware/musikbox/`); `include/config.h` ist nur noch optional |
 
 ## Kurz: Verkabelung
@@ -33,10 +33,12 @@ Kerbe, die Nase mit einer Zange abbiegen – die Mutter hält den Drehgeber alle
 `kartenanschlag.stl` drucken und von innen unter den Schacht kleben – die Zunge steckt im Schlitz, die Karte steht dann
 auf der richtigen Höhe. Neu gedruckte Gehäuse brauchen das nicht.
 
-**Kleine Taster (7,6 × 7,6 mm):** Die Halter im Gehäuse sind für 12-mm-Taster. `taster_adapter.stl` (2×) in den
-Halter stecken, den Taster mit den Beinchen zur offenen Seite hineinlegen und nach vorn schieben, bis der Stößel die
-Tastenkappe gerade berührt (er klickt noch nicht) – dann mit Heißkleber festsetzen. Die Kabel an zwei **diagonal**
-gegenüberliegende Beinchen löten.
+**Taster:** `tastenhalter.stl` 2× drucken (Klebefläche unten; für 12-mm-Omron-Taster in `musikbox.scad`
+`taster = "omron"`). Kappe in die runde Mulde des Halters legen, Kappe von innen durch das Loch stecken – so sitzt der
+Halter genau mittig – und den Halter mit Sekunden- oder Heißkleber an die Innenseite der Front kleben. Dann den Taster
+(Beinchen zu den offenen Seiten) hinten einlegen und nach vorn schieben, bis der Stößel die Kappe gerade berührt (er
+klickt noch nicht), festkleben. Kabel an zwei **diagonal** gegenüberliegende Beinchen löten. (Gehäuse vor dem
+05.11.2026 hatten lose mitgedruckte Halter – die einfach weglassen.)
 
 **Drehknopf:** Der Knopf ist für die runde, geriffelte Welle (Ø 5,9 mm) gemacht – sechs Klemmrippen drücken sich beim
 Aufstecken in die Riffelung. Am besten zuerst `knopf_test.stl` drucken (wenige Minuten): Sitzt es zu stramm, in

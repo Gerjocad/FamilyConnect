@@ -167,7 +167,7 @@ story = [
         ['ESP32-S3-DevKitC-1 (Nachbau mit 2 × USB-C)', '1', 'Platine 56,7 × 28,2 mm, Antenne steht vorne über – darauf ist der Boden abgestimmt'],
         ['RFID-Leser RC522 (13,56 MHz)', '1', 'mit Stiftleiste (gerade)'],
         ['Drehgeber-Modul auf runder Platine (Ø 23,5 mm)', '1', '5 Pins: 5V, KEY, S2, S1, GND; Welle rund, geriffelt Ø 5,9 mm; mit Mutter'],
-        ['Taster 12 × 12 mm (z. B. Omron B3F)', '2', '4 Beinchen'],
+        ['Taster 7,6 × 7,6 mm (oder 12 × 12 mm Omron)', '2', '4 Beinchen; für 12 mm in musikbox.scad taster = "omron"'],
         ['Dupont-Kabel Buchse–Buchse, 20 cm', '16', 'am besten in verschiedenen Farben'],
         ['Kurze Litze (für die Taster)', '–', 'oder Dupont-Kabel direkt auf die Taster-Beinchen löten'],
         ['Schrauben M3 × 10 (oder Blechschrauben 2,9 × 9,5)', '4', 'für den Boden'],
@@ -185,6 +185,7 @@ story = [
         ['gehaeuse.stl (oder gehaeuse_schlicht.stl)', '1', 'kopfüber, 3 Wände, 15 % Füllung'],
         ['boden.stl', '1', 'flach – mit Halter für das ESP32-Board'],
         ['tastenkappe.stl', '2', 'sichtbare Seite nach unten'],
+        ['tastenhalter.stl', '2', 'Klebefläche nach unten; wird innen an die Front geklebt'],
         ['knopf_test.stl → drehknopf.stl', '1', 'erst den Probering testen (sitzt stramm = richtig), dann den Knopf drucken'],
         ['karte_vorne.stl + karte_hinten.stl', 'je 1 pro Karte', '0,12–0,16 mm Schicht für glatte Flächen'],
     ], [62, 22, 86]),
@@ -244,11 +245,13 @@ story = [
         'unten links/rechts die Taster in ihren Haltern, in der Mitte das Drehgeber-Modul mit den Pins nach unten'),
     P('5.2 Taster einbauen', 'h2'),
     steps([
-        'Die beiden Tastenkappen <b>von innen</b> durch die äußeren Löcher stecken – der breite Rand bleibt innen.',
-        'Die Taster (mit angelöteten Kabeln) von hinten in die beiden Halter drücken, der Stößel zeigt nach vorn zur Kappe. '
+        'Tastenkappe mit dem breiten Rand in die runde Mulde eines Tasterhalters legen.',
+        'Die Kappe <b>von innen</b> durch ein äußeres Loch der Front stecken – dadurch sitzt der Halter genau mittig. '
+        'Den Halter so mit Sekunden- oder Heißkleber an die Innenseite der Front kleben. Die Kappe muss sich danach noch leicht bewegen.',
+        'Den Taster (Kabel an zwei <b>diagonal</b> gegenüberliegenden Beinchen) hinten in den Halter legen, Beinchen zu den offenen '
+        'Seiten. Nach vorn schieben, bis der Stößel die Kappe gerade berührt – er darf noch nicht klicken.',
+        'Ausprobieren: Kappe drücken → Taster muss klicken. Dann den Taster mit Heißkleber im Halter festsetzen.',
         'Links („<<“, von vorn gesehen) = <b>zurück</b> an GPIO 15, rechts („>>“) = <b>vor</b> an GPIO 16.',
-        'Ausprobieren: Kappe drücken → Taster muss klicken. Klickt er nicht, ein Stück Klebeband zwischen Kappe und Taster legen.',
-        'Taster mit einem Tropfen Heißkleber im Halter sichern.',
     ]),
     P('5.3 RC522 einsetzen', 'h2'),
     steps([
