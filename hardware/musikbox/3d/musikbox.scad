@@ -1,6 +1,6 @@
 // Musik-Box für FamilyConnect – zum 3D-Druck (OpenSCAD 2021+)
 // Teile einzeln exportieren:  openscad -D 'part="gehaeuse"' -o gehaeuse.stl musikbox.scad
-//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "taster_adapter" | "drehknopf" | "knopf_test" | "alles" (Vorschau)
+//   part = "gehaeuse" | "boden" | "karte_vorne" | "karte_hinten" | "tastenkappe" | "taster_adapter" | "kartenanschlag" | "drehknopf" | "knopf_test" | "alles" (Vorschau)
 //
 // Alle Maße in mm. Vor dem Druck die Werte unter „Bauteile“ mit deinen Teilen vergleichen
 // (Schieblehre) – besonders Taster und Drehgeber gibt es in leicht unterschiedlichen Größen.
@@ -154,8 +154,8 @@ module gehaeuse() {
       if (stil == "lautsprecher") deko_add();
     }
     if (stil == "lautsprecher") deko_cut();
-    // Schlitz oben mit Einführschräge
-    translate([0, -D / 2 + slot_y, floor_z]) cube([slot_w, slot_t, 2 * (H - floor_z) + 1], center = true);
+    // Schlitz oben mit Einführschräge – endet am Boden des Schachts (dort steht die Karte)
+    translate([0, -D / 2 + slot_y, floor_z + (H - floor_z + 1) / 2]) cube([slot_w, slot_t, H - floor_z + 1], center = true);
     translate([0, -D / 2 + slot_y, H - 1.2]) hull() {
       cube([slot_w, slot_t, 0.01], center = true);
       translate([0, 0, 1.21]) cube([slot_w + 2.4, slot_t + 2.4, 0.01], center = true);
@@ -271,6 +271,13 @@ module taster_adapter() {
   }
 }
 
+// Nachrüst-Teil für Gehäuse, die vor dem 04.11.2026 gedruckt wurden: Dort war der Kartenschacht unten offen.
+// Von innen unter den Schacht kleben – die Zunge steckt im Schlitz, die Karte steht dann wieder auf der richtigen Höhe.
+module kartenanschlag() {
+  translate([0, 0, 0]) linear_extrude(ch_wall) square([slot_w + 2 * ch_wall, slot_t + 2 * ch_wall], center = true);   // Platte unter den Schachtwänden
+  translate([0, 0, ch_wall - 0.01]) linear_extrude(ch_wall + 0.01) square([slot_w - 0.6, slot_t - 0.4], center = true); // Zunge im Schlitz
+}
+
 // ================== Ausgabe ==================
 if (part == "gehaeuse") rotate([180, 0, 0]) gehaeuse();      // kopfüber drucken
 else if (part == "boden") boden();
@@ -278,6 +285,7 @@ else if (part == "karte_vorne") karte_vorne();
 else if (part == "karte_hinten") karte_hinten();
 else if (part == "tastenkappe") rotate([180, 0, 0]) tastenkappe();
 else if (part == "taster_adapter") taster_adapter();
+else if (part == "kartenanschlag") kartenanschlag();
 else if (part == "drehknopf") rotate([180, 0, 0]) drehknopf();
 else if (part == "knopf_test") knopf_test();
 else if (part == "alles") {

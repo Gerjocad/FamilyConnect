@@ -29,6 +29,10 @@ Loch vorne, Mutter außen. Die Platine (Ø ca. 25 mm) passt hinter die Front. Di
 die Kabel unter dem ESP32 durch statt gegen ihn zu stoßen. Sitzt die kleine Metallnase am Gewinde dann nicht in der
 Kerbe, die Nase mit einer Zange abbiegen – die Mutter hält den Drehgeber allein.
 
+**Gehäuse vor dem 04.11.2026 gedruckt?** Dort war der Kartenschacht unten offen (Fehler im Modell, jetzt behoben).
+`kartenanschlag.stl` drucken und von innen unter den Schacht kleben – die Zunge steckt im Schlitz, die Karte steht dann
+auf der richtigen Höhe. Neu gedruckte Gehäuse brauchen das nicht.
+
 **Kleine Taster (7,6 × 7,6 mm):** Die Halter im Gehäuse sind für 12-mm-Taster. `taster_adapter.stl` (2×) in den
 Halter stecken, den Taster mit den Beinchen zur offenen Seite hineinlegen und nach vorn schieben, bis der Stößel die
 Tastenkappe gerade berührt (er klickt noch nicht) – dann mit Heißkleber festsetzen. Die Kabel an zwei **diagonal**
