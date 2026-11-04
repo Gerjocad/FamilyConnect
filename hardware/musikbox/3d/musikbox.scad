@@ -264,7 +264,7 @@ module knopf_test() {
 module tastenhalter() {
   body = taster == "omron" ? btn_body : btn_small + 0.4;
   size = 16;                          // außen (passt zwischen Drehgeber und Schraubdom)
-  rim = 1.5;                          // Mulde für den Kappenrand (Rand 1,2 mm)
+  rim = 2.0;                          // Mulde für den Kappenrand (Rand 1 mm → 1 mm Weg beim Drücken)
   plate = 1.0;
   len = rim + plate + 6;              // Tasche 6 mm tief – Platz zum Einstellen
   difference() {
