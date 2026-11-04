@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.75',
+    date: '2026-11-04',
+    title: 'Beschwerden weiterleiten',
+    changes: [
+      'Wer eine Beschwerde geschrieben hat, kann sie unter „Von mir“ mit „Weiterleiten“ an jemand anderen schicken – solange sie offen ist',
+      'Die neue Person bekommt eine Nachricht; im Verlauf steht „Weitergeleitet von … an …“',
+    ],
+  },
+  {
     version: '1.74',
     date: '2026-11-03',
     title: '„Wo bist du?“ antwortet automatisch',

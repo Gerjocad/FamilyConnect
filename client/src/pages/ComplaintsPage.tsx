@@ -134,6 +134,7 @@ function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
   const { isManager } = usePermissions();
   const [reply, setReply] = useState('');
   const [answering, setAnswering] = useState(false);
+  const [forwardTo, setForwardTo] = useState<number[] | null>(null);
   const { busy, error, run } = useAsync();
   const from = member(complaint.created_by) ?? FORMER;
   const to = member(complaint.recipient_id) ?? FORMER;
@@ -141,6 +142,7 @@ function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
   const isRecipient = complaint.recipient_id === user.id;
   const canAnswer = isRecipient || isManager;
   const canDelete = complaint.created_by === user.id || isManager;
+  const canForward = complaint.created_by === user.id && complaint.status === 'open';
   const resolved = complaint.status === 'resolved';
 
   const update = (body: { status: Complaint['status']; reply?: string }) =>
@@ -194,9 +196,26 @@ function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
           </label>
         </div>
       )}
+      {forwardTo && (
+        <div className="form complaint-answer">
+          <small className="muted">Weiterleiten an</small>
+          <MemberPicker value={forwardTo} onChange={setForwardTo} single exclude={[user.id, ...(complaint.recipient_id ? [complaint.recipient_id] : [])]} />
+          <div className="form-actions">
+            <span className="spacer" />
+            <button className="button small" onClick={() => setForwardTo(null)} disabled={busy}>Abbrechen</button>
+            <button className="button small primary" disabled={busy || !forwardTo[0]} onClick={() => void run(async () => {
+              await api(`${base}/${complaint.id}/forward`, { method: 'POST', body: { recipient_id: forwardTo[0] } });
+              setForwardTo(null);
+              onChanged();
+            })}>
+              <Icon name="send" size={16} /> Weiterleiten
+            </button>
+          </div>
+        </div>
+      )}
       {error && <p className="error">{error}</p>}
 
-      {(canAnswer || canDelete) && (
+      {(canAnswer || canDelete || canForward) && (
         <div className="form-actions complaint-actions">
           {canDelete && (
             <button
@@ -212,6 +231,11 @@ function ComplaintCard({ complaint, base, onViewImage, onChanged }: {
             </button>
           )}
           <span className="spacer" />
+          {canForward && !forwardTo && !answering && (
+            <button className="button small" onClick={() => setForwardTo([])}>
+              <Icon name="send" size={16} /> Weiterleiten
+            </button>
+          )}
           {canAnswer && !resolved && !answering && (
             <button className="button small primary" onClick={() => setAnswering(true)}>
               <Icon name="check" size={16} /> Erledigen

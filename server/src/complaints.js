@@ -1,5 +1,6 @@
 // Beschwerden: Foto + kurzer Text an eine bestimmte Person. Sehen können sie nur Absender,
-// Empfänger und Eltern/Admins; der Empfänger antwortet und erledigt sie.
+// Empfänger und Eltern/Admins; der Empfänger antwortet und erledigt sie. Wer sie geschrieben hat, kann sie an
+// jemand anderen weiterleiten (z. B. falsche Person gewählt) – das steht dann im Verlauf.
 import express, { Router } from 'express';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -67,6 +68,25 @@ export function complaintsRouter(db, { auth, member, publish, uploadDir, push })
     if (status === 'resolved' && row.status !== 'resolved' && row.created_by !== req.user.id) {
       push?.notifyComplaintResolved({ creatorId: row.created_by, by: req.user.name, reply });
     }
+    res.json(serialize(find(req)));
+  });
+
+  // Weiterleiten an eine andere Person: wer sie geschrieben hat, solange sie offen ist
+  router.post('/api/families/:familyId/complaints/:id/forward', auth, member, (req, res) => {
+    const row = find(req);
+    if (!row || !canSee(req, row)) return res.status(404).json({ error: 'Nicht gefunden' });
+    if (row.created_by !== req.user.id) return res.status(403).json({ error: 'Weiterleiten kann, wer die Beschwerde geschrieben hat' });
+    if (row.status !== 'open') return res.status(409).json({ error: 'Die Beschwerde ist schon erledigt' });
+    const to = req.body?.recipient_id;
+    if (!isMember(req.familyId, to)) return res.status(400).json({ error: 'Bitte wähle aus, an wen sie gehen soll' });
+    if (to === req.user.id) return res.status(400).json({ error: 'Über dich selbst kannst du dich nicht beschweren' });
+    if (to === row.recipient_id) return res.status(400).json({ error: 'Die Beschwerde ist schon bei dieser Person' });
+    const nameOf = (id) => db.prepare('SELECT name FROM users WHERE id = ?').get(id)?.name.split(' ')[0] ?? 'jemand';
+    db.prepare('UPDATE complaints SET recipient_id = ? WHERE id = ?').run(to, row.id);
+    db.prepare('INSERT INTO complaint_comments (family_id, complaint_id, user_id, text) VALUES (?, ?, ?, ?)')
+      .run(req.familyId, row.id, req.user.id, `↪ Weitergeleitet von ${nameOf(row.recipient_id)} an ${nameOf(to)}`);
+    publish(req.familyId, 'complaints');
+    push?.notifyComplaint({ recipientId: to, from: req.user.name, text: row.text });
     res.json(serialize(find(req)));
   });
 

@@ -113,6 +113,26 @@ describe('Beschwerden', () => {
     assert.equal(readdirSync(uploadDir).length, before - 2, 'Fotos werden mit gelöscht');
   });
 
+  test('Weiterleiten: nur wer sie geschrieben hat, solange offen; steht im Verlauf', async () => {
+    const { mama, tom, lea, fid, ids } = await family();
+    const path = `/families/${fid}/complaints`;
+    const { data: c } = await api(path, { token: lea, method: 'POST', body: { text: 'Licht im Bad an', recipient_id: ids.tom, images: [PNG] } });
+    const forward = (token, recipient_id) => api(`${path}/${c.id}/forward`, { token, method: 'POST', body: { recipient_id } });
+
+    assert.equal((await forward(tom, ids.mama)).status, 403, 'Empfänger leitet nicht weiter');
+    assert.equal((await forward(lea, ids.lea)).status, 400, 'nicht an sich selbst');
+    assert.equal((await forward(lea, ids.tom)).status, 400, 'schon bei Tom');
+    const { status, data } = await forward(lea, ids.mama);
+    assert.equal(status, 200);
+    assert.equal(data.recipient_id, ids.mama);
+    assert.equal(data.comments.at(-1).text, '↪ Weitergeleitet von Tom an Mama');
+    assert.deepEqual(pushes.at(-1), ['neu', { recipientId: ids.mama, from: 'Lea', text: 'Licht im Bad an' }]);
+    assert.ok(!(await api(path, { token: tom })).data.some((x) => x.id === c.id), 'Tom sieht sie nicht mehr');
+
+    await api(`${path}/${c.id}`, { token: mama, method: 'PATCH', body: { status: 'resolved' } });
+    assert.equal((await forward(lea, ids.tom)).status, 409, 'erledigt → nicht mehr weiterleiten');
+  });
+
   test('Kommentare: Beteiligte schreiben, Glocke und Push, Unbeteiligte sehen nichts', async () => {
     const { mama, tom, lea, fid, ids } = await family();
     const path = `/families/${fid}/complaints`;
