@@ -31,6 +31,7 @@ Alles Wichtige zu FamilyConnect auf einen Blick. Neue Anleitungen und Bastelproj
 | [karte_hinten.stl](../hardware/musikbox/3d/karte_hinten.stl) | Karte, hintere Hälfte (Mulde für den NFC-Aufkleber) | 1 pro Karte |
 | [drehknopf.stl](../hardware/musikbox/3d/drehknopf.stl) | Lautstärke-Knopf | 1 |
 | [tastenkappe.stl](../hardware/musikbox/3d/tastenkappe.stl) | Tastenkappe vor/zurück | 2 |
+| [taster_adapter.stl](../hardware/musikbox/3d/taster_adapter.stl) | Adapter für kleine Taster 7,6 × 7,6 mm im 12-mm-Halter | 2 |
 
 **Wandsensor** – Ordner [hardware/wandsensor/3d/stl](../hardware/wandsensor/3d/stl/), Modell zum Anpassen: [wandsensor.scad](../hardware/wandsensor/3d/wandsensor.scad)
 
