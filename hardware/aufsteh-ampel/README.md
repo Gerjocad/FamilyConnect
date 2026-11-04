@@ -2,7 +2,8 @@
 
 Ohne App, ohne WLAN: Die Matrix zeigt im Kreis einen **roten Mond**, einen **gelben Sonnenaufgang** (geht langsam
 von unten auf) und die **ganze Sonne** (pulsiert sanft). Die **BOOT-Taste** auf dem ESP32 springt sofort zum
-nächsten Bild. Der ganze Plan mit App-Anbindung steht in [docs/plaene/aufsteh-ampel.md](../../docs/plaene/aufsteh-ampel.md).
+nächsten Bild. Der ganze Plan mit App-Anbindung steht in [docs/plaene/aufsteh-ampel.md](../../docs/plaene/aufsteh-ampel.md),
+den Stand für einen eigenen Chat fasst [UEBERGABE.md](UEBERGABE.md) zusammen.
 
 ![Die drei Bilder](bilder.png)
 
