@@ -60,6 +60,8 @@ export class BoxConsole {
   #waiters: { test: (line: string) => boolean; resolve: (line: string) => void }[] = [];
   #buffer = '';
   onLine: (line: string) => void = () => {};
+  /** Meldungen der Seite selbst (was gesendet wird, Neustart) – fürs Protokoll */
+  onNote: (line: string) => void = () => {};
 
   constructor(port: SerialPort) {
     this.#port = port;
@@ -91,6 +93,7 @@ export class BoxConsole {
   }
 
   async send(line: string) {
+    this.onNote(`→ ${line.startsWith('fc:set pass=') ? 'fc:set pass=••••' : line}`);
     const writer = this.#port.writable!.getWriter();
     await writer.write(new TextEncoder().encode(`${line}\n`));
     writer.releaseLock();
@@ -108,10 +111,23 @@ export class BoxConsole {
     });
   }
 
-  /** Fragt den Zustand ab, bis die Box antwortet (nach einem Neustart dauert das 1–2 s) */
-  async status(totalMs = 10_000): Promise<BoxStatus | null> {
+  /** ESP32 neu starten wie esptool (EN kurz über RTS auf low) – klappt an der „COM“-Buchse */
+  async hardReset() {
+    this.onNote('Keine Antwort – starte die Box neu …');
+    await this.#port.setSignals({ dataTerminalReady: false, requestToSend: true });
+    await new Promise((r) => setTimeout(r, 150));
+    await this.#port.setSignals({ dataTerminalReady: false, requestToSend: false });
+  }
+
+  /** Fragt den Zustand ab, bis die Box antwortet; bleibt sie stumm, einmal neu starten und weiter fragen */
+  async status(totalMs = 12_000, resetIfSilent = true): Promise<BoxStatus | null> {
     const until = Date.now() + totalMs;
+    let resetAt = resetIfSilent ? Date.now() + 3000 : Infinity;
     while (Date.now() < until) {
+      if (Date.now() > resetAt) {
+        resetAt = Infinity;
+        await this.hardReset().catch(() => undefined);
+      }
       // erst auf die Antwort warten, dann fragen – sonst kann eine schnelle Antwort verloren gehen
       const answer = this.wait((l) => l.startsWith('fc:status '), 900);
       await this.send('fc:status');

@@ -115,6 +115,7 @@ function MusicBoxSetup() {
         if (!con) {
           con = new BoxConsole(port!);
           con.onLine = addLog;
+          con.onNote = addLog;
           await con.open();
           consoleRef.current = con;
         }
@@ -131,7 +132,7 @@ function MusicBoxSetup() {
         let s: BoxStatus | null = null;
         for (let i = 0; i < 8 && !s?.wifi; i++) {
           await new Promise((r) => setTimeout(r, 2500));
-          s = await con.status(4000);
+          s = await con.status(4000, false);
         }
         setStatus(s);
         setPass('');
@@ -226,6 +227,7 @@ function MusicBoxSetup() {
             if (!consoleRef.current) {
               const con = new BoxConsole(port);
               con.onLine = addLog;
+              con.onNote = addLog;
               await con.open();
               consoleRef.current = con;
             }
