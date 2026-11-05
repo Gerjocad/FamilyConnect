@@ -248,11 +248,11 @@ story = [
         'Tastenkappe mit dem breiten Rand in die runde Mulde eines Tasterhalters legen.',
         'Die Kappe <b>von innen</b> durch ein äußeres Loch der Front stecken – dadurch sitzt der Halter genau mittig. '
         'Den Halter so mit Sekunden- oder Heißkleber an die Innenseite der Front kleben. Die Kappe muss sich danach noch leicht bewegen.',
-        'Den Taster (Kabel an zwei <b>diagonal</b> gegenüberliegenden Beinchen) <b>von der Seite</b> in den Schlitz des Halters '
-        'schieben – Stößel zur Kappe, Beinchen zu den offenen Seiten. Er sitzt dort an der richtigen Stelle: 0,2 mm vor der Kappe, '
+        'Den Taster (Kabel an zwei <b>diagonal</b> gegenüberliegenden Beinchen) <b>von hinten</b> in den Halter setzen – Stößel zur '
+        'Kappe, Beinchen zu den seitlichen Öffnungen –, bis er vorn am Anschlag liegt. Dort sitzt er richtig: 0,2 mm vor der Kappe, '
         'die Kappe hat 1,6 mm Weg.',
-        'Ausprobieren: Kappe drücken → Taster muss klicken und die Kappe zurückfedern. Ein Tropfen Heißkleber an der Seite hält den '
-        'Taster im Schlitz.',
+        'Ausprobieren: Kappe drücken → Taster schaltet, Kappe federt zurück. Dann den Taster hinten mit einem Klecks Heißkleber festsetzen '
+        '(der Kleber hält ihn, wenn man drückt).',
         'Links („<<“, von vorn gesehen) = <b>zurück</b> an GPIO 15, rechts („>>“) = <b>vor</b> an GPIO 16.',
     ]),
     P('5.3 RC522 einsetzen', 'h2'),

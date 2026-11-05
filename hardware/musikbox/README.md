@@ -36,8 +36,8 @@ auf der richtigen Höhe. Neu gedruckte Gehäuse brauchen das nicht.
 **Taster:** `tastenhalter.stl` 2× drucken (Klebefläche unten; für 12-mm-Omron-Taster in `musikbox.scad`
 `taster = "omron"`). Kappe in die runde Mulde des Halters legen, Kappe von innen durch das Loch stecken – so sitzt der
 Halter genau mittig – und den Halter mit Sekunden- oder Heißkleber an die Innenseite der Front kleben. Dann den Taster
-von der Seite in den Schlitz schieben (Stößel zur Kappe, Beinchen zu den offenen Seiten) – er sitzt dort an der
-richtigen Stelle, ein Tropfen Heißkleber verhindert nur, dass er seitlich herausrutscht. Kabel an zwei **diagonal** gegenüberliegende Beinchen löten. (Gehäuse vor dem
+von hinten einsetzen (Stößel zur Kappe, Beinchen zu den seitlichen Öffnungen), bis er vorn am Anschlag liegt – dort sitzt
+er an der richtigen Stelle – und hinten mit einem Klecks Heißkleber festsetzen. Die Kappe hat dann 1,6 mm Weg. Kabel an zwei **diagonal** gegenüberliegende Beinchen löten. (Gehäuse vor dem
 05.11.2026 hatten lose mitgedruckte Halter – die einfach weglassen.)
 
 **Drehknopf:** Der Knopf ist für die runde, geriffelte Welle (Ø 5,9 mm) gemacht – sechs Klemmrippen drücken sich beim

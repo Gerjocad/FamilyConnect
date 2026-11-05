@@ -259,7 +259,7 @@ module knopf_test() {
 
 // Tasterhalter zum Ankleben innen an die Front (2×). Vorn eine 2,6 mm tiefe Mulde für den Rand der Tastenkappe – die
 // Kappe steckt darin und zentriert den Halter vor dem Loch –, dahinter sitzt der Taster an einer FESTEN Stelle:
-// Er wird von der Seite in einen Schlitz geschoben (Beinchen zu den offenen Seiten), vorn und hinten liegt er an.
+// Er wird von hinten eingesetzt, bis er vorn am Anschlag liegt, und hinten mit Heißkleber festgesetzt.
 // Gemessen (kleiner Taster): Gehäuse 2,0 mm, mit Stößel 5,2 mm, Weg 1,4 mm. Der Stößel steht 0,2 mm vor dem Drücker
 // der Kappe; die Kappe kann 1,6 mm nach innen – mehr als der Taster braucht.
 btn_h = taster == "omron" ? 3.5 : 2.0;     // Höhe des Taster-Gehäuses
@@ -273,16 +273,14 @@ module tastenhalter() {
   plate = 0.8;
   tip = kappe_rand + kappe_druecker + 0.2;  // hier steht die Stößel-Spitze (0,2 mm Luft zum Drücker)
   front = tip + (btn_total - btn_h);        // Vorderseite des Taster-Gehäuses
-  slot = btn_h + 0.2;
-  back = 1.2;                               // Steg hinter dem Taster
-  len = front + slot + back;
+  len = front + btn_h + 0.6;                // Taster schaut hinten nicht heraus – Platz für den Heißkleber-Klecks
   difference() {
     translate([-size / 2, -size / 2, 0]) cube([size, size, len]);
     translate([0, 0, -0.01]) cylinder(d = 14.2, h = rim + 0.01);                       // Kappenrand
     translate([0, 0, rim - 0.01]) cylinder(d = 6, h = front - rim + 0.02);             // Stößel und Drücker
-    translate([-size / 2 - 1, -body / 2, front]) cube([size + 2, body, slot]);          // Schlitz für den Taster, seitlich offen
-    // hinten nur ein 3 mm breiter Steg quer über die Mitte (verbindet beide Wände) – links und rechts Platz für Beinchen und Kabel
-    for (sx = [-1, 1]) translate([sx > 0 ? 1.5 : -size / 2 - 1, -body / 2, front + slot - 0.01]) cube([size / 2 - 1.5 + 1, body, back + 0.02]);
+    translate([-body / 2, -body / 2, front]) cube([body, body, len]);                    // Tasche für den Taster, hinten offen
+    // seitlich offen für Beinchen und Kabel
+    translate([-size / 2 - 1, -body / 2 + 1, front + 0.6]) cube([size + 2, body - 2, len]);
   }
 }
 
