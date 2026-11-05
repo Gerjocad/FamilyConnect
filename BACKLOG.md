@@ -8,7 +8,8 @@ erledigte wandern nach unten.
 - **Musik-Box** ([hardware/musikbox](hardware/musikbox/)) – Gehäuse gedruckt, Drehknopf passt, Firmware 2.1 im
   Browser aufspielbar (Musik → Musik-Box → „Per USB einrichten“). Als Nächstes: Firmware 2.1 aufspielen und WLAN
   einrichten, neuen Boden drucken (ESP32-Halter für das Board 56,7 × 28,2 mm), verkabeln, zusammenbauen, erste Karte
-  testen. Mit echter Hardware noch ungetestet: Kartenlesen, Lautstärke, Tasten.
+  testen. Tasten mit neuem Tasterhalter funktionieren (05.11.). Offen: Box antwortet beim WLAN-Übertragen noch nicht
+  (Protokoll abwarten); ungetestet: Kartenlesen, Lautstärke.
 - **„Wo bist du?“ Stufe 2 – automatische Antwort** (v1.74, braucht die neue Android-App): Fragt ein Admin, antworten
   alle Handys automatisch; fragen Eltern ein Kind, antwortet dessen Handy automatisch. Das Handy braucht den Standort
   „Immer erlauben“; die Person bekommt jedes Mal „… hat deinen Standort abgerufen“. Klappt es nicht, kommt nach 45 s
