@@ -257,23 +257,32 @@ module knopf_test() {
   }
 }
 
-// Tasterhalter zum Ankleben innen an die Front (2×). Vorn eine Mulde für den Rand der Tastenkappe – die Kappe steckt
-// darin und zentriert den Halter vor dem Loch –, dahinter die Tasche für den Taster. Der Taster gleitet in der Tasche:
-// so weit nach vorn schieben, bis der Stößel die Kappe gerade berührt (er klickt noch nicht), dann mit Heißkleber
-// festsetzen. Seitlich offen für Beinchen und Kabel. Gedruckt wird er mit der Klebefläche nach unten.
+// Tasterhalter zum Ankleben innen an die Front (2×). Vorn eine 2,6 mm tiefe Mulde für den Rand der Tastenkappe – die
+// Kappe steckt darin und zentriert den Halter vor dem Loch –, dahinter sitzt der Taster an einer FESTEN Stelle:
+// Er wird von der Seite in einen Schlitz geschoben (Beinchen zu den offenen Seiten), vorn und hinten liegt er an.
+// Gemessen (kleiner Taster): Gehäuse 2,0 mm, mit Stößel 5,2 mm, Weg 1,4 mm. Der Stößel steht 0,2 mm vor dem Drücker
+// der Kappe; die Kappe kann 1,6 mm nach innen – mehr als der Taster braucht.
+btn_h = taster == "omron" ? 3.5 : 2.0;     // Höhe des Taster-Gehäuses
+btn_total = taster == "omron" ? 7.3 : 5.2; // mit Stößel
+kappe_rand = 1.0;                          // Dicke des Kappenrands (tastenkappe)
+kappe_druecker = 1.6;                      // so weit ragt der Drücker hinter den Rand
 module tastenhalter() {
-  body = taster == "omron" ? btn_body : btn_small + 0.4;
-  size = 16;                          // außen (passt zwischen Drehgeber und Schraubdom)
-  rim = 2.0;                          // Mulde für den Kappenrand (Rand 1 mm → 1 mm Weg beim Drücken)
-  plate = 1.0;
-  len = rim + plate + 6;              // Tasche 6 mm tief – Platz zum Einstellen
+  body = (taster == "omron" ? btn_body : btn_small) + 0.4;
+  size = 16;                                // außen (passt zwischen Drehgeber und Schraubdom)
+  rim = 2.6;                                // Mulde für den Kappenrand → 1,6 mm Weg
+  plate = 0.8;
+  tip = kappe_rand + kappe_druecker + 0.2;  // hier steht die Stößel-Spitze (0,2 mm Luft zum Drücker)
+  front = tip + (btn_total - btn_h);        // Vorderseite des Taster-Gehäuses
+  slot = btn_h + 0.2;
+  back = 1.2;                               // Steg hinter dem Taster
+  len = front + slot + back;
   difference() {
     translate([-size / 2, -size / 2, 0]) cube([size, size, len]);
-    translate([0, 0, -0.01]) cylinder(d = 14.2, h = rim + 0.01);                         // Kappenrand
-    translate([0, 0, rim - 0.01]) cylinder(d = 6, h = plate + 0.02);                     // Stößel + Drücker der Kappe
-    translate([-body / 2, -body / 2, rim + plate]) cube([body, body, len]);              // Taster
-    // hinter einem 1-mm-Steg seitlich offen (Beinchen ragen zur Seite)
-    for (sx = [-1, 1]) translate([sx > 0 ? body / 2 - 0.01 : -size / 2 - 0.01, -body / 2, rim + plate + 1]) cube([(size - body) / 2 + 0.02, body, len]);
+    translate([0, 0, -0.01]) cylinder(d = 14.2, h = rim + 0.01);                       // Kappenrand
+    translate([0, 0, rim - 0.01]) cylinder(d = 6, h = front - rim + 0.02);             // Stößel und Drücker
+    translate([-size / 2 - 1, -body / 2, front]) cube([size + 2, body, slot]);          // Schlitz für den Taster, seitlich offen
+    // hinten nur ein schmaler Steg in der Mitte – Platz für Beinchen und Kabel
+    for (sy = [-1, 1]) translate([-size / 2 - 1, sy > 0 ? 1.5 : -body / 2, front + slot - 0.01]) cube([size + 2, body / 2 - 1.5, back + 0.02]);
   }
 }
 
