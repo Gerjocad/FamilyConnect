@@ -281,8 +281,8 @@ module tastenhalter() {
     translate([0, 0, -0.01]) cylinder(d = 14.2, h = rim + 0.01);                       // Kappenrand
     translate([0, 0, rim - 0.01]) cylinder(d = 6, h = front - rim + 0.02);             // Stößel und Drücker
     translate([-size / 2 - 1, -body / 2, front]) cube([size + 2, body, slot]);          // Schlitz für den Taster, seitlich offen
-    // hinten nur ein schmaler Steg in der Mitte – Platz für Beinchen und Kabel
-    for (sy = [-1, 1]) translate([-size / 2 - 1, sy > 0 ? 1.5 : -body / 2, front + slot - 0.01]) cube([size + 2, body / 2 - 1.5, back + 0.02]);
+    // hinten nur ein 3 mm breiter Steg quer über die Mitte (verbindet beide Wände) – links und rechts Platz für Beinchen und Kabel
+    for (sx = [-1, 1]) translate([sx > 0 ? 1.5 : -size / 2 - 1, -body / 2, front + slot - 0.01]) cube([size / 2 - 1.5 + 1, body, back + 0.02]);
   }
 }
 
