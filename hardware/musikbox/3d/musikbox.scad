@@ -222,15 +222,22 @@ module tastenkappe() {
   translate([0, 0, h - 0.01]) cylinder(d = 13, h = 1);            // Rand innen (hält die Kappe)
   translate([0, 0, h + 1 - 0.01]) cylinder(d = 5, h = 1.6);       // drückt auf den Taster
 }
+// Drehknopf mit Kragen: Der hohle Rand unten reicht über Mutter und Gewinde bis knapp vor die Front – vom Hals des
+// Drehgebers sieht man nichts. Den Knopf so weit aufdrücken, bis der Kragen ca. 1 mm vor der Front steht.
+knopf_kragen = 6.5;         // so lang ist der Kragen (sichtbarer Hals ohne Kragen gemessen ≈ 7 mm)
+knopf_kragen_innen = 13;    // Platz innen für Mutter (M7) und Unterlegscheibe
 module drehknopf() {
+  h = 13 + knopf_kragen;
   difference() {
     union() {
-      cylinder(d = 24, h = 13);
-      for (a = [0 : 20 : 359]) rotate(a) translate([12, 0, 0]) cylinder(d = 2, h = 13, $fn = 12);
+      cylinder(d = 24, h = h);
+      for (a = [0 : 20 : 359]) rotate(a) translate([12, 0, 0]) cylinder(d = 2, h = h, $fn = 12);
     }
-    translate([0, 0, -0.01]) welle_loch(11);
-    translate([0, 0, 12.2]) difference() { cylinder(d = 18, h = 1); cylinder(d = 16.5, h = 1); }  // Zierring
-    translate([0, 9.5, 12.4]) cylinder(d = 2, h = 1);  // Markierung
+    translate([0, 0, -0.01]) cylinder(d = knopf_kragen_innen, h = knopf_kragen + 0.01);                // Kragen (hohl)
+    translate([0, 0, knopf_kragen]) cylinder(d1 = knopf_kragen_innen, d2 = welle_d + 1.2, h = 1.5);     // Übergang, druckt ohne Stütze
+    translate([0, 0, knopf_kragen - 0.01]) welle_loch(11);
+    translate([0, 0, h - 0.8]) difference() { cylinder(d = 18, h = 1); cylinder(d = 16.5, h = 1); }  // Zierring
+    translate([0, 9.5, h - 0.6]) cylinder(d = 2, h = 1);  // Markierung
   }
 }
 
