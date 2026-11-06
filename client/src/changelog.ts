@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.76',
+    date: '2026-11-06',
+    title: 'Neues Aussehen fürs Wanddisplay',
+    changes: [
+      'Wanddisplay im dunklen Look mit farbigen Kacheln: Heute, Morgen und Wetter auf einen Blick',
+      'Links Uhr und alle Familienmitglieder mit der Zahl ihrer heutigen Termine, darunter das Raumklima',
+      'Unten Temperatur-Verlauf der nächsten Stunden (blau = Regen wahrscheinlich), Ringe für erledigte Termine, Regen und Luftfeuchte sowie die Pinnwand',
+      'Eigene Kürzel werden jetzt auch auf dem Wanddisplay gezeigt',
+    ],
+  },
+  {
     version: '1.75',
     date: '2026-11-04',
     title: 'Beschwerden weiterleiten',

@@ -247,7 +247,10 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
       try {
         const f = await weather.forecast(family.weather_lat, family.weather_lon);
         const todays = occ.filter((o) => localKey(o.start) === localKey(now) && !isCancelled(o));
-        forecast = { place: family.weather_place, current: f.current, days: f.days, hints: weatherHints(f, now, todays) };
+        // die nächsten 12 Stunden für das Diagramm (Temperatur und Regen)
+        const fromHour = `${localKey(now)}T${String(now.getHours()).padStart(2, '0')}`;
+        const hours = (f.hours ?? []).filter((h) => h.time.slice(0, 13) >= fromHour).slice(0, 12);
+        forecast = { place: family.weather_place, current: f.current, days: f.days, hours, hints: weatherHints(f, now, todays) };
       } catch {
         forecast = null;
       }
@@ -274,7 +277,7 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
     res.json({
       family: family.name,
       now: localStamp(now),
-      members: members.map(({ id, name, color }) => ({ id, name, color })),
+      members: members.map(({ id, name, color, initials }) => ({ id, name, color, initials })),
       days,
       weather: forecast,
       climate,

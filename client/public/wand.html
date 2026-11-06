@@ -9,86 +9,142 @@
 <link rel="manifest" href="/wand.webmanifest" />
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <style>
-  /* Absichtlich nur alte CSS-Technik (kein gap bei Flexbox, kein :has, kein color-mix):
-     läuft auch im Silk-Browser alter Fire-Tablets (Fire OS 5). */
-  :root { --bg: #fff8f3; --card: #ffffff; --text: #2b2118; --muted: #8a7a6d; --accent: #e8590c; --soft: #ffe8d9; --line: #f0e1d6; --warn: #c92a2a; }
-  .night { --bg: #0d0a08; --card: #1a1410; --text: #cfc3b8; --muted: #7d6f64; --accent: #c2510f; --soft: #2a1b10; --line: #2a211a; --warn: #e06666; }
+  /* Absichtlich nur alte CSS-Technik (kein gap bei Flexbox, kein Grid, kein :has, kein color-mix):
+     läuft auch im Silk-Browser alter Fire-Tablets (Fire OS 5). Look: dunkles Navy, Verlaufs-Kacheln, Ring-Anzeigen. */
+  :root { --bg: #0b1026; --card: rgba(26, 34, 78, 0.78); --card2: rgba(255,255,255,0.05); --line: rgba(255,255,255,0.08);
+    --text: #eef0ff; --muted: #8e96c8; --accent: #ff7a59; --warn: #ff6b8b; --pink: #ff6b8b; --violet: #b06bff; --blue: #43b4ff; --green: #46e3a5; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
-  body { background: var(--bg); color: var(--text); font-family: Roboto, "Segoe UI", sans-serif; font-size: 16px; -webkit-user-select: none; user-select: none; }
-  #app { display: -webkit-box; display: flex; height: 100%; padding: 14px; }
-  .col-left { width: 36%; display: flex; flex-direction: column; margin-right: 14px; overflow: hidden; }
-  .col-right { -webkit-box-flex: 1; flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .card { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-  .night .card { box-shadow: none; }
-  .clock { font-size: 72px; font-weight: 300; line-height: 1; letter-spacing: -1px; }
-  .date { font-size: 20px; margin-top: 4px; }
-  .family { color: var(--muted); font-size: 14px; margin-top: 2px; }
-  .weather-now { display: flex; align-items: center; }
-  /* Großes Spiel (z. B. Fenerbahçe) heute/morgen */
-  .match { background: var(--accent); color: #fff; text-align: center; padding: 12px 14px 14px; }
-  .match.tomorrow { background: var(--card); color: var(--text); border: 3px solid var(--accent); }
-  .m-when { font-size: 17px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
-  .m-when small { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; opacity: 0.85; }
-  .m-logos { display: flex; align-items: center; justify-content: center; margin: 8px 0 6px; }
-  .m-logos img { width: 76px; height: 76px; object-fit: contain; background: #fff; border-radius: 50%; padding: 6px; }
-  .m-logos .vs { font-size: 24px; font-weight: 800; margin: 0 12px; }
-  .m-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
-  .m-place { font-size: 14px; opacity: 0.85; margin-top: 2px; }
+  body { color: var(--text); font-family: Roboto, "Segoe UI", sans-serif; font-size: 16px; -webkit-user-select: none; user-select: none;
+    background: #0b1026;
+    background-image: radial-gradient(circle at 12% 0%, rgba(111, 66, 255, 0.35) 0, rgba(111, 66, 255, 0) 45%),
+      radial-gradient(circle at 100% 100%, rgba(232, 64, 251, 0.22) 0, rgba(232, 64, 251, 0) 42%),
+      radial-gradient(circle at 70% 10%, rgba(54, 198, 240, 0.12) 0, rgba(54, 198, 240, 0) 35%); }
+  /* nachts (Lichtsensor oder 22–6 Uhr): alles gedimmt */
+  .night #app { opacity: 0.5; }
+  #app { display: -webkit-box; display: flex; height: 100%; padding: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+
+  /* --- Seitenleiste ------------------------------------------------------------------- */
+  .side { width: 230px; margin-right: 12px; display: -webkit-box; display: flex; -webkit-box-orient: vertical; flex-direction: column; flex-shrink: 0; }
+  .side .card { -webkit-box-flex: 1; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .clock { font-size: 62px; font-weight: 300; line-height: 1; letter-spacing: -1px; }
+  .date { font-size: 17px; margin-top: 6px; }
+  .family { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .people { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); -webkit-box-flex: 1; flex: 1; overflow: hidden; }
+  .people li { display: flex; align-items: center; padding: 6px 8px; margin-bottom: 4px; border-radius: 12px; }
+  .people li.busy { background: var(--card2); }
+  .people .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13px; line-height: 34px; text-align: center; flex-shrink: 0; margin-right: 10px; box-shadow: 0 0 0 2px rgba(255,255,255,0.12); }
+  .people .nm { -webkit-box-flex: 1; flex: 1; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .people .cnt { font-size: 12px; color: var(--muted); }
+  .people .cnt b { color: var(--text); font-size: 15px; }
+  .climate { padding-top: 10px; border-top: 1px solid var(--line); }
+  .climate div { display: flex; justify-content: space-between; margin-top: 3px; font-size: 14px; }
+  .climate .bad { color: var(--warn); font-weight: 700; }
+
+  /* --- Hauptbereich ------------------------------------------------------------------- */
+  .main { -webkit-box-flex: 1; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .tiles { display: flex; margin-bottom: 12px; flex-shrink: 0; }
+  .tile { -webkit-box-flex: 1; flex: 1; border-radius: 16px; padding: 10px 14px; color: #fff; margin-right: 12px; min-width: 0; height: 96px; overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+  .tile:last-child { margin-right: 0; }
+  .g1 { background: #ff6b8b; background-image: linear-gradient(135deg, #ff5f8f, #ff9a5a); }
+  .g2 { background: #a64dff; background-image: linear-gradient(135deg, #7b5cff, #e040fb); }
+  .g3 { background: #3a7bfd; background-image: linear-gradient(135deg, #3a6bfd, #36c6f0); }
+  .t-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.85; }
+  .t-big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+  .t-big small { font-size: 15px; font-weight: 600; opacity: 0.9; }
+  .t-sub { font-size: 14px; opacity: 0.92; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .t-row { display: flex; align-items: center; }
+  .t-icon { font-size: 40px; line-height: 1; margin-right: 10px; }
+
+  /* Großes Spiel (z. B. Fenerbahçe) heute/morgen – statt der Kacheln */
+  .match { display: flex; align-items: center; border-radius: 16px; padding: 10px 18px; color: #fff; margin-bottom: 12px; height: 96px; flex-shrink: 0;
+    background: #ff6b8b; background-image: linear-gradient(135deg, #ff5f8f, #ff9a5a); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+  .match.tomorrow { background: var(--card); background-image: none; border: 2px solid var(--accent); }
+  .m-logos { display: flex; align-items: center; flex-shrink: 0; margin-right: 16px; }
+  .m-logos img { width: 70px; height: 70px; object-fit: contain; background: #fff; border-radius: 50%; padding: 6px; }
+  .m-logos .vs { font-size: 22px; font-weight: 800; margin: 0 10px; }
+  .m-text { min-width: 0; }
+  .m-when { font-size: 15px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  .m-when small { font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; opacity: 0.9; margin-left: 8px; }
+  .m-title { font-size: 24px; font-weight: 700; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-place { font-size: 13px; opacity: 0.9; }
   .live { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #fff; margin-right: 6px; vertical-align: 1px; animation: blink 1.2s infinite; }
   @-webkit-keyframes blink { 50% { opacity: 0.2; } }
   @keyframes blink { 50% { opacity: 0.2; } }
-  .w-icon { font-size: 46px; line-height: 1; margin-right: 10px; }
-  .w-temp { font-size: 36px; font-weight: 600; line-height: 1; }
-  .w-label { color: var(--muted); font-size: 14px; }
-  .w-days { margin-top: 8px; font-size: 15px; }
-  .w-days div { margin-top: 2px; }
-  .hints { margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--line); list-style: none; font-size: 15px; }
-  .hints li { margin-top: 3px; }
-  .climate div { display: flex; justify-content: space-between; margin-top: 4px; font-size: 16px; }
-  .climate .bad { color: var(--warn); font-weight: 700; }
-  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin: 0 0 6px; font-weight: 700; }
-  .day { -webkit-box-flex: 1; flex: 1; overflow: hidden; min-height: 0; }
-  .more { color: var(--muted); font-size: 14px; padding-left: 14px; }
-  .special { margin-bottom: 4px; }
-  .chip { display: inline-block; background: var(--soft); border-radius: 999px; padding: 2px 10px; margin: 0 6px 4px 0; font-size: 14px; }
-  .event { display: flex; align-items: center; padding: 4px 0 4px 10px; border-left: 4px solid var(--accent); margin-bottom: 5px; }
-  .event.past { opacity: 0.45; }
-  .event.now { background: var(--soft); border-radius: 0 8px 8px 0; }
-  .time { width: 64px; font-weight: 700; font-size: 17px; flex-shrink: 0; }
-  .time.allday { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
-  .time small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+
+  /* Termine heute / morgen */
+  .agenda { -webkit-box-flex: 1; flex: 1; display: flex; min-height: 0; margin-bottom: 12px; }
+  .day { -webkit-box-flex: 1; flex: 1; overflow: hidden; min-height: 0; min-width: 0; margin-right: 12px; }
+  .day.today { -webkit-box-flex: 1.35; flex: 1.35; }
+  .day:last-child { margin-right: 0; }
+  .more { color: var(--muted); font-size: 13px; padding-left: 12px; }
+  .special { margin-bottom: 6px; }
+  .chip { display: inline-block; background: var(--card2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; margin: 0 6px 4px 0; font-size: 13px; }
+  .event { display: flex; align-items: center; padding: 6px 8px 6px 10px; border-left: 4px solid var(--violet); background: var(--card2); border-radius: 4px 10px 10px 4px; margin-bottom: 6px; }
+  .event.past { opacity: 0.4; }
+  .event.now { background: rgba(255, 122, 89, 0.18); }
+  .time { width: 62px; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .time.allday { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+  .time small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
   .event.cancelled { opacity: 0.5; border-left-style: dashed; }
   .event.cancelled .title .t, .event.cancelled .time { text-decoration: line-through; }
-  .cancel-chip { font-size: 12px; font-weight: 700; color: #fff; background: #d6336c; border-radius: 6px; padding: 1px 6px; vertical-align: 2px; }
-  .title { -webkit-box-flex: 1; flex: 1; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-  .title small { color: var(--muted); font-size: 14px; }
-  .logo { width: 28px; height: 28px; object-fit: contain; margin-left: 8px; flex-shrink: 0; }
+  .cancel-chip { font-size: 11px; font-weight: 700; color: #fff; background: #d6336c; border-radius: 6px; padding: 1px 6px; vertical-align: 2px; }
+  .title { -webkit-box-flex: 1; flex: 1; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .title small { color: var(--muted); font-size: 13px; }
+  .logo { width: 26px; height: 26px; object-fit: contain; margin-left: 8px; flex-shrink: 0; }
   .logo + .logo { margin-left: 3px; }
   .dots { margin-left: 8px; flex-shrink: 0; }
-  .dot { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; margin-left: 3px; }
-  .empty { color: var(--muted); font-size: 16px; padding: 4px 0; }
-  .posts { flex-shrink: 0; margin-bottom: 0; }
-  .post { font-size: 15px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .post b { color: var(--accent); }
-  .fullscreen-hint { position: fixed; left: 14px; bottom: 10px; font-size: 14px; font-weight: 700; color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .dot { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700; line-height: 22px; text-align: center; margin-left: -4px; box-shadow: 0 0 0 2px #1a224e; }
+  .empty { color: var(--muted); font-size: 15px; padding: 4px 0; }
+
+  /* Unten: Wetterverlauf, Ringe, Pinnwand */
+  .bottom { display: flex; height: 138px; flex-shrink: 0; }
+  .bottom .card { margin-right: 12px; min-width: 0; overflow: hidden; }
+  .bottom .card:last-child { margin-right: 0; }
+  .chart { -webkit-box-flex: 1.5; flex: 1.5; }
+  .bars { display: flex; align-items: flex-end; height: 64px; }
+  .bar { -webkit-box-flex: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; margin: 0 2px; }
+  .bar i { display: block; width: 70%; max-width: 18px; border-radius: 6px 6px 3px 3px; background: #7b5cff; background-image: linear-gradient(180deg, #ff6b8b, #7b5cff); }
+  .bar.rain i { background-image: linear-gradient(180deg, #36c6f0, #3a6bfd); }
+  .bar b { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+  .hours { display: flex; margin-top: 3px; }
+  .hours span { -webkit-box-flex: 1; flex: 1; text-align: center; font-size: 10px; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rings { -webkit-box-flex: 1.2; flex: 1.2; }
+  .ring-row { display: flex; justify-content: space-around; }
+  .ring { text-align: center; }
+  .ring svg { display: block; margin: 0 auto; }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 7; }
+  .ring-fg { fill: none; stroke-width: 7; stroke-linecap: round; }
+  .ring text { fill: #fff; font-size: 14px; font-weight: 700; }
+  .ring-label { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }
+  .posts { -webkit-box-flex: 1; flex: 1; }
+  .post { font-size: 14px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .post b { color: #ff9a5a; }
+
+  .fullscreen-hint { position: fixed; left: 14px; bottom: 10px; font-size: 14px; font-weight: 700; color: #fff; background: #ff6b8b; border: 0; border-radius: 999px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
   .is-fullscreen .fullscreen-hint { display: none; }
   /* Ruhemodus (Näherungssensor): schwarz mit ganz schwacher Uhr, die langsam wandert (kein Einbrennen) */
   #sleep { display: none; position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; z-index: 10; }
   .sleeping #sleep { display: block; }
   #sleep div { position: absolute; color: #fff; opacity: 0.12; font-size: 56px; font-weight: 300; }
-  .status { position: fixed; right: 10px; bottom: 6px; font-size: 11px; color: var(--muted); }
+  .status { position: fixed; right: 10px; bottom: 4px; font-size: 11px; color: var(--muted); }
   /* Einrichtung */
   .setup { max-width: 460px; margin: 60px auto; text-align: center; }
   .setup h1 { font-size: 26px; margin-bottom: 6px; }
   .setup p { color: var(--muted); line-height: 1.4; }
   .setup input { font-size: 26px; letter-spacing: 3px; text-align: center; text-transform: uppercase; width: 100%; padding: 12px; border: 2px solid var(--line); border-radius: 12px; margin: 14px 0; background: var(--card); color: var(--text); }
-  .setup button { font-size: 19px; font-weight: 700; color: #fff; background: var(--accent); border: 0; border-radius: 12px; padding: 12px 30px; }
+  .setup button { font-size: 19px; font-weight: 700; color: #fff; background: #ff6b8b; border: 0; border-radius: 12px; padding: 12px 30px; }
   .error { color: var(--warn); }
   /* Hochformat: untereinander */
   @media (orientation: portrait) {
     #app { display: block; overflow: hidden; }
-    .col-left { width: auto; margin-right: 0; }
+    .side { width: auto; margin: 0 0 12px; }
+    .people { display: none; }
+    .main { height: 75%; }
   }
 </style>
 </head>
@@ -214,7 +270,7 @@
   function stampDate(stamp) {
     return new Date(Number(stamp.slice(0, 4)), Number(stamp.slice(5, 7)) - 1, Number(stamp.slice(8, 10)), Number(stamp.slice(11, 13)), Number(stamp.slice(14, 16)));
   }
-  // Großes Spiel heute oder morgen (in der App beim Logo „Groß auf dem Wanddisplay“ eingeschaltet)
+  // Großes Spiel heute oder morgen (in der App beim Logo „Groß auf dem Wanddisplay“ eingeschaltet) – ersetzt die Kacheln
   function matchHtml(now, nowStamp) {
     var m = data.match;
     if (!m || m.end <= nowStamp) return '';
@@ -230,17 +286,17 @@
         when += '<small>noch ' + (minutes >= 60 ? Math.floor(minutes / 60) + ' Std. ' : '') + (minutes % 60) + ' Min.</small>';
       }
     }
-    var logos = '';
+    var imgs = '';
     for (var i = 0; m.icons && i < m.icons.length && i < 2; i++) {
-      if (i > 0) logos += '<span class="vs">–</span>';
-      logos += '<img src="' + esc(m.icons[i]) + '" alt="" />';
+      if (i > 0) imgs += '<span class="vs">–</span>';
+      imgs += '<img src="' + esc(m.icons[i]) + '" alt="" />';
     }
-    return '<div class="card match' + (today || running ? '' : ' tomorrow') + '">' +
-      '<div class="m-when">' + when + '</div>' +
-      (logos ? '<div class="m-logos">' + logos + '</div>' : '') +
+    return '<div class="match' + (today || running ? '' : ' tomorrow') + '">' +
+      (imgs ? '<div class="m-logos">' + imgs + '</div>' : '') +
+      '<div class="m-text"><div class="m-when">' + when + '</div>' +
       '<div class="m-title">' + esc(m.title) + '</div>' +
       (m.location ? '<div class="m-place">📍 ' + esc(m.location) + '</div>' : '') +
-      '</div>';
+      '</div></div>';
   }
   function specialChips(list) {
     var icons = { birthday: '🎂', vacation: '🧳', holiday: '🎉', school: '🏖️', loan: '📚', f1: '🏁' };
@@ -272,6 +328,138 @@
     return html;
   }
 
+  // nicht abgesagte Termine eines Tages
+  function active(day) {
+    var list = [];
+    for (var i = 0; day && i < day.events.length; i++) if (!day.events[i].cancelled) list.push(day.events[i]);
+    return list;
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  // Ring-Anzeige: Anteil in Prozent, Farbe, Text in der Mitte, Beschriftung
+  function ring(pct, color, text, label) {
+    var r = 26, c = 2 * Math.PI * r;
+    var len = Math.max(0, Math.min(100, pct)) * c / 100;
+    return '<div class="ring"><svg width="64" height="64" viewBox="0 0 64 64">' +
+      '<circle class="ring-bg" cx="32" cy="32" r="' + r + '" />' +
+      (len > 0 ? '<circle class="ring-fg" cx="32" cy="32" r="' + r + '" stroke="' + color + '" stroke-dasharray="' + len.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 32 32)" />' : '') +
+      '<text x="32" y="37" text-anchor="middle">' + esc(text) + '</text></svg>' +
+      '<div class="ring-label">' + esc(label) + '</div></div>';
+  }
+
+  function sideHtml(now, todays) {
+    var html = '<div class="card"><div class="clock">' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + '</div>' +
+      '<div class="date">' + DAYS[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()] + '</div>' +
+      '<div class="family">' + esc(data.family) + '</div><ul class="people">';
+    for (var i = 0; i < data.members.length; i++) {
+      var m = data.members[i];
+      var n = 0;
+      for (var j = 0; j < todays.length; j++) if (todays[j].member_ids.indexOf(m.id) >= 0) n++;
+      html += '<li' + (n ? ' class="busy"' : '') + '><span class="av" style="background:' + esc(m.color) + '">' + esc(m.initials || m.name.charAt(0).toUpperCase()) + '</span>' +
+        '<span class="nm">' + esc(m.name.split(' ')[0]) + '</span>' +
+        '<span class="cnt">' + (n ? '<b>' + n + '</b> heute' : 'frei') + '</span></li>';
+    }
+    html += '</ul>';
+    if (data.climate.length) {
+      html += '<div class="climate"><h2>Raumklima</h2>';
+      for (var c = 0; c < data.climate.length; c++) {
+        var s = data.climate[c];
+        var tempBad = s.warnings.join(' ').indexOf('temp') >= 0;
+        var humBad = s.warnings.join(' ').indexOf('humidity') >= 0;
+        html += '<div><span>' + esc(s.label) + '</span><span>' +
+          (s.temperature !== null ? '<span class="' + (tempBad ? 'bad' : '') + '">' + num(s.temperature) + '°</span>' : '–') +
+          (s.humidity !== null ? ' · <span class="' + (humBad ? 'bad' : '') + '">' + num(s.humidity) + ' %</span>' : '') +
+          '</span></div>';
+      }
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  function tilesHtml(now, nowStamp, todays, tomorrows) {
+    var next = null;
+    for (var i = 0; i < todays.length; i++) {
+      var e = todays[i];
+      if (!e.all_day && e.end > nowStamp) { next = e; break; }
+    }
+    var sub;
+    if (next) sub = (next.start <= nowStamp ? 'Jetzt: ' : 'Als Nächstes ' + hm(next.start) + ' · ') + esc(next.title);
+    else if (todays.length) sub = 'Für heute alles erledigt 🎉';
+    else sub = 'Ein freier Tag';
+    var html = '<div class="tiles"><div class="tile g1"><div class="t-label">Heute</div>' +
+      '<div class="t-big">' + todays.length + ' <small>' + (todays.length === 1 ? 'Termin' : 'Termine') + '</small></div>' +
+      '<div class="t-sub">' + sub + '</div></div>';
+    var first = null;
+    // erster Termin mit Uhrzeit, sonst der erste ganztägige
+    for (var t = 0; t < tomorrows.length; t++) if (!first || (first.all_day && !tomorrows[t].all_day)) first = tomorrows[t];
+    html += '<div class="tile g2"><div class="t-label">Morgen · ' + DAYS[(now.getDay() + 1) % 7] + '</div>' +
+      '<div class="t-big">' + tomorrows.length + ' <small>' + (tomorrows.length === 1 ? 'Termin' : 'Termine') + '</small></div>' +
+      '<div class="t-sub">' + (first ? (first.all_day ? '' : hm(first.start) + ' · ') + esc(first.title) : 'Noch nichts geplant') + '</div></div>';
+    var w = data.weather;
+    if (w && w.days && w.days.length) {
+      var d = w.days[0];
+      var temp = w.current && w.current.temp !== null ? Math.round(w.current.temp) : d.max;
+      html += '<div class="tile g3"><div class="t-label">' + esc(w.place || 'Wetter') + '</div>' +
+        '<div class="t-row"><span class="t-icon">' + weatherIcon(w.current && w.current.code) + '</span>' +
+        '<span style="min-width:0"><div class="t-big">' + temp + '°</div>' +
+        '<div class="t-sub">' + esc(weatherLabel(w.current && w.current.code)) + ' · ' + d.max + '° / ' + d.min + '°</div></span></div></div>';
+    } else {
+      html += '<div class="tile g3"><div class="t-label">Pinnwand</div><div class="t-big">' + data.posts.length + '</div><div class="t-sub">' + plural(data.posts.length, 'Beitrag', 'Beiträge') + '</div></div>';
+    }
+    return html + '</div>';
+  }
+
+  function chartHtml() {
+    var w = data.weather;
+    if (!w || !w.hours || !w.hours.length) return '';
+    var hours = w.hours;
+    var lo = 99, hi = -99;
+    for (var i = 0; i < hours.length; i++) { lo = Math.min(lo, hours[i].temp); hi = Math.max(hi, hours[i].temp); }
+    var bars = '', labels = '';
+    for (var j = 0; j < hours.length; j++) {
+      var h = hours[j];
+      var height = Math.round(8 + (hi > lo ? (h.temp - lo) / (hi - lo) : 0.5) * 38);
+      bars += '<div class="bar' + (h.rain >= 50 ? ' rain' : '') + '"><b>' + Math.round(h.temp) + '°</b><i style="height:' + height + 'px"></i></div>';
+      labels += '<span>' + (j % 2 === 0 ? h.time.slice(11, 13) : '') + '</span>';
+    }
+    var hint = w.hints && w.hints.length ? '☂ ' + w.hints[0] : (w.days[0].rain >= 30 ? '💧 Regen heute ' + w.days[0].rain + ' %' : 'Blau = Regen wahrscheinlich');
+    return '<div class="card chart"><h2>Wetter nächste Stunden</h2><div class="bars">' + bars + '</div><div class="hours">' + labels + '</div>' +
+      '<div class="hint">' + esc(hint) + '</div></div>';
+  }
+
+  function ringsHtml(nowStamp, todays) {
+    var timed = 0, done = 0;
+    for (var i = 0; i < todays.length; i++) {
+      if (todays[i].all_day) continue;
+      timed++;
+      if (todays[i].end <= nowStamp) done++;
+    }
+    var html = ring(timed ? done * 100 / timed : 0, '#ff6b8b', timed ? done + '/' + timed : '–', 'Erledigt');
+    var w = data.weather;
+    if (w && w.days && w.days.length) html += ring(w.days[0].rain, '#43b4ff', w.days[0].rain + '%', 'Regen heute');
+    var colors = ['#b06bff', '#46e3a5'];
+    // höchstens drei Ringe: zuerst ein Raum mit zu hoher/niedriger Luftfeuchte, sonst der erste
+    var rooms = [];
+    for (var c = 0; c < data.climate.length; c++) if (data.climate[c].humidity !== null) rooms.push(data.climate[c]);
+    rooms.sort(function (a, b) { return (b.warnings.join(' ').indexOf('humidity') >= 0 ? 1 : 0) - (a.warnings.join(' ').indexOf('humidity') >= 0 ? 1 : 0); });
+    for (var k = 0, n = 0; k < rooms.length && n < 1; k++) {
+      var s = rooms[k];
+      var bad = s.warnings.join(' ').indexOf('humidity') >= 0;
+      html += ring(s.humidity, bad ? '#ff6b8b' : colors[n], Math.round(s.humidity) + '%', '💧 ' + s.label);
+      n++;
+    }
+    return '<div class="card rings"><h2>Auf einen Blick</h2><div class="ring-row">' + html + '</div></div>';
+  }
+
+  function postsHtml() {
+    if (!data.posts.length) return '';
+    var html = '<div class="card posts"><h2>Pinnwand</h2>';
+    for (var p = 0; p < data.posts.length && p < 2; p++) {
+      var author = member(data.posts[p].created_by);
+      html += '<div class="post"><b>' + esc(author ? author.name.split(' ')[0] : '') + ':</b> ' + esc(data.posts[p].text) + '</div>';
+    }
+    return html + '</div>';
+  }
+
   function render() {
     if (!data) return;
     var now = new Date();
@@ -279,56 +467,15 @@
     var hour = now.getHours();
     var night = sensor && sensor.dark !== null ? sensor.dark : hour >= 22 || hour < 6;
     document.documentElement.className = (night ? 'night' : '') + (asleep ? ' sleeping' : '');
+    var todays = active(data.days[0]);
+    var tomorrows = active(data.days[1]);
 
-    var left = '<div class="card"><div class="clock">' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + '</div>' +
-      '<div class="date">' + DAYS[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()] + '</div>' +
-      '<div class="family">' + esc(data.family) + '</div></div>';
+    var main = matchHtml(now, nowStamp) || tilesHtml(now, nowStamp, todays, tomorrows);
+    main += '<div class="agenda"><div class="card day today"><h2>Heute</h2>' + eventsHtml(data.days[0], true, nowStamp) + '</div>' +
+      '<div class="card day"><h2>Morgen · ' + DAYS[(now.getDay() + 1) % 7] + '</h2>' + eventsHtml(data.days[1], false, nowStamp) + '</div></div>';
+    main += '<div class="bottom">' + chartHtml() + ringsHtml(nowStamp, todays) + postsHtml() + '</div>';
 
-    left += matchHtml(now, nowStamp);
-
-    var w = data.weather;
-    if (w && w.days && w.days.length) {
-      var today = w.days[0];
-      var tomorrow = w.days[1];
-      left += '<div class="card"><div class="weather-now"><span class="w-icon">' + weatherIcon(w.current && w.current.code) + '</span>' +
-        '<span><div class="w-temp">' + (w.current && w.current.temp !== null ? w.current.temp : today.max) + '°</div>' +
-        '<div class="w-label">' + esc(weatherLabel(w.current && w.current.code)) + ' · ' + esc(w.place) + '</div></span></div>' +
-        '<div class="w-days"><div>Heute <b>' + today.max + '°</b> / ' + today.min + '°' + (today.rain >= 30 ? ' · 💧 ' + today.rain + ' %' : '') + '</div>' +
-        (tomorrow ? '<div>Morgen ' + weatherIcon(tomorrow.code) + ' <b>' + tomorrow.max + '°</b> / ' + tomorrow.min + '°' + (tomorrow.rain >= 30 ? ' · 💧 ' + tomorrow.rain + ' %' : '') + '</div>' : '') +
-        '</div>';
-      if (w.hints.length) {
-        left += '<ul class="hints">';
-        for (var h = 0; h < w.hints.length; h++) left += '<li>☂ ' + esc(w.hints[h]) + '</li>';
-        left += '</ul>';
-      }
-      left += '</div>';
-    }
-
-    if (data.climate.length) {
-      left += '<div class="card climate"><h2>Raumklima</h2>';
-      for (var c = 0; c < data.climate.length; c++) {
-        var s = data.climate[c];
-        var tempBad = s.warnings.join(' ').indexOf('temp') >= 0;
-        var humBad = s.warnings.join(' ').indexOf('humidity') >= 0;
-        left += '<div><span>' + esc(s.label) + '</span><span>' +
-          (s.temperature !== null ? '<span class="' + (tempBad ? 'bad' : '') + '">' + num(s.temperature) + ' °C</span>' : '–') +
-          (s.humidity !== null ? ' · <span class="' + (humBad ? 'bad' : '') + '">💧 ' + num(s.humidity) + ' %</span>' : '') +
-          '</span></div>';
-      }
-      left += '</div>';
-    }
-
-    var right = '<div class="card day"><h2>Heute</h2>' + eventsHtml(data.days[0], true, nowStamp) + '</div>' +
-      '<div class="card day tomorrow"><h2>Morgen · ' + DAYS[(now.getDay() + 1) % 7] + '</h2>' + eventsHtml(data.days[1], false, nowStamp) + '</div>';
-    if (data.posts.length) {
-      right += '<div class="card posts"><h2>Pinnwand</h2>';
-      for (var p = 0; p < data.posts.length && p < 2; p++) {
-        var author = member(data.posts[p].created_by);
-        right += '<div class="post"><b>' + esc(author ? author.name.split(' ')[0] : '') + ':</b> ' + esc(data.posts[p].text) + '</div>';
-      }
-      right += '</div>';
-    }
-    app.innerHTML = '<div class="col-left">' + left + '</div><div class="col-right">' + right + '</div>';
+    app.innerHTML = '<div class="side">' + sideHtml(now, todays) + '</div><div class="main">' + main + '</div>';
     fit();
     statusEl.textContent = lastOk && now - lastOk > 15 * 60 * 1000 ? 'Keine Verbindung seit ' + pad(lastOk.getHours()) + ':' + pad(lastOk.getMinutes()) : '';
   }
