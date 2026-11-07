@@ -91,10 +91,12 @@ machen.
 1. Kabel an die Matrix löten (5V, GND, DIN – siehe oben) und nach hinten führen.
 2. Raster auf die LED-Seite der Matrix legen (Dome zu den Löchern) und mit **4–6 Schrauben M2 × 6** von hinten durch
    die Platine in die Dome schrauben – nur leicht anziehen.
-3. Streuscheibe **von hinten** ins Gehäuse legen – sie liegt vorne im Rahmen.
+3. Streuscheibe **von hinten** ins Gehäuse legen – sie fällt bis nach vorne in den Rahmen (innen ist alles frei).
 4. Raster + Matrix dahinter einsetzen: der Kragen des Rasters rutscht in die Vertiefung und hält die Scheibe fest.
 5. **Später für die App:** Berührungssensor TTP223 innen oben rechts in die dünne Stelle kleben (außen ist dort ein
    kleiner Punkt zum Antippen), Lichtsensor BH1750 innen oben links unter das kleine Loch kleben.
 6. ESP32-C3 in den Halter der Rückwand legen, **USB-C nach oben** (zur Aussparung), mit einem Klecks Heißkleber
    sichern. Den Elko unten daneben legen.
-7. Rückwand aufsetzen und mit **4 Schrauben M2 × 8** (Senkkopf) festschrauben. Das USB-Kabel kommt oben heraus.
+7. Rückwand aufsetzen – ihre vier Stifte drücken die Matrix nach vorn – und mit **4 Schrauben M2 × 8** (Senkkopf)
+   **seitlich** festschrauben: je zwei links und rechts durch die Gehäusewand in die Blöcke der Rückwand. Das
+   USB-Kabel kommt oben heraus.

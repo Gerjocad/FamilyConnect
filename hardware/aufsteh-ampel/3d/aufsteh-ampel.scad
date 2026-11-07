@@ -4,7 +4,8 @@
 //
 // Aufbau von vorne nach hinten: Rahmen (Gehäuse) → Streuscheibe (eigenes Teil, z. B. transparentes Filament) →
 // Raster mit 64 Kammern (Kragen vorne hält die Scheibe) → Matrix-Platine (M2-Schrauben am Raster) →
-// Platz für Kabel/Elko/ESP32 → Rückwand (4 Schrauben M2). USB-C kommt oben heraus.
+// Platz für Kabel/Elko/ESP32 → Rückwand (4 Schrauben M2 seitlich, Stifte drücken die Platine nach vorn).
+// Innen gibt es keine Säulen: Scheibe, Raster und Platine rutschen von hinten bis an den Rahmen. USB-C oben.
 teil = "alles";
 $fn = 48;
 
@@ -39,8 +40,12 @@ front = rahmen + scheibe + kragen;             // so dick ist die Front
 raster_z = rahmen + scheibe;                   // Vorderkante des Rasters
 pcb_z = raster_z + raster_h;                   // Vorderseite der Platine
 hinten_z = pcb_z + pcb_t;                      // Rückseite der Platine
-post_pos = innen / 2 - 3.2;                    // Eck-Säulen für die Rückwand
-post_d = 7;
+// Rückwand: Schrauben seitlich (links/rechts je 2) und Stifte, die die Platine nach vorn drücken
+schraub_y = 18;                                // Abstand der Seitenschrauben von der Mitte (oben/unten)
+schraub_tief = 3.5;                            // Abstand der Schrauben von der Hinterkante
+block = [6, 8, 7];                             // Schraubblöcke an der Rückwand (tief × breit × hoch)
+stift_pos = 30;                                // Stifte an den Ecken der Platine
+stift_d = 5;
 
 // ESP32-C3 SuperMini auf der Rückwand, USB-C nach oben
 esp = [18, 22.6];                      // Breite × Länge
@@ -50,9 +55,9 @@ usb = [13, 9];                         // Aussparung oben für den Stecker (Brei
 
 // Oben: Berührungssensor TTP223 (durch 1,2 mm Kunststoff) und Lichtsensor BH1750 (Loch) links/rechts vom USB
 ttp = [16, 12];
-ttp_x = 19.5;
+ttp_x = 18;
 ttp_wand = 1.2;
-bh_x = -19;
+bh_x = -17;
 bh_loch = 4;
 oben_z = hinten_z + 6;                 // hinter der Matrix, im dunklen Teil
 
@@ -73,19 +78,14 @@ module gehaeuse() {
         // Fenster vorne
         translate([0, 0, -1]) rund(raster_aussen, 2, rahmen + 2);
         // Vertiefung für Streuscheibe und Kragen des Rasters
-        translate([0, 0, rahmen]) rund(tasche, 3, front);
-      }
-      // Eck-Säulen: halten die Platine nach vorn und die Rückwand; unten 45° schräg zur Wand hin,
-      // damit sie ohne Stützen druckt (Gehäuse liegt mit der Front auf dem Drucker)
-      for (sx = [-1, 1], sy = [-1, 1]) translate([sx * post_pos, sy * post_pos, 0]) {
-        translate([0, 0, hinten_z + post_d]) cylinder(d = post_d, h = tiefe - hinten_z - post_d);
-        hull() {
-          translate([0, 0, hinten_z + post_d]) cylinder(d = post_d, h = 0.01);
-          translate([sx * post_d / 2, sy * post_d / 2, hinten_z]) cylinder(d = 1, h = 0.01);
-        }
+        translate([0, 0, rahmen]) rund(tasche, 5 + spiel, front);
       }
     }
-    for (sx = [-1, 1], sy = [-1, 1]) translate([sx * post_pos, sy * post_pos, hinten_z + post_d]) cylinder(d = schraube_vor, h = tiefe);
+    // Seitenschrauben für die Rückwand (mit Senkung außen)
+    for (sx = [-1, 1], y = [-schraub_y, schraub_y]) translate([sx * aussen / 2, y, tiefe - schraub_tief]) rotate([0, sx * -90, 0]) {
+      translate([0, 0, -1]) cylinder(d = schraube_loch, h = wand + 2);
+      translate([0, 0, -0.01]) cylinder(d1 = 4.4, d2 = schraube_loch, h = 1.1);
+    }
     // USB-C oben hinten
     translate([-usb[0] / 2, aussen / 2 - wand - 1, tiefe - usb[1]]) cube([usb[0], wand + 2, usb[1] + 1]);
     // TTP223: Wand innen auf 1,2 mm verdünnt, außen ein kleiner Punkt zum Antippen
@@ -97,7 +97,7 @@ module gehaeuse() {
 }
 
 module streuscheibe() {
-  rund(scheibe_s, 3, scheibe);
+  rund(scheibe_s, 5, scheibe);
 }
 
 module raster(h = raster_h) {
@@ -106,7 +106,7 @@ module raster(h = raster_h) {
     union() {
       // Kragen vorne: drückt die Streuscheibe in den Rahmen und richtet das Raster mittig aus
       if (h >= raster_h) difference() {
-        rund(scheibe_s, 3, kragen);
+        rund(scheibe_s, 5, kragen);
         translate([0, 0, -1]) rund(raster_aussen - 2 * raster_wand, 0.5, kragen + 2);
       }
       // Rahmen außen bis an die Platine
@@ -133,18 +133,27 @@ module rueckwand() {
   t = 2;
   lippe = 2;
   ey1 = innen / 2 - 1.2;                 // USB-Ende des ESP32 (oben)
+  stift_h = tiefe - hinten_z - 0.2;      // Stifte drücken leicht auf die Platine
   difference() {
     union() {
       rund(aussen, ecke, t);
-      // Lippe passt innen ins Gehäuse
-      translate([0, 0, t]) difference() {
-        rund(innen - 2 * spiel, ecke - wand, lippe);
-        translate([0, 0, -1]) rund(innen - 2 * spiel - 2.4, ecke - wand - 1.2, lippe + 2);
-        for (sx = [-1, 1], sy = [-1, 1]) translate([sx * post_pos, sy * post_pos, -1]) cylinder(d = post_d + 1.5, h = lippe + 2);
-        translate([-esp[0] / 2 - 1, aussen / 2 - 6, -1]) cube([esp[0] + 2, 6, lippe + 2]);   // Platz für ESP32 und USB
-      }
-      // Halter für den ESP32-C3: Auflagen, Seitenleisten, Anschlag
       translate([0, 0, t]) {
+        // Lippe passt innen ins Gehäuse
+        difference() {
+          rund(innen - 2 * spiel, ecke - wand, lippe);
+          translate([0, 0, -1]) rund(innen - 2 * spiel - 2.4, ecke - wand - 1.2, lippe + 2);
+          translate([-esp[0] / 2 - 1, aussen / 2 - 6, -1]) cube([esp[0] + 2, 6, lippe + 2]);   // Platz für ESP32 und USB
+        }
+        // Schraubblöcke links/rechts für die Seitenschrauben
+        for (sx = [-1, 1], y = [-schraub_y, schraub_y]) {
+          translate([sx > 0 ? innen / 2 - spiel - block[0] : -innen / 2 + spiel, y - block[1] / 2, 0]) cube([block[0], block[1], block[2]]);
+        }
+        // Stifte: halten Raster und Platine vorne am Rahmen
+        for (sx = [-1, 1], sy = [-1, 1]) translate([sx * stift_pos, sy * stift_pos, 0]) {
+          cylinder(d = stift_d, h = stift_h - 1);
+          translate([0, 0, stift_h - 1]) cylinder(d1 = stift_d, d2 = stift_d - 1.5, h = 1);
+        }
+        // Halter für den ESP32-C3: Auflagen, Seitenleisten, Anschlag
         for (sx = [-1, 1]) {
           translate([sx * (esp[0] / 2 + 0.3) + (sx < 0 ? -1.2 : 0), ey1 - esp[1] + 1, 0]) cube([1.2, esp[1] - 4, esp_hoch + esp_t + 1]);
           translate([sx * (esp[0] / 2 - 1.5) - 1, ey1 - esp[1] + 2, 0]) cube([2, esp[1] - 6, esp_hoch]);
@@ -152,11 +161,8 @@ module rueckwand() {
         translate([-6, ey1 - esp[1] - 1.5, 0]) cube([12, 1.2, esp_hoch + esp_t + 1]);
       }
     }
-    // Schraublöcher mit Senkung
-    for (sx = [-1, 1], sy = [-1, 1]) translate([sx * post_pos, sy * post_pos, -1]) {
-      cylinder(d = schraube_loch, h = t + 2);
-      cylinder(d1 = 4.6, d2 = schraube_loch, h = 1 + 1.2);
-    }
+    // Vorbohrungen der Seitenschrauben
+    for (sx = [-1, 1], y = [-schraub_y, schraub_y]) translate([sx * (innen / 2 + 1), y, t + schraub_tief]) rotate([0, 90, 0]) cylinder(d = schraube_vor, h = 13, center = true);
     // Lüftungsschlitze (unterhalb des ESP32)
     for (i = [-2 : 2]) translate([i * 6 - 1, -24, -1]) cube([2, 16, t + 2]);
   }
