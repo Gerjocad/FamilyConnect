@@ -48,7 +48,8 @@ Alles Wichtige zu FamilyConnect auf einen Blick. Neue Anleitungen und Bastelproj
 | Datei | Was |
 | --- | --- |
 | [raster_test.stl](../hardware/aufsteh-ampel/3d/raster_test.stl) | Zuerst: flaches Probe-Raster (passt es auf die Matrix?) |
-| [gehaeuse.stl](../hardware/aufsteh-ampel/3d/gehaeuse.stl) | Gehäuse mit Streuscheibe (weiß, Front nach unten drucken) |
+| [gehaeuse.stl](../hardware/aufsteh-ampel/3d/gehaeuse.stl) | Gehäuse mit Rahmen vorne, USB oben (Front nach unten drucken) |
+| [streuscheibe.stl](../hardware/aufsteh-ampel/3d/streuscheibe.stl) | Streuscheibe (transparent oder weiß drucken) |
 | [raster.stl](../hardware/aufsteh-ampel/3d/raster.stl) | Raster mit 64 Kammern, wird an die Matrix geschraubt |
 | [rueckwand.stl](../hardware/aufsteh-ampel/3d/rueckwand.stl) | Rückwand mit Halter für den ESP32-C3 SuperMini |
 
