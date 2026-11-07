@@ -17,8 +17,8 @@ erledigte wandern nach unten.
 ## Gebaut, wartet auf dich
 
 - **Aufsteh-Ampel** ([hardware/aufsteh-ampel](hardware/aufsteh-ampel/), Plan: [docs/plaene/aufsteh-ampel.md](docs/plaene/aufsteh-ampel.md))
-  – ESP32 + 8×8-Matrix (roter Mond, gelber Sonnenaufgang, ganze Sonne). Firmware und Verkabelung fertig; wird später
-  gebaut. Danach: Zeiten in der App einstellen (App-Einbindung erst nach dem Bau).
+  – ESP32 + 8×8-Matrix (roter Mond, gelber Sonnenaufgang, ganze Sonne). Firmware, Verkabelung und Gehäuse (07.11.)
+  fertig; ESP32-C3 SuperMini wird gekauft. Danach: Zeiten in der App einstellen (App-Einbindung erst nach dem Bau).
 - **Wandsensor** ([hardware/wandsensor](hardware/wandsensor/)) – Radar weckt das Wanddisplay, BH1750 schaltet den
   Dark Mode. Fertig, noch nicht getestet.
 - **Zahnputzkamera** ([docs/plaene/zahnputz-kamera.md](docs/plaene/zahnputz-kamera.md)) – Kamera + KI-Auswertung,

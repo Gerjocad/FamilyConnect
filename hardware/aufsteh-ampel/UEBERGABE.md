@@ -25,17 +25,17 @@ Gebaut wird es aus einem **ESP32** und einer **WS2812B-Matrix 8×8**.
 
 - Zuerst **nur ESP32 + 8×8-Matrix** verbinden: roter Mond, gelber Sonnenaufgang, ganze Sonne. („Ok, ich baue es später.“)
 - **App-Einbindung erst, wenn die Hardware gebaut ist** – vorher nicht umsetzen.
-- Vorhanden: WS2812B 8×8, BH1750 (zweiter), TTP223, ESP32-S3-DevKitC-1 (Nachbau, Platine 56,7 × 28,2 mm).
+- Vorhanden: WS2812B 8×8 (feste Platine 65,5 × 66,5 mm, Löcher Ø 2,5 im Abstand 49 × 25 mm), BH1750 (zweiter), TTP223, ESP32-S3-DevKitC-1 (Nachbau, Platine 56,7 × 28,2 mm).
   Einkaufsliste: [docs/einkaufsliste.md](../../docs/einkaufsliste.md). Der vorhandene ESP32-S3 steckt inzwischen in der
-  Musik-Box – für die Ampel also einen ESP32-C3 SuperMini (oder zweiten S3) nehmen.
+  Musik-Box – für die Ampel wird ein ESP32-C3 SuperMini gekauft (Entscheidung 07.11.).
 - **Noch offen** (im Plan unter „Noch zu klären“): für welches Kind bzw. wie viele Ampeln, Zeiten Mo–Fr/Wochenende,
   nachts roter Mond oder ganz aus, „Ich bin wach“ mit Punkten verbinden, Gehäuse schlicht oder mit Motiv.
 
 ## Nächste Schritte (wenn der Nutzer so weit ist)
 
 1. Matrix nach README anschließen, Firmware aufspielen, Bilder prüfen (ggf. `ZICKZACK`, `SPIEGELN`, `KOPFUEBER`).
-2. Gehäuse (Würfel ca. 75 × 75 × 45 mm, Streuscheibe 0,8 mm, Raster mit 64 Kammern) in OpenSCAD modellieren –
-   noch nicht angefangen.
+2. Gehäuse ist modelliert (07.11.): [3d/](3d/) – Würfel 76 × 76 × 32 mm, Streuscheibe 0,8 mm, Raster mit 64 Kammern,
+   ESP32-C3-Halter, Platz für TTP223/BH1750. Erst `raster_test.stl` drucken und den LED-Abstand prüfen.
 3. Erst danach die App-Anbindung nach dem Plan: Server `GET /api/wake-light/<code>`, Geräte-Code wie bei Wanddisplay
    und Musik-Box, Einrichten per USB im Browser wie bei der Musik-Box (`client/src/musicBoxSerial.ts`,
    `client/src/pages/MusicBoxSetupPage.tsx`).

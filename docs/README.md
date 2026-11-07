@@ -43,6 +43,15 @@ Alles Wichtige zu FamilyConnect auf einen Blick. Neue Anleitungen und Bastelproj
 | [gehaeuse_s3.stl](../hardware/wandsensor/3d/stl/gehaeuse_s3.stl) | Gehäuse für ESP32-S3-DevKitC-1 (größer) |
 | [rueckwand_s3.stl](../hardware/wandsensor/3d/stl/rueckwand_s3.stl) | Rückwand für den S3 |
 
+**Aufsteh-Ampel** – Ordner [hardware/aufsteh-ampel/3d](../hardware/aufsteh-ampel/3d/), Modell zum Anpassen: [aufsteh-ampel.scad](../hardware/aufsteh-ampel/3d/aufsteh-ampel.scad)
+
+| Datei | Was |
+| --- | --- |
+| [raster_test.stl](../hardware/aufsteh-ampel/3d/raster_test.stl) | Zuerst: flaches Probe-Raster (passt es auf die Matrix?) |
+| [gehaeuse.stl](../hardware/aufsteh-ampel/3d/gehaeuse.stl) | Gehäuse mit Streuscheibe (weiß, Front nach unten drucken) |
+| [raster.stl](../hardware/aufsteh-ampel/3d/raster.stl) | Raster mit 64 Kammern, wird an die Matrix geschraubt |
+| [rueckwand.stl](../hardware/aufsteh-ampel/3d/rueckwand.stl) | Rückwand mit Halter für den ESP32-C3 SuperMini |
+
 Auf GitHub eine STL anklicken zeigt sie in 3D; rechts oben „Download“ lädt sie für den Slicer herunter.
 
 ## ⚙️ Server einrichten (Schritt für Schritt)
