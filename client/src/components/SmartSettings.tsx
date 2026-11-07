@@ -5,7 +5,7 @@ import { useFamily } from '../session';
 import { Icon } from './Icon';
 import { useAsync } from './useAsync';
 
-/** Admin: welche Tuya-Lampen und -Steckdosen unter „Smart Home“ erscheinen und welche Kinder schalten dürfen */
+/** Admin: welche Tuya-Lampen und -Steckdosen unter „Smart Home“ erscheinen */
 export function SmartSettings() {
   const { family } = useFamily();
   const path = `/families/${family.id}/smart/devices`;
@@ -41,20 +41,17 @@ export function SmartSettings() {
           {d.selected && (
             <>
               <label>Name in der App<input value={d.label} onChange={(e) => update(d.id, { label: e.target.value })} placeholder="z. B. Kinderzimmer Licht" maxLength={50} /></label>
-              <div className="row">
-                <label>Art
-                  <select value={d.kind} onChange={(e) => update(d.id, { kind: e.target.value as SmartSetupDevice['kind'] })}>
-                    <option value="light">💡 Lampe</option>
-                    <option value="plug">🔌 Steckdose</option>
-                  </select>
-                </label>
-                <label className="checkbox"><input type="checkbox" checked={d.kids_allowed} onChange={(e) => update(d.id, { kids_allowed: e.target.checked })} /> Kinder dürfen schalten</label>
-              </div>
+              <label>Art
+                <select value={d.kind} onChange={(e) => update(d.id, { kind: e.target.value as SmartSetupDevice['kind'] })}>
+                  <option value="light">💡 Lampe</option>
+                  <option value="plug">🔌 Steckdose</option>
+                </select>
+              </label>
             </>
           )}
         </div>
       ))}
-      <small className="hint">Eltern und Admins schalten alle ausgewählten Geräte, Kinder nur die freigegebenen.</small>
+      <small className="hint">Alle in der Familie können die ausgewählten Geräte schalten.</small>
       {save.error && <p className="error">{save.error}</p>}
       {saved && <p className="success">Gespeichert</p>}
       <button

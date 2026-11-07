@@ -8,7 +8,6 @@ export interface SmartDevice {
   device_id: string;
   label: string;
   kind: 'light' | 'plug';
-  kids_allowed: boolean;
   on: boolean | null;
   brightness: number | null;
   dimmable: boolean;
@@ -23,7 +22,6 @@ export interface SmartSetupDevice {
   selected: boolean;
   label: string;
   kind: 'light' | 'plug';
-  kids_allowed: boolean;
 }
 
 /** Geräte mit Zustand; jede Minute und bei Änderungen anderer neu laden */

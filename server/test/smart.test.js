@@ -56,7 +56,7 @@ async function api(path, { token, method = 'GET', body } = {}) {
 }
 
 describe('Smart Home (Tuya)', () => {
-  test('Geräte wählen, schalten, dimmen, Rechte der Kinder', async () => {
+  test('Geräte wählen, schalten, dimmen, alle dürfen schalten', async () => {
     const reg = async (name) => (await api('/auth/register', { method: 'POST', body: { name, email: `${name}@smart.test`, password: 'geheim123' } })).data.token;
     const mama = await reg('Mama');
     const lea = await reg('Lea');
@@ -69,17 +69,16 @@ describe('Smart Home (Tuya)', () => {
     assert.deepEqual(list.devices.map((d) => [d.id, d.kind]), [['lampe-1', 'light'], ['dose-1', 'plug']], 'ohne Thermometer');
 
     assert.equal((await api(`${path}/devices`, { token: mama, method: 'PUT', body: { devices: [
-      { id: 'lampe-1', label: 'Kinderzimmer', kind: 'light', kids_allowed: true },
+      { id: 'lampe-1', label: 'Kinderzimmer', kind: 'light' },
       { id: 'dose-1', label: 'Fernseher', kind: 'plug' },
     ] } })).status, 204);
 
     const { data } = await api(path, { token: mama });
     assert.deepEqual(data.devices.map((d) => [d.label, d.on, d.brightness, d.dimmable]), [['Kinderzimmer', false, 50, true], ['Fernseher', true, null, false]]);
 
-    // Kind sieht und schaltet nur die freigegebene Lampe
+    // auch Kinder sehen und schalten alles
     const kid = await api(path, { token: lea });
-    assert.deepEqual(kid.data.devices.map((d) => d.label), ['Kinderzimmer']);
-    assert.equal((await api(`${path}/dose-1`, { token: lea, method: 'POST', body: { on: false } })).status, 403);
+    assert.deepEqual(kid.data.devices.map((d) => d.label), ['Kinderzimmer', 'Fernseher']);
     assert.equal((await api(`${path}/lampe-1`, { token: lea, method: 'POST', body: { on: true, brightness: 100 } })).status, 204);
     assert.deepEqual(commands.at(-1), ['lampe-1', [{ code: 'switch_led', value: true }, { code: 'bright_value_v2', value: 1000 }]]);
 

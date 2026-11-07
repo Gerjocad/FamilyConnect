@@ -18,7 +18,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       'Neuer Bereich „Smart Home“ im Menü: Tuya-Lampen und -Steckdosen an- und ausschalten, Lampen dimmen',
       'Knopf „Alle Lichter aus“',
-      'Admins wählen unter Familie & Profil → Geräte aus, welche Geräte erscheinen und welche Kinder schalten dürfen',
+      'Admins wählen unter Familie & Profil → Geräte aus, welche Geräte erscheinen – schalten darf jeder in der Familie alles',
     ],
   },
   {

@@ -1,8 +1,6 @@
 // Smart Home: Lampen und Steckdosen aus dem Tuya-Projekt schalten.
-// Admins wählen in den Einstellungen die Geräte aus; Eltern/Admins schalten alles,
-// Kinder nur Geräte, die dafür freigegeben sind.
+// Admins wählen in den Einstellungen die Geräte aus; schalten darf jedes Familienmitglied alles.
 import { Router } from 'express';
-import { isManager } from './permissions.js';
 import { LIGHT_CATEGORIES, PLUG_CATEGORIES, TuyaError } from './tuya.js';
 
 const STATE_CACHE_MS = 30 * 1000;
@@ -31,14 +29,13 @@ export function smartRouter(db, { auth, member, publish, tuya }) {
     if (!(err instanceof TuyaError)) throw err;
     res.status(502).json({ error: err.message, expired: err.expired });
   };
-  const allowed = (req, device) => isManager(req.role) || Boolean(device.kids_allowed);
 
-  // Geräte mit Zustand – Kinder sehen nur die für sie freigegebenen
+  // Geräte mit Zustand
   router.get(base, auth, member, async (req, res) => {
     if (!tuya.enabled) return res.json({ enabled: false, devices: [] });
-    const list = devicesOf(db, req.familyId).filter((d) => allowed(req, d));
+    const list = devicesOf(db, req.familyId);
     const devices = await Promise.all(list.map(async (d) => {
-      const info = { device_id: d.device_id, label: d.label, kind: d.kind, kids_allowed: Boolean(d.kids_allowed) };
+      const info = { device_id: d.device_id, label: d.label, kind: d.kind };
       try {
         const s = await state(d.device_id);
         return { ...info, on: s.on, brightness: s.brightness, dimmable: Boolean(s.bright_code), error: null };
@@ -54,7 +51,6 @@ export function smartRouter(db, { auth, member, publish, tuya }) {
   router.post(`${base}/:deviceId`, auth, member, async (req, res) => {
     const device = db.prepare('SELECT * FROM smart_devices WHERE family_id = ? AND device_id = ?').get(req.familyId, req.params.deviceId);
     if (!device) return res.status(404).json({ error: 'Gerät nicht gefunden' });
-    if (!allowed(req, device)) return res.status(403).json({ error: 'Dieses Gerät dürfen nur Eltern schalten' });
     const { on, brightness } = req.body ?? {};
     if (on !== undefined && typeof on !== 'boolean') return res.status(400).json({ error: 'on muss true/false sein' });
     if (brightness !== undefined && (!Number.isInteger(brightness) || brightness < 1 || brightness > 100)) {
@@ -90,7 +86,7 @@ export function smartRouter(db, { auth, member, publish, tuya }) {
           .map((d) => {
             const c = chosen.get(d.id);
             return { id: d.id, name: d.name, online: d.online, category: d.category, selected: Boolean(c),
-              label: c?.label ?? d.name, kind: c?.kind ?? kindOf(d.category) ?? 'plug', kids_allowed: Boolean(c?.kids_allowed) };
+              label: c?.label ?? d.name, kind: c?.kind ?? kindOf(d.category) ?? 'plug' };
           }),
       });
     } catch (err) {
@@ -106,9 +102,9 @@ export function smartRouter(db, { auth, member, publish, tuya }) {
     db.exec('BEGIN');
     try {
       db.prepare('DELETE FROM smart_devices WHERE family_id = ?').run(req.familyId);
-      const insert = db.prepare('INSERT OR IGNORE INTO smart_devices (family_id, device_id, label, kind, kids_allowed, position) VALUES (?, ?, ?, ?, ?, ?)');
+      const insert = db.prepare('INSERT OR IGNORE INTO smart_devices (family_id, device_id, label, kind, position) VALUES (?, ?, ?, ?, ?)');
       list.forEach((d, i) => insert.run(req.familyId, d.id, typeof d.label === 'string' ? d.label.trim().slice(0, 50) : '',
-        KINDS.includes(d.kind) ? d.kind : 'plug', d.kids_allowed ? 1 : 0, i));
+        KINDS.includes(d.kind) ? d.kind : 'plug', i));
       db.exec('COMMIT');
     } catch (err) {
       db.exec('ROLLBACK');

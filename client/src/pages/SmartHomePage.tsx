@@ -90,7 +90,7 @@ export function SmartHomePage() {
       {data && !data.enabled && <EmptyState icon="bulb" title="Smart Home ist noch nicht eingerichtet">Die Tuya-Zugangsdaten fehlen auf dem Server.</EmptyState>}
       {data?.enabled && devices.length === 0 && (
         <EmptyState icon="bulb" title="Noch keine Geräte">
-          {isAdmin ? 'Unter Familie & Profil → Geräte → Lampen & Steckdosen auswählen, welche hier erscheinen.' : 'Ein Admin kann unter Familie & Profil Lampen und Steckdosen freigeben.'}
+          {isAdmin ? 'Unter Familie & Profil → Geräte → Lampen & Steckdosen auswählen, welche hier erscheinen.' : 'Ein Admin kann unter Familie & Profil Lampen und Steckdosen auswählen.'}
         </EmptyState>
       )}
       {lights.length > 0 && (
