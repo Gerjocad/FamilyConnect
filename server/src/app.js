@@ -10,6 +10,7 @@ import { crudRouter } from './crud.js';
 import { birthdaysRouter } from './birthdays.js';
 import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
+import { smartRouter } from './smart.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter, followEventDate } from './eventComments.js';
@@ -440,6 +441,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(wishesRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(eventCommentsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(climateRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
+  app.use(smartRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), tuya }));
   app.use(birthdaysRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(pollsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(choresRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

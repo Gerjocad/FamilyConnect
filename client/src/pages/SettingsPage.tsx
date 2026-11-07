@@ -5,6 +5,7 @@ import { CHANGELOG, CURRENT_VERSION, hasUnseenChanges } from '../changelog';
 import { Link } from 'react-router';
 import { Avatar, initials as nameInitials } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
+import { SmartSettings } from '../components/SmartSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
 import { WallDisplays } from '../components/WallDisplays';
 import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
@@ -317,9 +318,11 @@ export function SettingsPage() {
         )}
 
         {isAdmin && (
-          <SettingsGroup id="geraete" icon="monitor" title="Geräte" summary="Thermometer · Wanddisplay">
+          <SettingsGroup id="geraete" icon="monitor" title="Geräte" summary="Thermometer · Lampen & Steckdosen · Wanddisplay">
             <h3><Icon name="thermometer" size={16} /> Thermometer</h3>
             <ClimateSettings />
+            <h3><Icon name="bulb" size={16} /> Lampen &amp; Steckdosen</h3>
+            <SmartSettings />
             <h3><Icon name="monitor" size={16} /> Wanddisplay</h3>
             <WallDisplays />
           </SettingsGroup>

@@ -182,6 +182,16 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+-- Smart Home: Tuya-Lampen und -Steckdosen, die eine Familie schalten kann
+CREATE TABLE IF NOT EXISTS smart_devices (
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  device_id TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'plug',
+  kids_allowed INTEGER NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (family_id, device_id)
+);
 -- Finanzen (nur Eltern/Admins): owner_id NULL = gemeinsames Konto; Beträge in Cent
 CREATE TABLE IF NOT EXISTS finance_entries (
   id INTEGER PRIMARY KEY,

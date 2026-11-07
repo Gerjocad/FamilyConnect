@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.77',
+    date: '2026-11-07',
+    title: 'Smart Home: Lampen und Steckdosen schalten',
+    changes: [
+      'Neuer Bereich „Smart Home“ im Menü: Tuya-Lampen und -Steckdosen an- und ausschalten, Lampen dimmen',
+      'Knopf „Alle Lichter aus“',
+      'Admins wählen unter Familie & Profil → Geräte aus, welche Geräte erscheinen und welche Kinder schalten dürfen',
+    ],
+  },
+  {
     version: '1.76',
     date: '2026-11-06',
     title: 'Neues Aussehen fürs Wanddisplay',

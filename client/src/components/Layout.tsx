@@ -33,6 +33,7 @@ const NAV: { to: string; label: string; icon: IconName; feature?: 'points'; mana
   { to: '/wuensche', label: 'Wünsche', icon: 'gift' },
   { to: '/ausgeliehen', label: 'Ausgeliehen', icon: 'book' },
   { to: '/musik', label: 'Musik', icon: 'music' },
+  { to: '/smarthome', label: 'Smart Home', icon: 'bulb' },
   { to: '/anfragen', label: 'Anfragen', icon: 'request' },
   { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint' },
   { to: '/feedback', label: 'Feedback', icon: 'feedback' },

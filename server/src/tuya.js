@@ -1,4 +1,4 @@
-// Thermometer über die Tuya-Cloud (Smart Life). Zugangsdaten liegen nur auf dem Server
+// Thermometer, Lampen und Steckdosen über die Tuya-Cloud (Smart Life). Zugangsdaten liegen nur auf dem Server
 // (/etc/familyconnect/tuya.json, siehe deploy/TUYA.md) und werden bei Bedarf gelesen.
 // Signatur nach https://developer.tuya.com/en/docs/iot/new-singnature
 import { createHash, createHmac, randomUUID } from 'node:crypto';
@@ -29,6 +29,13 @@ const statusSources = (id) => [
   { path: `/v2.0/cloud/thing/${id}/shadow/properties`, pick: (r) => r?.properties },
   { path: `/v1.0/devices/${id}`, pick: (r) => r?.status },
 ];
+
+// Schalten: Lampen (switch_led) und Steckdosen (switch_1, switch); Helligkeit je nach Gerät
+const SWITCH = ['switch_led', 'switch_led_1', 'switch_1', 'switch', 'switch_on'];
+const BRIGHTNESS = ['bright_value_v2', 'bright_value', 'bright_value_1'];
+/** Tuya-Kategorien von Lampen und Steckdosen/Schaltern */
+export const LIGHT_CATEGORIES = ['dj', 'dd', 'xdd', 'fwd', 'dc', 'tgq', 'tgkg', 'fsd', 'gyd', 'tyndj', 'sxd', 'mbd'];
+export const PLUG_CATEGORIES = ['cz', 'pc', 'kg', 'qjdcz', 'wkcz', 'dlq'];
 
 const toNumber = (v) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : null);
 
@@ -193,6 +200,71 @@ export class TuyaClient {
     for (const path of paths) {
       try {
         return await this.request('GET', path);
+      } catch (err) {
+        if (err.expired) throw err;
+        firstError ??= err;
+      }
+    }
+    throw firstError;
+  }
+
+  /** Gerätebeschreibung: { code: { scale, min, max } } – wird gemerkt, ändert sich nicht */
+  #specCache = new Map();
+  async #spec(id) {
+    if (this.#specCache.has(id)) return this.#specCache.get(id);
+    try {
+      const spec = await this.#firstOf([`/v1.0/iot-03/devices/${id}/specification`, `/v1.0/devices/${id}/specifications`]);
+      const out = {};
+      for (const s of [...(spec?.functions ?? []), ...(spec?.status ?? [])]) {
+        let v = {};
+        try {
+          v = JSON.parse(s.values ?? '{}');
+        } catch { /* egal */ }
+        out[s.code] ??= { scale: v.scale ?? 0, min: toNumber(v.min), max: toNumber(v.max) };
+      }
+      this.#specCache.set(id, out);
+      return out;
+    } catch (err) {
+      if (err.expired) throw err;
+      return {};
+    }
+  }
+
+  /** Schaltzustand einer Lampe/Steckdose: { on, brightness (0–100 oder null), switch_code, bright_code } */
+  async switchState(id) {
+    const [status, spec] = await Promise.all([this.#status(id), this.#spec(id)]);
+    if (!status.source) throw new TuyaError('Das Gerät meldet keinen Zustand');
+    const sw = SWITCH.map((c) => status.points.find((p) => p.code === c && typeof p.value === 'boolean')).find(Boolean)
+      ?? status.points.find((p) => /^switch/.test(p.code) && typeof p.value === 'boolean');
+    const br = BRIGHTNESS.map((c) => status.points.find((p) => p.code === c && toNumber(p.value) !== null)).find(Boolean);
+    let brightness = null;
+    if (br) {
+      const { min = 10, max = br.code === 'bright_value' ? 255 : 1000 } = Object.fromEntries(Object.entries(spec[br.code] ?? {}).filter(([, v]) => v !== null));
+      brightness = Math.max(1, Math.min(100, Math.round(((toNumber(br.value) - min) / (max - min)) * 100)));
+    }
+    return { on: sw ? sw.value : null, brightness, switch_code: sw?.code ?? null, bright_code: br?.code ?? null };
+  }
+
+  /** Lampe/Steckdose schalten: { on: true/false } und/oder { brightness: 1–100 } */
+  async setSwitch(id, { on, brightness }) {
+    const state = await this.switchState(id);
+    const commands = [];
+    if (on !== undefined) {
+      if (!state.switch_code) throw new TuyaError('Dieses Gerät kann die App nicht schalten');
+      commands.push({ code: state.switch_code, value: on });
+    }
+    if (brightness !== undefined) {
+      if (!state.bright_code) throw new TuyaError('Dieses Gerät ist nicht dimmbar');
+      const spec = (await this.#spec(id))[state.bright_code] ?? {};
+      const min = spec.min ?? 10;
+      const max = spec.max ?? (state.bright_code === 'bright_value' ? 255 : 1000);
+      commands.push({ code: state.bright_code, value: Math.round(min + (brightness / 100) * (max - min)) });
+    }
+    let firstError = null;
+    for (const path of [`/v1.0/iot-03/devices/${id}/commands`, `/v1.0/devices/${id}/commands`]) {
+      try {
+        await this.request('POST', path, { commands });
+        return;
       } catch (err) {
         if (err.expired) throw err;
         firstError ??= err;

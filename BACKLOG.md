@@ -49,7 +49,7 @@ erledigte wandern nach unten.
 
 Feste Einkaufsliste mit Warengruppen · Dienste mit Rotation · Geburtstage mit Geschenkideen · Abstimmungen und
 Familien-Umfrage (Essen → Essensplan, Ausflug → Kalender) · Ferien & Feiertage · Tuya-Raumklima (läuft) ·
-Server-Update per Knopf · NFC-Aufkleber in der App beschreiben · Wunschliste · Wetter · Wanddisplay fürs Fire 7 mit
+Server-Update per Knopf · Smart Home (Tuya-Lampen und -Steckdosen schalten) · neues Wanddisplay · NFC-Aufkleber in der App beschreiben · Wunschliste · Wetter · Wanddisplay fürs Fire 7 mit
 Fenerbahçe-Banner · Kalender: Logos (auch beide Wappen), Gegner-Assistent, Formel 1, Wischen, Termine absagen, Chat
 bleibt beim Verschieben · Ausgeliehen · Orte mit „angekommen/losgegangen“ (Fehlmeldungen behoben) · Musik über
 Spotify mit NFC-Karten · Spiele (Tic-Tac-Toe, Vier gewinnt, Memory, Wörter raten, Kniffel online, Schiffe versenken;
