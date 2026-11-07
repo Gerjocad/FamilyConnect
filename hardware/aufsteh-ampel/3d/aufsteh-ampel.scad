@@ -12,14 +12,15 @@ $fn = 48;
 // --- Matrix (gemessen) ------------------------------------------------------------------
 pcb = [65.5, 66.5];      // Breite × Höhe der Platine
 pcb_t = 1.6;             // Dicke der Platine
-pitch = 49 / 6;          // LED-Abstand (aus Lochabstand 49 mm = 6 Raster) ≈ 8,17 mm
+pitch_x = 49 / 6;        // LED-Abstand waagerecht (Lochabstand 49 mm = 6 Raster) ≈ 8,17 mm
+pitch_y = 25 / 3;        // LED-Abstand senkrecht (Lochabstand 25 mm = 3 Raster) ≈ 8,33 mm – die Platine ist 1 mm höher
 loch_x = 49;             // Lochabstand waagerecht (Mitte–Mitte)
 loch_y = 25;             // Lochabstand senkrecht (oben–Mitte, Mitte–unten)
 schraube_vor = 1.7;      // Vorbohrung für M2-Schrauben (selbstschneidend in Kunststoff)
 schraube_loch = 2.4;     // Durchgangsloch M2
 
 // --- Gehäuse ----------------------------------------------------------------------------
-aussen = 76;             // Breite = Höhe außen
+aussen = 78;             // Breite = Höhe außen
 tiefe = 32;              // Tiefe ohne Rückwand
 ecke = 8;                // Rundung außen
 wand = 2.4;              // Seitenwände
@@ -33,9 +34,9 @@ raster_frei = 1.2;       // Raster-Wände enden so weit vor der Platine (Platz f
 spiel = 0.2;
 
 innen = aussen - 2 * wand;
-raster_aussen = 8 * pitch + raster_wand;
-scheibe_s = raster_aussen + 2 * rand;          // Größe der Streuscheibe (= Kragen des Rasters)
-tasche = scheibe_s + 2 * spiel;                // Vertiefung im Rahmen für Scheibe + Kragen
+raster_aussen = [8 * pitch_x + raster_wand, 8 * pitch_y + raster_wand];
+scheibe_s = [raster_aussen[0] + 2 * rand, raster_aussen[1] + 2 * rand];        // Größe der Streuscheibe (= Kragen des Rasters)
+tasche = [scheibe_s[0] + 2 * spiel, scheibe_s[1] + 2 * spiel];              // Vertiefung im Rahmen für Scheibe + Kragen
 front = rahmen + scheibe + kragen;             // so dick ist die Front
 raster_z = rahmen + scheibe;                   // Vorderkante des Rasters
 pcb_z = raster_z + raster_h;                   // Vorderseite der Platine
@@ -62,7 +63,8 @@ bh_loch = 4;
 oben_z = hinten_z + 6;                 // hinter der Matrix, im dunklen Teil
 
 module rund(s, r, h) {
-  linear_extrude(h) offset(r) square([s - 2 * r, s - 2 * r], center = true);
+  q = is_list(s) ? s : [s, s];
+  linear_extrude(h) offset(r) square([q[0] - 2 * r, q[1] - 2 * r], center = true);
 }
 
 module loecher() {
@@ -107,17 +109,17 @@ module raster(h = raster_h) {
       // Kragen vorne: drückt die Streuscheibe in den Rahmen und richtet das Raster mittig aus
       if (h >= raster_h) difference() {
         rund(scheibe_s, 5, kragen);
-        translate([0, 0, -1]) rund(raster_aussen - 2 * raster_wand, 0.5, kragen + 2);
+        translate([0, 0, -1]) rund([raster_aussen[0] - 2 * raster_wand, raster_aussen[1] - 2 * raster_wand], 0.5, kragen + 2);
       }
       // Rahmen außen bis an die Platine
       difference() {
-        translate([-raster_aussen / 2, -raster_aussen / 2, 0]) cube([raster_aussen, raster_aussen, h]);
-        translate([-raster_aussen / 2 + raster_wand, -raster_aussen / 2 + raster_wand, -1]) cube([raster_aussen - 2 * raster_wand, raster_aussen - 2 * raster_wand, h + 2]);
+        translate([-raster_aussen[0] / 2, -raster_aussen[1] / 2, 0]) cube([raster_aussen[0], raster_aussen[1], h]);
+        translate([-raster_aussen[0] / 2 + raster_wand, -raster_aussen[1] / 2 + raster_wand, -1]) cube([raster_aussen[0] - 2 * raster_wand, raster_aussen[1] - 2 * raster_wand, h + 2]);
       }
       // Trennwände – enden kurz vor der Platine
       for (i = [1 : n - 1]) {
-        translate([-4 * pitch + i * pitch - raster_wand / 2, -raster_aussen / 2, 0]) cube([raster_wand, raster_aussen, h - raster_frei]);
-        translate([-raster_aussen / 2, -4 * pitch + i * pitch - raster_wand / 2, 0]) cube([raster_aussen, raster_wand, h - raster_frei]);
+        translate([-4 * pitch_x + i * pitch_x - raster_wand / 2, -raster_aussen[1] / 2, 0]) cube([raster_wand, raster_aussen[1], h - raster_frei]);
+        translate([-raster_aussen[0] / 2, -4 * pitch_y + i * pitch_y - raster_wand / 2, 0]) cube([raster_aussen[0], raster_wand, h - raster_frei]);
       }
       // Schraubdome an den Löchern der Platine (mit Kegel darunter, druckt ohne Stütze)
       loecher() {

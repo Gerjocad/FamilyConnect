@@ -65,10 +65,10 @@ Die Bilder selbst stehen oben in `firmware/src/main.cpp` als 8 Zeilen Text (`R` 
 
 ![Teile des Gehäuses](3d/vorschau.png)
 
-Würfel 76 × 76 × 34 mm. Vorne leuchtet die Matrix durch eine eigene Streuscheibe (z. B. aus transparentem oder
+Würfel 78 × 78 × 34 mm. Vorne leuchtet die Matrix durch eine eigene Streuscheibe (z. B. aus transparentem oder
 weißem Filament); dahinter trennt ein Raster mit 64 Kammern die LEDs, damit Mond und Sonne aus klaren Punkten
 bestehen. USB-C kommt oben heraus. Modell zum Anpassen: [3d/aufsteh-ampel.scad](3d/aufsteh-ampel.scad)
-(Maße der Matrix: 65,5 × 66,5 mm, Löcher Ø 2,5 im Abstand 49 × 25 mm).
+(Maße der Matrix: 65,5 × 66,5 mm, Löcher Ø 2,5 im Abstand 49 × 25 mm; LED-Abstand 8,17 mm waagerecht, 8,33 mm senkrecht).
 
 | Datei | Was | Wie drucken |
 | --- | --- | --- |

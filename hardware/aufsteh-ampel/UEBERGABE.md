@@ -34,7 +34,7 @@ Gebaut wird es aus einem **ESP32** und einer **WS2812B-Matrix 8×8**.
 ## Nächste Schritte (wenn der Nutzer so weit ist)
 
 1. Matrix nach README anschließen, Firmware aufspielen, Bilder prüfen (ggf. `ZICKZACK`, `SPIEGELN`, `KOPFUEBER`).
-2. Gehäuse ist modelliert (07.11.): [3d/](3d/) – Würfel 76 × 76 × 34 mm, Streuscheibe als eigenes Teil
+2. Gehäuse ist modelliert (07.11.): [3d/](3d/) – Würfel 78 × 78 × 34 mm, Streuscheibe als eigenes Teil
    (transparentes Filament), Raster mit 64 Kammern, ESP32-C3-Halter, USB-C oben, Platz für TTP223/BH1750. Erst `raster_test.stl` drucken und den LED-Abstand prüfen.
 3. Erst danach die App-Anbindung nach dem Plan: Server `GET /api/wake-light/<code>`, Geräte-Code wie bei Wanddisplay
    und Musik-Box, Einrichten per USB im Browser wie bei der Musik-Box (`client/src/musicBoxSerial.ts`,
