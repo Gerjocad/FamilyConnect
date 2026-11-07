@@ -1,13 +1,10 @@
-# Projekte und Ideen – Stand 03.11.2026
+# Projekte und Ideen – Stand 07.11.2026
 
 Was gerade läuft, was gemerkt ist und was erst auf Zuruf umgesetzt wird. Neue Ideen kommen hier dazu,
 erledigte wandern nach unten.
 
 ## In Arbeit
 
-- **Musik-Box** ([hardware/musikbox](hardware/musikbox/)) – **fertig gebaut (06.11.)**: Gehäuse, Tasterhalter (Taster
-  von hinten, Kappe 1,6 mm Weg), Drehknopf mit Kragen, Kartenanschlag. Der Nutzer nimmt evtl. noch Optimierungen vor.
-  Offen: Bestätigung, dass WLAN-Einrichtung, Kartenlesen und Lautstärke im Alltag laufen.
 - **„Wo bist du?“ Stufe 2 – automatische Antwort** (v1.74, braucht die neue Android-App): Fragt ein Admin, antworten
   alle Handys automatisch; fragen Eltern ein Kind, antwortet dessen Handy automatisch. Das Handy braucht den Standort
   „Immer erlauben“; die Person bekommt jedes Mal „… hat deinen Standort abgerufen“. Klappt es nicht, kommt nach 45 s
@@ -52,6 +49,6 @@ Familien-Umfrage (Essen → Essensplan, Ausflug → Kalender) · Ferien & Feiert
 Server-Update per Knopf · Smart Home (Tuya-Lampen und -Steckdosen schalten) · neues Wanddisplay · NFC-Aufkleber in der App beschreiben · Wunschliste · Wetter · Wanddisplay fürs Fire 7 mit
 Fenerbahçe-Banner · Kalender: Logos (auch beide Wappen), Gegner-Assistent, Formel 1, Wischen, Termine absagen, Chat
 bleibt beim Verschieben · Ausgeliehen · Orte mit „angekommen/losgegangen“ (Fehlmeldungen behoben) · Musik über
-Spotify mit NFC-Karten · Spiele (Tic-Tac-Toe, Vier gewinnt, Memory, Wörter raten, Kniffel online, Schiffe versenken;
+Spotify mit NFC-Karten · **Musik-Box** fertig gebaut und in Betrieb (07.11., [hardware/musikbox](hardware/musikbox/)) · Spiele (Tic-Tac-Toe, Vier gewinnt, Memory, Wörter raten, Kniffel online, Schiffe versenken;
 „Du bist dran“ kommt) · Punkte & Belohnungen · „Wo bist du?“ mit Adresse und Karte · Finanzen (Aufteilung aufs
 gemeinsame Konto, einmalige Zahlungen) · eigene Kürzel im Profilbild · Testfunktionen aufgelöst (alles freigegeben)
