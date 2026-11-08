@@ -1,6 +1,6 @@
 # Einkaufsliste – Aufsteh-Ampel, Wandsensor, Zahnputz-Kamera
 
-Stand 29.10.2026. Preise sind grobe Richtwerte.
+Stand 08.11.2026. Preise sind grobe Richtwerte.
 
 ## Bestellen
 
@@ -15,8 +15,11 @@ Stand 29.10.2026. Preise sind grobe Richtwerte.
 | **Widerstände 330 Ω** (bedrahtet) | 1 Set | Datenleitung der LEDs | 3 € |
 | **Dupont-Kabel** Buchse–Buchse + Stecker–Buchse | je 1 Set | Verbinden ohne Löten | 6 € |
 | **Doppelseitiges Schaumklebeband** | 1 Rolle | Sensoren im Gehäuse | 5 € |
-| **Schrauben M3 × 8** bzw. Blechschrauben 3 × 8 | 1 Set | Gehäuse | 5 € |
-| **PETG-Filament** (weiß) | 1 Rolle | Gehäuse fürs Bad (verträgt Feuchtigkeit besser als PLA) und Streuscheibe der Ampel | 20 € |
+| **Schrauben M3 × 8** bzw. Blechschrauben 3 × 8 | 1 Set | Gehäuse Wandsensor | 5 € |
+| **Schrauben M2 × 6** (6 Stück) und **M2 × 8 Senkkopf** (4 Stück) – am einfachsten ein M2-Sortiment | 1 Set | Aufsteh-Ampel: Raster an die Matrix, Rückwand seitlich | 5–8 € |
+| **PETG-Filament** (weiß) | 1 Rolle | Gehäuse fürs Bad (verträgt Feuchtigkeit besser als PLA) | 20 € |
+| **Transparentes Filament** (PLA oder PETG) | 1 Rolle | Streuscheibe der Aufsteh-Ampel | 20 € |
+| **Schwarzes mattes Filament** | (falls nicht da) | Raster der Aufsteh-Ampel | 20 € |
 
 ## Schon vorhanden
 
