@@ -1379,3 +1379,22 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .smart-pill.on span { transform: translateX(20px); }
 .smart-dim { display: flex; align-items: center; gap: 8px; }
 .smart-dim input { flex: 1; accent-color: #e0a800; }
+
+/* Übersicht anpassen */
+.dash-edit-button { align-self: flex-start; flex-shrink: 0; }
+.dash-edit { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dash-edit li { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 12px; }
+.dash-edit li.off { opacity: 0.55; }
+.dash-edit-toggle { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.smart-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.smart-chip { border: 1px solid var(--border); background: var(--surface, transparent); color: inherit; font: inherit; border-radius: 999px; padding: 6px 12px; cursor: pointer; filter: grayscale(0.6); opacity: 0.8; }
+.smart-chip.on { background: #ffe08a; border-color: #f5c84c; color: #3d2f00; filter: none; opacity: 1; }
+
+/* Menügruppen */
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group + .nav-group { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.nav-group-title { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 6px 12px; color: var(--muted); font: inherit; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; border-radius: 8px; text-align: left; }
+@media (hover: hover) { .nav-group-title:hover { background: var(--surface-2); } }
+.nav-group .nav-link { padding: 9px 12px; }
+.sidebar-user-text { display: flex; flex-direction: column; min-width: 0; }
+.sidebar-user-text small { font-weight: 500; color: var(--muted); font-size: 0.75rem; }

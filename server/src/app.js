@@ -163,7 +163,14 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     res.status(204).end();
   });
 
-  const meOf = (user) => ({ ...user, beta: Boolean(user.beta), families: familiesOf(user.id) });
+  const parseDashboard = (text) => {
+    try {
+      return text ? JSON.parse(text) : null;
+    } catch {
+      return null;
+    }
+  };
+  const meOf = (user) => ({ ...user, beta: Boolean(user.beta), dashboard: parseDashboard(user.dashboard), families: familiesOf(user.id) });
   app.get('/api/me', auth, (req, res) => {
     res.json(meOf(req.user));
   });
@@ -188,6 +195,20 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
     db.prepare('UPDATE users SET name = ?, color = ?, initials = ?, theme = ?, beta = ? WHERE id = ?').run(name, color, initials, theme, beta, req.user.id);
     for (const f of familiesOf(req.user.id)) hub.publish(f.id, 'family');
     res.json(meOf({ ...req.user, name, color, initials, theme, beta }));
+  });
+
+  // Eigene Übersicht: Reihenfolge und ausgeblendete Karten (gilt für alle Geräte des Nutzers); null = Standard
+  app.put('/api/me/dashboard', auth, (req, res) => {
+    const body = req.body ?? {};
+    if (body.reset === true) {
+      db.prepare('UPDATE users SET dashboard = NULL WHERE id = ?').run(req.user.id);
+      return res.json({ dashboard: null });
+    }
+    const valid = (list) => Array.isArray(list) && list.length <= 40 && list.every((id) => typeof id === 'string' && /^[a-z0-9_-]{1,30}$/.test(id));
+    if (!valid(body.order) || !valid(body.hidden)) return res.status(400).json({ error: 'Ungültige Einstellung der Übersicht' });
+    const dashboard = { order: [...new Set(body.order)], hidden: [...new Set(body.hidden)] };
+    db.prepare('UPDATE users SET dashboard = ? WHERE id = ?').run(JSON.stringify(dashboard), req.user.id);
+    res.json({ dashboard });
   });
 
   // --- Geräte für Push-Benachrichtigungen ----------------------------------

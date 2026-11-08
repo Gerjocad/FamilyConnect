@@ -17,6 +17,8 @@ export interface User {
   theme: string;
   /** Testfunktionen für sich eingeschaltet (nur Admins) */
   beta: boolean;
+  /** eigene Übersicht: Reihenfolge und ausgeblendete Karten; null = Standard */
+  dashboard?: { order: string[]; hidden: string[] } | null;
   families: FamilySummary[];
 }
 

@@ -15,30 +15,65 @@ import { UpdateBanner } from './UpdateBanner';
 import { TOPBAR_ACTIONS_ID } from './TopbarActions';
 import { ActivityBell } from './ActivityBell';
 
-const NAV: { to: string; label: string; icon: IconName; feature?: 'points'; managers?: boolean }[] = [
-  { to: '/', label: 'Übersicht', icon: 'home' },
-  { to: '/kalender', label: 'Kalender', icon: 'calendar' },
-  { to: '/listen', label: 'Listen', icon: 'list' },
-  { to: '/aufgaben', label: 'Aufgaben', icon: 'task' },
-  { to: '/pinnwand', label: 'Pinnwand', icon: 'chat' },
-  { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit' },
-  { to: '/dienste', label: 'Dienste', icon: 'chore' },
-  { to: '/punkte', label: 'Punkte', icon: 'star', feature: 'points' },
-  { to: '/spiele', label: 'Spiele', icon: 'game' },
-  { to: '/finanzen', label: 'Finanzen', icon: 'wallet', managers: true },
-  { to: '/essen', label: 'Essensplan', icon: 'meal' },
-  { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
-  { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },
-  { to: '/geburtstage', label: 'Geburtstage', icon: 'cake' },
-  { to: '/wuensche', label: 'Wünsche', icon: 'gift' },
-  { to: '/ausgeliehen', label: 'Ausgeliehen', icon: 'book' },
-  { to: '/musik', label: 'Musik', icon: 'music' },
-  { to: '/smarthome', label: 'Smart Home', icon: 'bulb' },
-  { to: '/anfragen', label: 'Anfragen', icon: 'request' },
-  { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint' },
-  { to: '/feedback', label: 'Feedback', icon: 'feedback' },
-  { to: '/einstellungen', label: 'Familie & Profil', icon: 'settings' },
+type NavItem = { to: string; label: string; icon: IconName; feature?: 'points'; managers?: boolean };
+
+// Menü in Gruppen; Gruppen mit Titel lassen sich zuklappen (wird pro Gerät gemerkt)
+const NAV_GROUPS: { title?: string; closed?: boolean; items: NavItem[] }[] = [
+  { items: [
+    { to: '/', label: 'Übersicht', icon: 'home' },
+    { to: '/kalender', label: 'Kalender', icon: 'calendar' },
+    { to: '/listen', label: 'Listen', icon: 'list' },
+    { to: '/aufgaben', label: 'Aufgaben', icon: 'task' },
+    { to: '/pinnwand', label: 'Pinnwand', icon: 'chat' },
+  ] },
+  { title: 'Essen', items: [
+    { to: '/essen', label: 'Essensplan', icon: 'meal' },
+    { to: '/rezepte', label: 'Rezepte', icon: 'recipe' },
+  ] },
+  { title: 'Familie', items: [
+    { to: '/dienste', label: 'Dienste', icon: 'chore' },
+    { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit' },
+    { to: '/punkte', label: 'Punkte', icon: 'star', feature: 'points' },
+    { to: '/geburtstage', label: 'Geburtstage', icon: 'cake' },
+    { to: '/wuensche', label: 'Wünsche', icon: 'gift' },
+    { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },
+  ] },
+  { title: 'Zuhause', items: [
+    { to: '/smarthome', label: 'Smart Home', icon: 'bulb' },
+    { to: '/finanzen', label: 'Finanzen', icon: 'wallet', managers: true },
+    { to: '/ausgeliehen', label: 'Ausgeliehen', icon: 'book' },
+  ] },
+  { title: 'Freizeit', items: [
+    { to: '/musik', label: 'Musik', icon: 'music' },
+    { to: '/spiele', label: 'Spiele', icon: 'game' },
+  ] },
+  { title: 'Anfragen & Feedback', closed: true, items: [
+    { to: '/anfragen', label: 'Anfragen', icon: 'request' },
+    { to: '/beschwerden', label: 'Beschwerden', icon: 'complaint' },
+    { to: '/feedback', label: 'Feedback', icon: 'feedback' },
+  ] },
 ];
+const NAV = NAV_GROUPS.flatMap((g) => g.items);
+const COLLAPSED_KEY = 'familyconnect-nav-collapsed';
+
+/** zugeklappte Menügruppen (pro Gerät) */
+function useCollapsed() {
+  const [collapsed, setCollapsed] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_KEY);
+      if (saved) return JSON.parse(saved) as string[];
+    } catch { /* egal */ }
+    return NAV_GROUPS.filter((g) => g.closed && g.title).map((g) => g.title!);
+  });
+  const toggle = (title: string) => setCollapsed((c) => {
+    const next = c.includes(title) ? c.filter((t) => t !== title) : [...c, title];
+    try {
+      localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+    } catch { /* egal */ }
+    return next;
+  });
+  return { collapsed, toggle };
+}
 
 // Untere Leiste auf dem Handy: je zwei Bereiche links und rechts, die Übersicht rund in der Mitte
 const MOBILE_LEFT = NAV.filter((n) => ['/kalender', '/listen'].includes(n.to));
@@ -97,6 +132,7 @@ export function Layout() {
   const requests = useRequests();
   const badges: Record<string, number> = { '/beschwerden': openComplaints, '/anfragen': requests.needsMe.length };
   useDrawerSwipe(drawerOpen, setDrawerOpen);
+  const { collapsed, toggle } = useCollapsed();
 
   // Nach dem Antippen eines Menüpunkts schließen
   useEffect(() => setDrawerOpen(false), [pathname]);
@@ -137,17 +173,37 @@ export function Layout() {
           <div className="family-name">{family.name}</div>
         )}
         <nav>
-          {NAV.filter((item) => (!item.feature || features[item.feature]) && (!item.managers || isManager)).map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'} className="nav-link">
-              <Icon name={item.icon} />
-              {item.label}
-              {badges[item.to] > 0 && <span className="badge nav-badge">{badges[item.to]}</span>}
-            </NavLink>
-          ))}
+          {NAV_GROUPS.map((group, gi) => {
+            const items = group.items.filter((item) => (!item.feature || features[item.feature]) && (!item.managers || isManager));
+            if (!items.length) return null;
+            const count = items.reduce((n, item) => n + (badges[item.to] ?? 0), 0);
+            // offen, wenn nicht zugeklappt – oder wenn die aktuelle Seite bzw. etwas Neues darin ist
+            const active = items.some((item) => item.to !== '/' && pathname.startsWith(item.to));
+            const open = !group.title || !collapsed.includes(group.title) || active;
+            return (
+              <div key={gi} className="nav-group">
+                {group.title && (
+                  <button type="button" className="nav-group-title" onClick={() => toggle(group.title!)} aria-expanded={open}>
+                    {group.title}
+                    {!open && count > 0 && <span className="badge nav-badge">{count}</span>}
+                    <span className="spacer" />
+                    <Icon name={open ? 'up' : 'down'} size={16} />
+                  </button>
+                )}
+                {open && items.map((item) => (
+                  <NavLink key={item.to} to={item.to} end={item.to === '/'} className="nav-link">
+                    <Icon name={item.icon} />
+                    {item.label}
+                    {badges[item.to] > 0 && <span className="badge nav-badge">{badges[item.to]}</span>}
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <NavLink to="/einstellungen" className="sidebar-user">
           <Avatar member={user} size={28} />
-          <span>{user.name}</span>
+          <span className="sidebar-user-text">{user.name}<small>Familie &amp; Profil · Einstellungen</small></span>
         </NavLink>
       </aside>
 

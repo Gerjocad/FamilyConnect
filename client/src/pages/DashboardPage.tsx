@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { EmptyState } from '../components/EmptyState';
 import { Icon } from '../components/Icon';
@@ -29,6 +29,9 @@ import { OccurrenceRow } from './CalendarPage';
 import { useEventIcons } from '../eventIcons';
 import { commentKey, useEventComments } from '../eventComments';
 import { TaskRow, useTaskToggle } from './TasksPage';
+import { type CardId, visibleCards } from '../dashboardCards';
+import { SmartCard } from '../components/SmartCard';
+import { DashboardEditor } from '../components/DashboardEditor';
 
 /** Ganze Karte antippbar; Häkchen und Abhak-Knöpfe darin funktionieren weiter für sich */
 const More = () => (
@@ -109,6 +112,7 @@ export function DashboardPage() {
   const todaysMeals = meals.items.filter((m) => m.date === toDateKey(today));
   // Familien-Umfragen (Essen/Ausflug): offene und die seit gestern entschiedenen
   const [startingPoll, setStartingPoll] = useState(false);
+  const [editing, setEditing] = useState(false);
   const planPolls = polls.polls
     .filter((p) => p.plan && (!p.plan.closed_at || Date.now() - new Date(`${p.plan.closed_at.replace(' ', 'T')}Z`).getTime() < 86_400_000))
     .map((poll) => ({ poll, post: posts.items.find((p) => p.id === poll.post_id) }))
@@ -126,6 +130,230 @@ export function DashboardPage() {
     else groups.push({ day, items: [occ] });
   }
 
+  // Karten der Übersicht – Reihenfolge und Sichtbarkeit stellt jeder selbst ein (siehe dashboardCards.ts)
+  const cards: Record<CardId, ReactNode> = {
+    weather: (
+      <>
+    <WeatherCard events={events.items} />
+      </>
+    ),
+    locate: (
+      <>
+    <LocateCard />
+      </>
+    ),
+    where: (
+      <>
+    <WhereCard />
+      </>
+    ),
+    calendar: (
+      <>
+    <NavCard to="/kalender" className="span-2">
+      <header className="section-header">
+        <h2><Icon name="calendar" size={18} /> Die nächsten 7 Tage</h2>
+        <span className="spacer" />
+        <More />
+      </header>
+      {groups.length === 0 ? (
+        <EmptyState icon="calendar" title="Keine Termine in dieser Woche" />
+      ) : (
+        groups.map((g) => (
+          <div key={toDateKey(g.day)} className="agenda-group">
+            <h3>{sameDay(g.day, today) ? 'Heute' : formatDay(g.day)}</h3>
+            <div className="stack">
+              {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} onClick={() => navigate(`/kalender?tag=${toDateKey(o.start)}&termin=${o.event.id}`)} />)}
+            </div>
+          </div>
+        ))
+      )}
+    </NavCard>
+      </>
+    ),
+    polls: (
+      <>
+    <section className="card span-2 plan-polls">
+      <header className="section-header">
+        <h2>🗳️ Familien-Umfrage</h2>
+        <span className="spacer" />
+        <button type="button" className="button small primary" onClick={() => setStartingPoll(true)}>Umfrage starten</button>
+      </header>
+      {planPolls.length === 0 ? (
+        <p className="muted">Was essen wir am Samstag? Wohin geht der Ausflug? Alle stimmen ab, und das Ergebnis kommt direkt in den Essensplan oder in den Kalender.</p>
+      ) : (
+        planPolls.map(({ poll, post }) => (
+          <PostCard key={poll.post_id} post={post!} poll={poll} extras={postExtras} compact
+            onVote={(optionId) => void polls.vote(poll, optionId)}
+            onClosePoll={(optionId) => polls.close(poll, optionId)} />
+        ))
+      )}
+    </section>
+      </>
+    ),
+    tasks: (
+      <>
+    <NavCard to="/aufgaben">
+      <header className="section-header">
+        <h2><Icon name="task" size={18} /> Für dich zu tun</h2>
+        <span className="spacer" />
+        <More />
+      </header>
+      {myTasks.length === 0 ? (
+        <EmptyState icon="check" title="Nichts offen" />
+      ) : (
+        <ul className="check-list">
+          {myTasks.map((t) => <TaskRow key={t.id} task={t} onToggle={() => void toggle(t)} />)}
+        </ul>
+      )}
+    </NavCard>
+      </>
+    ),
+    habits: (
+      <>
+    {myHabits.length > 0 && (
+      <NavCard to="/gewohnheiten">
+        <header className="section-header">
+          <h2><Icon name="habit" size={18} /> Gewohnheiten</h2>
+          <span className="spacer" />
+          <More />
+        </header>
+        <ul className="check-list">
+          {myHabits.map(({ habit, status }) => (
+            <li key={habit.id} className={`check-row ${status.doneToday ? 'done' : ''}`}>
+              <span className="habit-emoji small">{habit.emoji || '✔️'}</span>
+              <span className="task-main">
+                <span className="check-text">{habit.title}</span>
+                <small className={status.doneToday ? 'muted' : 'overdue'}>{statusLabel(status)}</small>
+              </span>
+              {nfcOnlyFor(habit, isChild) ? (
+                <span className={`check-button ${status.doneToday ? 'done' : 'nfc-only'}`} title="Mit dem NFC-Aufkleber abhaken" aria-label={`${habit.title}: mit dem NFC-Aufkleber abhaken`}>
+                  <Icon name={status.doneToday ? 'check' : 'nfc'} size={20} />
+                </span>
+              ) : (
+                <button
+                  className={`check-button ${status.doneToday ? 'done' : ''}`}
+                  onClick={() => void checkins.toggle(habit.id, user.id, toDateKey(today), status.doneToday)}
+                  aria-label={`${habit.title} ${status.doneToday ? 'zurücknehmen' : 'erledigt'}`}
+                >
+                  <Icon name="check" size={20} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </NavCard>
+    )}
+      </>
+    ),
+    climate: (
+      <>
+    {climate.sensors.length > 0 && (
+      <section className="card climate-card">
+        <header className="section-header">
+          <h2><Icon name="thermometer" size={18} /> Raumklima</h2>
+        </header>
+        <ul className="climate-list">
+          {climate.sensors.map((s) => (
+            <li key={s.device_id} className={`climate-row ${s.warnings.length ? 'warn' : ''}`}>
+              <span className="climate-label">
+                <strong>{s.label || 'Thermometer'}</strong>
+                {s.error ? <small className="error">{s.error}</small> : s.warnings.length > 0 && (
+                  <small className="climate-warning">{s.warnings.map((w) => WARNING_LABELS[w]).join(' · ')}</small>
+                )}
+              </span>
+              {s.temperature !== null && <span className={`climate-value ${s.warnings.some((w) => w.endsWith('temp')) ? 'bad' : ''}`}>{formatNumber(s.temperature)} °C</span>}
+              {s.humidity !== null && <span className={`climate-value humidity ${s.warnings.some((w) => w.endsWith('humidity')) ? 'bad' : ''}`}>💧 {formatNumber(s.humidity)} %</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+      </>
+    ),
+    birthdays: (
+      <>
+    {birthdaysSoon.length > 0 && (
+      <NavCard to="/geburtstage" className="birthday-alert">
+        <header className="section-header">
+          <h2><Icon name="cake" size={18} /> Geburtstage</h2>
+          <span className="spacer" />
+          <More />
+        </header>
+        <ul className="plain-list">
+          {birthdaysSoon.map((b) => (
+            <li key={b.key} className="birthday-line">
+              <strong>{b.name.split(' ')[0]}</strong> wird {b.age}
+              <span className={`birthday-until ${b.daysUntil <= 7 ? 'soon' : ''}`}>{untilLabel(b.daysUntil)}</span>
+            </li>
+          ))}
+        </ul>
+      </NavCard>
+    )}
+      </>
+    ),
+    chores: (
+      <>
+    {choresSoon.length > 0 && (
+      <NavCard to="/dienste">
+        <header className="section-header">
+          <h2><Icon name="chore" size={18} /> Dienste heute & morgen</h2>
+          <span className="spacer" />
+          <More />
+        </header>
+        <ul className="chore-list">
+          {choresSoon.map((o) => (
+            <ChoreRow key={`${o.chore.id}-${o.date}`} occ={o} showTitle onDone={(d) => void chores.setDone(o, d)} />
+          ))}
+        </ul>
+      </NavCard>
+    )}
+      </>
+    ),
+    meals: (
+      <>
+    <NavCard to="/essen">
+      <header className="section-header">
+        <h2><Icon name="meal" size={18} /> Heute auf dem Tisch</h2>
+        <span className="spacer" />
+        <More />
+      </header>
+      {todaysMeals.length === 0 ? (
+        <EmptyState icon="meal" title="Noch nichts geplant" />
+      ) : (
+        <ul className="plain-list">
+          {(['breakfast', 'lunch', 'dinner'] as const).map((slot) => {
+            const meal = todaysMeals.find((m) => m.slot === slot);
+            return meal && <li key={slot}><small className="muted">{SLOT_LABEL[slot]}</small> {meal.title}</li>;
+          })}
+        </ul>
+      )}
+    </NavCard>
+      </>
+    ),
+    posts: (
+      <>
+    <NavCard to="/pinnwand" className="span-2">
+      <header className="section-header">
+        <h2><Icon name="chat" size={18} /> Pinnwand</h2>
+        <span className="spacer" />
+        <More />
+      </header>
+      {latestPosts.length === 0 ? (
+        <EmptyState icon="chat" title="Noch keine Beiträge" />
+      ) : (
+        latestPosts.map((p) => (
+          <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} extras={postExtras} compact onVote={(optionId) => {
+            const poll = polls.forPost(p.id);
+            if (poll) void polls.vote(poll, optionId);
+          }} onClosePoll={(optionId) => polls.close(polls.forPost(p.id)!, optionId)} />
+        ))
+      )}
+    </NavCard>
+      </>
+    ),
+    smart: <SmartCard />,
+  };
+
   return (
     <div className="page">
       <header className="page-header">
@@ -140,7 +368,11 @@ export function DashboardPage() {
             </p>
           ))}
         </div>
+        <button type="button" className="button small dash-edit-button" onClick={() => setEditing(true)}>
+          <Icon name="edit" size={16} /> Anpassen
+        </button>
       </header>
+      {editing && <DashboardEditor onClose={() => setEditing(false)} />}
 
       <div className="dashboard">
         {requests.needsMe.length > 0 && (
@@ -163,46 +395,7 @@ export function DashboardPage() {
             <p className="muted">{openComplaints[0].text}</p>
           </NavCard>
         )}
-        <WeatherCard events={events.items} />
-        <LocateCard />
-        <WhereCard />
-
-        <NavCard to="/kalender" className="span-2">
-          <header className="section-header">
-            <h2><Icon name="calendar" size={18} /> Die nächsten 7 Tage</h2>
-            <span className="spacer" />
-            <More />
-          </header>
-          {groups.length === 0 ? (
-            <EmptyState icon="calendar" title="Keine Termine in dieser Woche" />
-          ) : (
-            groups.map((g) => (
-              <div key={toDateKey(g.day)} className="agenda-group">
-                <h3>{sameDay(g.day, today) ? 'Heute' : formatDay(g.day)}</h3>
-                <div className="stack">
-                  {g.items.map((o, i) => <OccurrenceRow key={`${o.event.id}-${i}`} occ={o} icons={icons.iconsFor(o.event.title)} comments={comments.counts.get(commentKey(o.event.id, toDateKey(o.start))) ?? 0} onClick={() => navigate(`/kalender?tag=${toDateKey(o.start)}&termin=${o.event.id}`)} />)}
-                </div>
-              </div>
-            ))
-          )}
-        </NavCard>
-
-        <section className="card span-2 plan-polls">
-          <header className="section-header">
-            <h2>🗳️ Familien-Umfrage</h2>
-            <span className="spacer" />
-            <button type="button" className="button small primary" onClick={() => setStartingPoll(true)}>Umfrage starten</button>
-          </header>
-          {planPolls.length === 0 ? (
-            <p className="muted">Was essen wir am Samstag? Wohin geht der Ausflug? Alle stimmen ab, und das Ergebnis kommt direkt in den Essensplan oder in den Kalender.</p>
-          ) : (
-            planPolls.map(({ poll, post }) => (
-              <PostCard key={poll.post_id} post={post!} poll={poll} extras={postExtras} compact
-                onVote={(optionId) => void polls.vote(poll, optionId)}
-                onClosePoll={(optionId) => polls.close(poll, optionId)} />
-            ))
-          )}
-        </section>
+        {visibleCards(user.dashboard).map((id) => <Fragment key={id}>{cards[id]}</Fragment>)}
         {startingPoll && (
           <PlanPollDialog
             onClose={() => setStartingPoll(false)}
@@ -212,146 +405,6 @@ export function DashboardPage() {
             }}
           />
         )}
-
-        <NavCard to="/aufgaben">
-          <header className="section-header">
-            <h2><Icon name="task" size={18} /> Für dich zu tun</h2>
-            <span className="spacer" />
-            <More />
-          </header>
-          {myTasks.length === 0 ? (
-            <EmptyState icon="check" title="Nichts offen" />
-          ) : (
-            <ul className="check-list">
-              {myTasks.map((t) => <TaskRow key={t.id} task={t} onToggle={() => void toggle(t)} />)}
-            </ul>
-          )}
-        </NavCard>
-
-        {myHabits.length > 0 && (
-          <NavCard to="/gewohnheiten">
-            <header className="section-header">
-              <h2><Icon name="habit" size={18} /> Gewohnheiten</h2>
-              <span className="spacer" />
-              <More />
-            </header>
-            <ul className="check-list">
-              {myHabits.map(({ habit, status }) => (
-                <li key={habit.id} className={`check-row ${status.doneToday ? 'done' : ''}`}>
-                  <span className="habit-emoji small">{habit.emoji || '✔️'}</span>
-                  <span className="task-main">
-                    <span className="check-text">{habit.title}</span>
-                    <small className={status.doneToday ? 'muted' : 'overdue'}>{statusLabel(status)}</small>
-                  </span>
-                  {nfcOnlyFor(habit, isChild) ? (
-                    <span className={`check-button ${status.doneToday ? 'done' : 'nfc-only'}`} title="Mit dem NFC-Aufkleber abhaken" aria-label={`${habit.title}: mit dem NFC-Aufkleber abhaken`}>
-                      <Icon name={status.doneToday ? 'check' : 'nfc'} size={20} />
-                    </span>
-                  ) : (
-                    <button
-                      className={`check-button ${status.doneToday ? 'done' : ''}`}
-                      onClick={() => void checkins.toggle(habit.id, user.id, toDateKey(today), status.doneToday)}
-                      aria-label={`${habit.title} ${status.doneToday ? 'zurücknehmen' : 'erledigt'}`}
-                    >
-                      <Icon name="check" size={20} />
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </NavCard>
-        )}
-
-        {climate.sensors.length > 0 && (
-          <section className="card climate-card">
-            <header className="section-header">
-              <h2><Icon name="thermometer" size={18} /> Raumklima</h2>
-            </header>
-            <ul className="climate-list">
-              {climate.sensors.map((s) => (
-                <li key={s.device_id} className={`climate-row ${s.warnings.length ? 'warn' : ''}`}>
-                  <span className="climate-label">
-                    <strong>{s.label || 'Thermometer'}</strong>
-                    {s.error ? <small className="error">{s.error}</small> : s.warnings.length > 0 && (
-                      <small className="climate-warning">{s.warnings.map((w) => WARNING_LABELS[w]).join(' · ')}</small>
-                    )}
-                  </span>
-                  {s.temperature !== null && <span className={`climate-value ${s.warnings.some((w) => w.endsWith('temp')) ? 'bad' : ''}`}>{formatNumber(s.temperature)} °C</span>}
-                  {s.humidity !== null && <span className={`climate-value humidity ${s.warnings.some((w) => w.endsWith('humidity')) ? 'bad' : ''}`}>💧 {formatNumber(s.humidity)} %</span>}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {birthdaysSoon.length > 0 && (
-          <NavCard to="/geburtstage" className="birthday-alert">
-            <header className="section-header">
-              <h2><Icon name="cake" size={18} /> Geburtstage</h2>
-              <span className="spacer" />
-              <More />
-            </header>
-            <ul className="plain-list">
-              {birthdaysSoon.map((b) => (
-                <li key={b.key} className="birthday-line">
-                  <strong>{b.name.split(' ')[0]}</strong> wird {b.age}
-                  <span className={`birthday-until ${b.daysUntil <= 7 ? 'soon' : ''}`}>{untilLabel(b.daysUntil)}</span>
-                </li>
-              ))}
-            </ul>
-          </NavCard>
-        )}
-
-        {choresSoon.length > 0 && (
-          <NavCard to="/dienste">
-            <header className="section-header">
-              <h2><Icon name="chore" size={18} /> Dienste heute & morgen</h2>
-              <span className="spacer" />
-              <More />
-            </header>
-            <ul className="chore-list">
-              {choresSoon.map((o) => (
-                <ChoreRow key={`${o.chore.id}-${o.date}`} occ={o} showTitle onDone={(d) => void chores.setDone(o, d)} />
-              ))}
-            </ul>
-          </NavCard>
-        )}
-
-        <NavCard to="/essen">
-          <header className="section-header">
-            <h2><Icon name="meal" size={18} /> Heute auf dem Tisch</h2>
-            <span className="spacer" />
-            <More />
-          </header>
-          {todaysMeals.length === 0 ? (
-            <EmptyState icon="meal" title="Noch nichts geplant" />
-          ) : (
-            <ul className="plain-list">
-              {(['breakfast', 'lunch', 'dinner'] as const).map((slot) => {
-                const meal = todaysMeals.find((m) => m.slot === slot);
-                return meal && <li key={slot}><small className="muted">{SLOT_LABEL[slot]}</small> {meal.title}</li>;
-              })}
-            </ul>
-          )}
-        </NavCard>
-
-        <NavCard to="/pinnwand" className="span-2">
-          <header className="section-header">
-            <h2><Icon name="chat" size={18} /> Pinnwand</h2>
-            <span className="spacer" />
-            <More />
-          </header>
-          {latestPosts.length === 0 ? (
-            <EmptyState icon="chat" title="Noch keine Beiträge" />
-          ) : (
-            latestPosts.map((p) => (
-              <PostCard key={p.id} post={p} poll={polls.forPost(p.id)} extras={postExtras} compact onVote={(optionId) => {
-                const poll = polls.forPost(p.id);
-                if (poll) void polls.vote(poll, optionId);
-              }} onClosePoll={(optionId) => polls.close(polls.forPost(p.id)!, optionId)} />
-            ))
-          )}
-        </NavCard>
       </div>
       {toast}
     </div>

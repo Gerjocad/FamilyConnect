@@ -121,6 +121,8 @@ const ADDED_COLUMNS = [
   ['users', 'beta', 'INTEGER NOT NULL DEFAULT 0'],
   // eigenes Kürzel im runden Bild (z. B. „SA“ und „SE“ statt zweimal „S“); NULL = aus dem Namen
   ['users', 'initials', 'TEXT'],
+  // eigene Übersicht: { order: [...], hidden: [...] } als JSON; NULL = Standard
+  ['users', 'dashboard', 'TEXT'],
   // NULL = Standard nach Rolle (Kinder sammeln Punkte)
   ['memberships', 'collects_points', 'INTEGER'],
   ['families', 'points_enabled', 'INTEGER NOT NULL DEFAULT 0'],

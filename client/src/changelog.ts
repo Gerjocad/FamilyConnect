@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.78',
+    date: '2026-11-08',
+    title: 'Aufgeräumtes Menü und eigene Übersicht',
+    changes: [
+      'Menü in Gruppen (Essen, Familie, Zuhause, Freizeit, Anfragen & Feedback) – Gruppen lassen sich zuklappen',
+      '„Familie & Profil“ steht jetzt unten im Menü bei deinem Namen',
+      'Übersicht anpassen: oben auf „Anpassen“ tippen, Karten ein- und ausblenden und umsortieren – jeder für sich',
+      'Neue Karte „Smart Home“ auf der Übersicht: Lampen und Steckdosen mit einem Tipp schalten',
+    ],
+  },
+  {
     version: '1.77',
     date: '2026-11-07',
     title: 'Smart Home: Lampen und Steckdosen schalten',
