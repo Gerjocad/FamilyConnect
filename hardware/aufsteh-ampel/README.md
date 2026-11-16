@@ -25,16 +25,25 @@ den Stand für einen eigenen Chat fasst [UEBERGABE.md](UEBERGABE.md) zusammen.
 
 ## Aufspielen
 
-Wie bei der Musik-Box (VS Code + PlatformIO):
+**Am einfachsten im Browser** (ohne Programmier-Software): am PC in Chrome oder Edge die App öffnen →
+**Familie & Profil → Geräte → Schlaflicht → „Firmware im Browser aufspielen“** (Adresse `/schlaflicht`).
+ESP32 per USB-C anstecken, „ESP32 auswählen“ (Eintrag „USB JTAG/serial“), „Firmware aufspielen“ – fertig.
+Die Datei dafür baut `firmware/web-firmware.sh` (→ `client/public/firmware/aufsteh-ampel/ampel-c3.bin`).
+
+Oder wie bei der Musik-Box mit VS Code + PlatformIO:
 
 ```
 cd hardware/aufsteh-ampel/firmware
-pio run -e s3 -t upload      # ESP32-S3-DevKitC-1
-pio run -e c3 -t upload      # oder ESP32-C3 SuperMini
+pio run -e c3 -t upload      # ESP32-C3 SuperMini (auch die blaue „Plus“-Variante)
+pio run -e s3 -t upload      # oder ESP32-S3-DevKitC-1
 pio device monitor           # zeigt „🌙 Mond“, „🌅 Sonnenaufgang“, „☀️ Sonne“
 ```
 
 Kein `config.h` nötig – es gibt kein WLAN-Passwort.
+
+**ESP32-C3 SuperMini Plus** (blau, mit Keramik-Antenne und kleinem Antennenstecker): Die Anschlüsse sind am Rand
+beschriftet – Matrix an **5V**, **G**/**GND** und **4**. Die externe Antenne wird nicht gebraucht. Klappt das
+Aufspielen nicht: **BOOT** gedrückt halten, kurz **RST** drücken, BOOT loslassen, nochmal versuchen.
 
 ## Anpassen
 

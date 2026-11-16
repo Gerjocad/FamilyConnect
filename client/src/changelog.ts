@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.80',
+    date: '2026-11-16',
+    title: 'Schlaflicht im Browser aufspielen',
+    changes: [
+      'Familie & Profil → Geräte → Schlaflicht: Firmware für den ESP32-C3 SuperMini direkt im Browser aufspielen (am PC in Chrome/Edge), mit Anschlussplan',
+    ],
+  },
+  {
     version: '1.79',
     date: '2026-11-16',
     title: 'Sicherung in Google Drive',

@@ -27,7 +27,7 @@ Gebaut wird es aus einem **ESP32** und einer **WS2812B-Matrix 8×8**.
 - **App-Einbindung erst, wenn die Hardware gebaut ist** – vorher nicht umsetzen.
 - Vorhanden: WS2812B 8×8 (feste Platine 65,5 × 66,5 mm, Löcher Ø 2,5 im Abstand 49 × 25 mm), BH1750 (zweiter), TTP223, ESP32-S3-DevKitC-1 (Nachbau, Platine 56,7 × 28,2 mm).
   Einkaufsliste: [docs/einkaufsliste.md](../../docs/einkaufsliste.md). Der vorhandene ESP32-S3 steckt inzwischen in der
-  Musik-Box – für die Ampel wird ein ESP32-C3 SuperMini gekauft (Entscheidung 07.11.).
+  Musik-Box – für die Ampel ist ein ESP32-C3 SuperMini (blaue „Plus“-Variante) da (16.11.). Aufspielen im Browser: App → `/schlaflicht`.
 - **Noch offen** (im Plan unter „Noch zu klären“): für welches Kind bzw. wie viele Ampeln, Zeiten Mo–Fr/Wochenende,
   nachts roter Mond oder ganz aus, „Ich bin wach“ mit Punkten verbinden, Gehäuse schlicht oder mit Motiv.
 

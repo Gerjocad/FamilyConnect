@@ -1398,3 +1398,6 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .nav-group .nav-link { padding: 9px 12px; }
 .sidebar-user-text { display: flex; flex-direction: column; min-width: 0; }
 .sidebar-user-text small { font-weight: 500; color: var(--muted); font-size: 0.75rem; }
+.plain-table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+.plain-table th, .plain-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.plain-table th { font-size: 0.8rem; color: var(--muted); font-weight: 700; }

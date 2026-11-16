@@ -324,6 +324,9 @@ export function SettingsPage() {
             <ClimateSettings />
             <h3><Icon name="bulb" size={16} /> Lampen &amp; Steckdosen</h3>
             <SmartSettings />
+            <h3>🌙 Schlaflicht</h3>
+            <p className="muted">Aufsteh-Ampel mit ESP32-C3 SuperMini und 8×8-Matrix.</p>
+            <Link to="/schlaflicht" className="button">Firmware im Browser aufspielen</Link>
             <h3><Icon name="monitor" size={16} /> Wanddisplay</h3>
             <WallDisplays />
           </SettingsGroup>

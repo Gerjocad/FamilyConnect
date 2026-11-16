@@ -18,8 +18,8 @@ export interface BoxStatus {
 }
 
 /** Firmware-Datei als „binary string“ (so erwartet esptool-js die Daten) */
-async function firmwareData() {
-  const res = await fetch(FIRMWARE_URL, { cache: 'no-store' });
+async function firmwareData(url: string) {
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Firmware nicht gefunden – Server aktualisieren');
   const bytes = new Uint8Array(await res.arrayBuffer());
   let out = '';
@@ -28,8 +28,8 @@ async function firmwareData() {
 }
 
 /** Spielt die Firmware auf; der ESP32 startet danach neu. Der Port ist danach wieder geschlossen. */
-export async function flashFirmware(port: SerialPort, log: (line: string) => void, progress: (share: number) => void) {
-  const [{ ESPLoader, Transport }, data] = await Promise.all([import('esptool-js'), firmwareData()]);
+export async function flashFirmware(port: SerialPort, log: (line: string) => void, progress: (share: number) => void, url = FIRMWARE_URL) {
+  const [{ ESPLoader, Transport }, data] = await Promise.all([import('esptool-js'), firmwareData(url)]);
   const transport = new Transport(port, false);
   const loader = new ESPLoader({
     transport,
