@@ -69,7 +69,7 @@ Das dauert etwa 5 Minuten. Am Ende steht die Adresse da, z. B. `https://123-45-6
 | Aktualisieren | den Installationsbefehl aus Schritt 5 erneut ausführen |
 | Protokoll ansehen | `journalctl -u familyconnect -f` |
 | Neu starten | `sudo systemctl restart familyconnect` |
-| Backups | täglich automatisch in `/var/backups/familyconnect` (14 Tage) |
+| Backups | täglich automatisch in `/var/backups/familyconnect` (14 Tage), auf Wunsch zusätzlich in Google Drive – siehe [BACKUP.md](BACKUP.md) |
 | Backup auf den PC holen | `scp -i $HOME\.ssh\oracle.key ubuntu@IP:/var/backups/familyconnect/*.db .` |
 
 ## Gut zu wissen

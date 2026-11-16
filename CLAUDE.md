@@ -28,7 +28,8 @@ Bastelprojekten: [docs/README.md](docs/README.md).
   Capacitor-Android-App in `client/android` (eigene Plugins: Geofence, LocateAuto, NfcWriter).
 - `hardware/` – Musik-Box, Wandsensor, Aufsteh-Ampel: Firmware (PlatformIO, `pio`), 3D-Modelle (OpenSCAD, mit
   `xvfb-run -a openscad` exportieren), Anleitungen als PDF (Quelle z. B. `hardware/musikbox/anleitung/bauen.py`).
-- `deploy/` – Installation und nächtliches Update des Servers.
+- `deploy/` – Installation, nächtliche Sicherung (`backup.sh`, Google Drive per rclone, Anleitung `BACKUP.md`) und
+  nächtliches Update des Servers.
 
 ## Server und Updates
 

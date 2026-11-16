@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.79',
+    date: '2026-11-16',
+    title: 'Sicherung in Google Drive',
+    changes: [
+      'Der Server sichert jede Nacht alle Daten und Fotos – auf Wunsch zusätzlich in dein Google Drive (Einrichtung: deploy/BACKUP.md)',
+      'Unter Familie & Profil → App & Server → Sicherung: wann zuletzt gesichert wurde, und „Jetzt sichern“',
+      'Klappt die Sicherung nicht, bekommen Admins eine Nachricht',
+    ],
+  },
+  {
     version: '1.78',
     date: '2026-11-08',
     title: 'Aufgeräumtes Menü und eigene Übersicht',

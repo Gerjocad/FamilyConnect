@@ -7,6 +7,7 @@ import { openDatabase } from './db.js';
 import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
 import { checkClimateAlerts } from './climate.js';
+import { ServerBackup, watchBackup } from './backup.js';
 import { checkLoanReminders } from './loans.js';
 import { SpotifyClient } from './spotify.js';
 import { TuyaClient } from './tuya.js';
@@ -37,7 +38,9 @@ const tuya = new TuyaClient({ configFile: process.env.TUYA_CONFIG ?? '/etc/famil
 const updater = new ServerUpdate({ requestFile: process.env.UPDATE_REQUEST_FILE, installed: readInstalled(root) });
 // Musik über Spotify (optional, siehe deploy/SPOTIFY.md)
 const spotify = new SpotifyClient({ configFile: process.env.SPOTIFY_CONFIG ?? '/etc/familyconnect/spotify.json' });
-const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater, spotify });
+const backup = new ServerBackup({ requestFile: process.env.BACKUP_REQUEST_FILE });
+const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater, spotify, backup });
+if (backup.enabled) watchBackup(db, backup, push);
 // Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
 setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
 // Rückgabe-Erinnerungen für Ausgeliehenes (Vortag 17 Uhr, Tag selbst 7 Uhr)

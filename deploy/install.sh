@@ -45,7 +45,7 @@ fi
 # --- Pakete ------------------------------------------------------------------
 say "Installiere Systempakete"
 apt-get update -q
-apt-get install -y -q curl git sqlite3 ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https >/dev/null
+apt-get install -y -q curl git sqlite3 unzip ca-certificates gnupg debian-keyring debian-archive-keyring apt-transport-https >/dev/null
 
 NODE_MAJOR="$(node -v 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/' || true)"
 if [ -z "$NODE_MAJOR" ] || [ "$NODE_MAJOR" -lt 22 ]; then
@@ -100,6 +100,7 @@ Environment=TZ=${TIMEZONE:-Europe/Berlin}
 Environment=FIREBASE_SERVICE_ACCOUNT=/etc/familyconnect/firebase.json
 # Update aus der App: der Dienst legt nur diese Datei an, familyconnect-update.path startet das Update
 Environment=UPDATE_REQUEST_FILE=$DATA_DIR/update-request
+Environment=BACKUP_REQUEST_FILE=$DATA_DIR/backup-request
 ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning server/src/index.js
 Restart=always
 RestartSec=3
@@ -158,14 +159,48 @@ Unit=familyconnect-update.service
 WantedBy=multi-user.target
 UNIT
 
-# --- Tägliches Backup (14 Tage aufbewahren) -----------------------------------
-cat > /etc/cron.daily/familyconnect-backup <<BACKUP
-#!/bin/sh
-[ -f $DATA_DIR/familyconnect.db ] || exit 0
-sqlite3 $DATA_DIR/familyconnect.db ".backup '$BACKUP_DIR/familyconnect-\$(date +%F).db'"
-find $BACKUP_DIR -name 'familyconnect-*.db' -mtime +14 -delete
-BACKUP
-chmod 755 /etc/cron.daily/familyconnect-backup
+# --- Tägliche Sicherung (lokal 14 Tage, optional Google Drive – siehe deploy/BACKUP.md) ---
+rm -f /etc/cron.daily/familyconnect-backup   # alte Variante
+if ! command -v rclone >/dev/null; then
+  say "Installiere rclone (für die Sicherung in Google Drive)"
+  curl -fsSL https://rclone.org/install.sh | bash >/dev/null 2>&1 || apt-get install -y -q rclone >/dev/null || true
+fi
+cat > /etc/systemd/system/familyconnect-backup.service <<UNIT
+[Unit]
+Description=FamilyConnect sichern
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash $APP_DIR/deploy/backup.sh
+UNIT
+
+cat > /etc/systemd/system/familyconnect-backup.timer <<UNIT
+[Unit]
+Description=FamilyConnect jede Nacht sichern (vor dem Update)
+
+[Timer]
+OnCalendar=*-*-* 03:05:00 Europe/Berlin
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+# Sicherung auf Knopfdruck aus der App (Familie & Profil → Server, nur Admins)
+cat > /etc/systemd/system/familyconnect-backup.path <<UNIT
+[Unit]
+Description=FamilyConnect auf Anforderung aus der App sichern
+
+[Path]
+PathExists=$DATA_DIR/backup-request
+Unit=familyconnect-backup.service
+
+[Install]
+WantedBy=multi-user.target
+UNIT
 
 # --- Firewall: Ports 80/443 öffnen --------------------------------------------
 # Die Oracle-Ubuntu-Images blockieren per iptables alles außer SSH.
@@ -191,7 +226,7 @@ fi
 say "Starte Dienste"
 systemctl daemon-reload
 systemctl enable -q familyconnect caddy
-systemctl enable -q --now familyconnect-update.timer familyconnect-update.path
+systemctl enable -q --now familyconnect-update.timer familyconnect-update.path familyconnect-backup.timer familyconnect-backup.path
 systemctl restart familyconnect
 systemctl reload caddy 2>/dev/null || systemctl restart caddy
 

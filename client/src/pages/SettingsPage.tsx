@@ -7,6 +7,7 @@ import { Avatar, initials as nameInitials } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
 import { SmartSettings } from '../components/SmartSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
+import { BackupCard } from '../components/BackupCard';
 import { WallDisplays } from '../components/WallDisplays';
 import { ManagedMemberDialog } from '../components/ManagedMemberDialog';
 import { Icon } from '../components/Icon';
@@ -343,6 +344,8 @@ export function SettingsPage() {
             <>
               <h3>Server</h3>
               <ServerUpdateCard />
+              <h3>Sicherung</h3>
+              <BackupCard />
             </>
           )}
         </SettingsGroup>

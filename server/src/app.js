@@ -10,6 +10,7 @@ import { crudRouter } from './crud.js';
 import { birthdaysRouter } from './birthdays.js';
 import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
+import { ServerBackup, backupRouter } from './backup.js';
 import { smartRouter } from './smart.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
@@ -58,7 +59,7 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL, locateAutoTimeoutMs } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), backup = new ServerBackup(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL, locateAutoTimeoutMs } = {}) {
   const app = express();
   const hub = new LiveHub();
   const auth = requireUser(db);
@@ -447,6 +448,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   });
 
   app.use(serverUpdateRouter({ auth, member, updater }));
+  app.use(backupRouter({ auth, member, backup }));
   app.use(activityRouter(db, { auth, member }));
   app.use(spotifyRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), spotify, publicUrl }));
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
