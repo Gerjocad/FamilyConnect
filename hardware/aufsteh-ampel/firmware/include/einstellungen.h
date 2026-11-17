@@ -5,7 +5,7 @@
 #define MATRIX_PIN 4
 
 // Helligkeit 0–255. 40 ist hell genug und schont Netzteil und Augen (64 LEDs voll weiß = bis 3,8 A!)
-#define HELLIGKEIT 40
+#define HELLIGKEIT 40       // nur noch für die alte Vorführung; die Helligkeit kommt jetzt aus der App
 // Der Mond darf nachts noch dunkler sein
 #define HELLIGKEIT_MOND 12
 

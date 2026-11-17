@@ -12,6 +12,7 @@ import { choresRouter } from './chores.js';
 import { climateRouter } from './climate.js';
 import { ServerBackup, backupRouter } from './backup.js';
 import { smartRouter } from './smart.js';
+import { wakeLightRouter } from './wakeLight.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter, followEventDate } from './eventComments.js';
@@ -454,6 +455,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }));
+  app.use(wakeLightRouter(db, { auth, member, holidays, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(pointsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(kniffelRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));

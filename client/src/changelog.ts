@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.81',
+    date: '2026-11-17',
+    title: 'Schlaflicht mit Zeiten aus der App',
+    changes: [
+      'Neuer Bereich „Schlaflicht“ (für Eltern): Mond ab, Sonnenaufgang ab, Sonne ganz oben und Licht aus – getrennt für Schultage und freie Tage',
+      'Wochenende, Feiertage und Schulferien gelten automatisch als freie Tage (abschaltbar)',
+      'Helligkeit für Sonne und Mond einstellbar (Mond auch ganz aus) – mit einer Minute Vorschau direkt am Licht',
+      'Einrichten per USB im Browser: Firmware aufspielen, WLAN und Gerätecode übertragen',
+    ],
+  },
+  {
     version: '1.80',
     date: '2026-11-16',
     title: 'Schlaflicht im Browser aufspielen',

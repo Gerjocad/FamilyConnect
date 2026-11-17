@@ -184,6 +184,31 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+-- Schlaflicht / Aufsteh-Ampel: Zeiten (HH:MM) für Schultage und freie Tage, Helligkeit in %
+CREATE TABLE IF NOT EXISTS wake_lights (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  member_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  school_moon TEXT NOT NULL DEFAULT '19:30',
+  school_dawn TEXT NOT NULL DEFAULT '06:15',
+  school_sun TEXT NOT NULL DEFAULT '06:30',
+  school_off TEXT NOT NULL DEFAULT '07:30',
+  free_moon TEXT NOT NULL DEFAULT '20:00',
+  free_dawn TEXT NOT NULL DEFAULT '07:00',
+  free_sun TEXT NOT NULL DEFAULT '07:30',
+  free_off TEXT NOT NULL DEFAULT '08:30',
+  holidays_free INTEGER NOT NULL DEFAULT 1,
+  sun_brightness INTEGER NOT NULL DEFAULT 60,
+  moon_brightness INTEGER NOT NULL DEFAULT 30,
+  test TEXT,
+  test_until INTEGER,
+  firmware TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_seen_at TEXT
+);
 -- Smart Home: Tuya-Lampen und -Steckdosen, die eine Familie schalten kann
 CREATE TABLE IF NOT EXISTS smart_devices (
   family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,

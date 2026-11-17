@@ -1401,3 +1401,21 @@ input.switch:disabled { opacity: 0.5; cursor: default; }
 .plain-table { width: 100%; border-collapse: collapse; margin: 6px 0; }
 .plain-table th, .plain-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
 .plain-table th { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+
+/* Schlaflicht */
+.wake-card h3 { margin: 14px 0 6px; font-size: 0.95rem; }
+.wake-status { margin: 0; }
+.wake-online { font-size: 0.8rem; color: var(--muted); }
+.wake-online.on { color: var(--success); }
+.wake-times input[type="time"] { width: 100%; min-width: 0; }
+.wake-times .plain-table td { vertical-align: middle; }
+.wake-slider { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.wake-slider input { width: 100%; accent-color: #e0a800; }
+.wake-preview { display: flex; flex-wrap: wrap; gap: 8px; }
+.wake-more { margin-top: 12px; }
+.wake-more summary { cursor: pointer; color: var(--muted); }
+.wake-more label { margin-top: 8px; }
+.wake-times .plain-table { table-layout: fixed; }
+.wake-times .plain-table th:first-child { width: 40%; }
+.wake-times .plain-table td { padding: 6px 4px; }
+.wake-times input[type="time"] { padding: 8px 6px; font-size: 0.95rem; }

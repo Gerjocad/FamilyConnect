@@ -31,6 +31,13 @@ Gebaut wird es aus einem **ESP32** und einer **WS2812B-Matrix 8×8**.
 - **Noch offen** (im Plan unter „Noch zu klären“): für welches Kind bzw. wie viele Ampeln, Zeiten Mo–Fr/Wochenende,
   nachts roter Mond oder ganz aus, „Ich bin wach“ mit Punkten verbinden, Gehäuse schlicht oder mit Motiv.
 
+## App-Anbindung (gebaut 17.11.)
+
+Firmware 2.0 + Server `server/src/wakeLight.js` (`GET /api/wake-light/<code>`, Tabelle `wake_lights`) + App-Seite
+`/schlaflicht` (Zeiten Schultage/freie Tage, Helligkeit Sonne/Mond, Vorschau) + Einrichten per USB
+`/schlaflicht/:id/einrichten`. Noch nicht auf echter Hardware getestet. Offen aus dem Plan: Berührungssensor
+(„Ich bin wach“), Lichtsensor, Mittagsschlaf, Ausnahmen für einzelne Tage.
+
 ## Nächste Schritte (wenn der Nutzer so weit ist)
 
 1. Matrix nach README anschließen, Firmware aufspielen, Bilder prüfen (ggf. `ZICKZACK`, `SPIEGELN`, `KOPFUEBER`).

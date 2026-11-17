@@ -34,6 +34,7 @@ const NAV_GROUPS: { title?: string; closed?: boolean; items: NavItem[] }[] = [
     { to: '/dienste', label: 'Dienste', icon: 'chore' },
     { to: '/gewohnheiten', label: 'Gewohnheiten', icon: 'habit' },
     { to: '/punkte', label: 'Punkte', icon: 'star', feature: 'points' },
+    { to: '/schlaflicht', label: 'Schlaflicht', icon: 'sun', managers: true },
     { to: '/geburtstage', label: 'Geburtstage', icon: 'cake' },
     { to: '/wuensche', label: 'Wünsche', icon: 'gift' },
     { to: '/kontakte', label: 'Kontakte', icon: 'contacts' },

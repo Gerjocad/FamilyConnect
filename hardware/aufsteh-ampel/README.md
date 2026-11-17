@@ -1,4 +1,4 @@
-# Aufsteh-Ampel – erster Test (nur ESP32 + 8×8-Matrix)
+# Aufsteh-Ampel / Schlaflicht (ESP32 + 8×8-Matrix)
 
 Ohne App, ohne WLAN: Die Matrix zeigt im Kreis einen **roten Mond**, einen **gelben Sonnenaufgang** (geht langsam
 von unten auf) und die **ganze Sonne** (pulsiert sanft). Die **BOOT-Taste** auf dem ESP32 springt sofort zum
@@ -22,6 +22,24 @@ den Stand für einen eigenen Chat fasst [UEBERGABE.md](UEBERGABE.md) zusammen.
 - Optional, aber gut: **330 Ω** in die Datenleitung und **1000 µF Elko** zwischen 5V und GND direkt an der Matrix
   (langes Bein = Plus an 5V).
 - Strom über das USB-Kabel des ESP32 reicht – die Helligkeit ist im Programm auf ca. 15 % begrenzt.
+
+## Mit der App (Zeiten und Helligkeit)
+
+Seit Firmware 2.0 holt sich das Licht alle 20 Sekunden den Plan vom Server:
+
+1. App → **Schlaflicht** (im Menü unter „Familie“, nur für Eltern) → **Neues Schlaflicht** anlegen.
+2. Beim Licht unter „Gerät“ → **Per USB einrichten** (am PC in Chrome/Edge): Firmware aufspielen, dann WLAN-Name
+   und -Passwort eingeben → **Auf das Licht übertragen**. Das Passwort geht nur über das USB-Kabel ans Licht.
+3. In der App die Zeiten einstellen – **Mond ab**, **Sonnenaufgang ab**, **Sonne ganz oben**, **Licht aus** – getrennt
+   für **Schultage** und **freie Tage** (Sa/So, Feiertage, Schulferien). Der Mond am Abend richtet sich nach dem
+   nächsten Morgen (freitags gilt schon die Zeit für freie Tage).
+4. **Helligkeit** für Sonne und Mond (Mond auf „aus“ = nachts dunkel). Mit den **Vorschau**-Knöpfen zeigt das Licht
+   eine Minute lang Mond, Sonnenaufgang oder Sonne – so lässt sich die Helligkeit am Bett ausprobieren.
+
+Ohne WLAN läuft das Licht mit dem zuletzt geladenen Plan weiter. Nach einem Stromausfall ohne WLAN kennt es die
+Uhrzeit nicht und zeigt einen **blau blinkenden Punkt** oben rechts, bis es den Server wieder erreicht.
+Ohne Einrichtung zeigt es zur Probe Mond → Sonnenaufgang → Sonne im Kreis. **BOOT-Taste:** Vorschau (jeder Druck
+zeigt 15 s das nächste Bild).
 
 ## Aufspielen
 

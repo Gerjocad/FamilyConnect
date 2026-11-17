@@ -1,12 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useParams } from 'react-router';
 import { getServerUrl, isNativeApp } from '../api';
-import { flashFirmware, serialSupported } from '../musicBoxSerial';
+import { BoxConsole, flashFirmware, serialSupported } from '../musicBoxSerial';
+import { useWakeLights } from '../wakeLight';
 
 const FIRMWARE = '/firmware/aufsteh-ampel/ampel-c3.bin';
 
-/** Schlaflicht (Aufsteh-Ampel) mit ESP32-C3 SuperMini: Firmware im Browser aufspielen und Protokoll ansehen */
+interface LightStatus { version: string; ssid: string; wifi: boolean; ip: string; plan: boolean; phase: string }
+
+/** Schlaflicht (Aufsteh-Ampel) mit ESP32-C3 SuperMini: Firmware im Browser aufspielen, WLAN und Gerätecode übertragen */
 export function SleepLightSetupPage() {
+  const { id } = useParams();
+  const { lights } = useWakeLights();
+  const light = lights?.find((l) => l.id === Number(id)) ?? null;
+  const [ssid, setSsid] = useState('');
+  const [pass, setPass] = useState('');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<LightStatus | null | 'none'>(null);
   const [port, setPort] = useState<SerialPort | null>(null);
   const [flashing, setFlashing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -24,7 +34,10 @@ export function SleepLightSetupPage() {
   }, [log]);
   useEffect(() => () => void stopListening(), []);
 
+  const consoleRef = useRef<BoxConsole | null>(null);
   async function stopListening() {
+    await consoleRef.current?.close();
+    consoleRef.current = null;
     try {
       await reader.current?.cancel();
     } catch { /* egal */ }
@@ -63,6 +76,44 @@ export function SleepLightSetupPage() {
     }
   };
 
+  // WLAN, Server und Gerätecode per USB an das Licht (das WLAN-Passwort geht nur über das Kabel)
+  const send = (e: FormEvent) => {
+    e.preventDefault();
+    if (!port || !light) return;
+    void (async () => {
+      setError(null);
+      setSending(true);
+      setResult(null);
+      await stopListening();
+      try {
+        const con = new BoxConsole(port);
+        con.onLine = addLog;
+        con.onNote = addLog;
+        await con.open();
+        consoleRef.current = con;
+        if (!(await con.status(8000, false))) throw new Error('Das Licht antwortet nicht. USB-Kabel kurz aus- und wieder einstecken, „anderen Anschluss wählen“ und nochmal versuchen – oder zuerst die Firmware aufspielen.');
+        await con.set('ssid', ssid.trim());
+        if (pass) await con.set('pass', pass);
+        await con.set('server', server);
+        await con.set('code', light.token);
+        await con.send('fc:connect');
+        addLog('Übertragen – das Licht verbindet sich mit dem WLAN …');
+        let s: LightStatus | null = null;
+        for (let i = 0; i < 10 && !(s?.wifi && s.plan); i++) {
+          await new Promise((r) => setTimeout(r, 2500));
+          s = (await con.status(4000, false)) as unknown as LightStatus | null;
+        }
+        setResult(s ?? 'none');
+        setPass('');
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        await stopListening();
+        setSending(false);
+      }
+    })();
+  };
+
   // Ausgaben des ESP32 anzeigen („🌙 Mond“, „🌅 Sonnenaufgang“ …)
   const listen = async () => {
     if (!port) return;
@@ -97,7 +148,7 @@ export function SleepLightSetupPage() {
   };
 
   if (!serialSupported() || isNativeApp) {
-    const url = `${server}/schlaflicht`;
+    const url = `${server}/schlaflicht${id ? `/${id}/einrichten` : '/einrichten'}`;
     return (
       <div className="page narrow">
         <header className="page-header"><h1>Schlaflicht aufspielen</h1></header>
@@ -114,8 +165,8 @@ export function SleepLightSetupPage() {
   return (
     <div className="page narrow box-setup" data-no-reload>
       <header className="page-header">
-        <h1>🌙 Schlaflicht aufspielen</h1>
-        <Link to="/einstellungen#geraete" className="link-button">Zurück</Link>
+        <h1>🌙 Schlaflicht einrichten{light && `: ${light.name}`}</h1>
+        <Link to="/schlaflicht" className="link-button">Zurück</Link>
       </header>
 
       <section className="card">
@@ -142,13 +193,39 @@ export function SleepLightSetupPage() {
 
       <section className="card">
         <h2>3. Firmware aufspielen</h2>
-        <p className="muted">Dauert ca. 30 Sekunden. Danach zeigt die Matrix im Wechsel 🌙 roten Mond, 🌅 Sonnenaufgang und ☀️ Sonne. Die BOOT-Taste springt zum nächsten Bild.</p>
+        <p className="muted">Dauert ca. 30 Sekunden. Danach zeigt die Matrix zur Probe im Wechsel 🌙 roten Mond, 🌅 Sonnenaufgang und ☀️ Sonne – bis WLAN und Code übertragen sind. Schon eingerichtete Einstellungen bleiben erhalten.</p>
         <button type="button" className="button primary" disabled={!port || flashing} onClick={() => void flash()}>
           {flashing ? `Spiele auf … ${Math.round(progress * 100)} %` : 'Firmware aufspielen'}
         </button>
         {flashing && <div className="flash-progress"><span style={{ width: `${progress * 100}%` }} /></div>}
         {done && <p className="success">✓ Firmware ist drauf.</p>}
       </section>
+
+      {light ? (
+        <form className="card form" onSubmit={send}>
+          <h2>4. WLAN und Gerätecode übertragen</h2>
+          <p className="muted">Die Daten gehen nur über das USB-Kabel an das Licht – das Passwort wird nirgends gespeichert oder an den Server geschickt.</p>
+          <label>WLAN-Name (2,4 GHz)<input value={ssid} onChange={(e) => setSsid(e.target.value)} required maxLength={32} autoComplete="off" /></label>
+          <label>WLAN-Passwort<input type="password" value={pass} onChange={(e) => setPass(e.target.value)} maxLength={64} autoComplete="new-password" /></label>
+          <p className="hint">Server: <code>{server}</code> · Gerätecode: <code>{light.token}</code> (kommen automatisch dazu)</p>
+          <div className="form-actions">
+            <span className="spacer" />
+            <button className="button primary" disabled={!port || sending || flashing || !ssid.trim()}>{sending ? 'Übertrage …' : 'Auf das Licht übertragen'}</button>
+          </div>
+          {result && result !== 'none' && (
+            <div className={`setup-result ${result.wifi && result.plan ? 'ok' : 'warn'}`}>
+              <p>{result.wifi ? `✓ Mit „${result.ssid}“ verbunden` : `✗ WLAN „${result.ssid}“ nicht erreicht – Name/Passwort prüfen (nur 2,4 GHz)`}</p>
+              {result.wifi && <p>{result.plan ? '✓ Zeiten vom Server geladen – das Licht läuft jetzt nach Plan.' : '✗ Server noch nicht erreicht – Protokoll ansehen.'}</p>}
+            </div>
+          )}
+          {result === 'none' && <p className="error">Das Licht hat nicht geantwortet – im Protokoll nachsehen.</p>}
+        </form>
+      ) : (
+        <section className="card">
+          <h2>4. Mit der App verbinden</h2>
+          <p className="muted">Damit das Licht die Zeiten aus der App bekommt: unter <Link to="/schlaflicht">Schlaflicht</Link> ein Licht anlegen und dort „Per USB einrichten“ wählen.</p>
+        </section>
+      )}
 
       {error && <p className="error">{error}</p>}
 
