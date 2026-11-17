@@ -123,9 +123,9 @@ export function SleepLightSetupPage() {
         <table className="plain-table">
           <thead><tr><th>Matrix</th><th>ESP32-C3 SuperMini</th></tr></thead>
           <tbody>
-            <tr><td><b>5V</b> (oder VCC)</td><td><b>5V</b></td></tr>
-            <tr><td><b>GND</b></td><td><b>GND</b> (G)</td></tr>
-            <tr><td><b>DIN</b> (Eingang, nicht DOUT)</td><td><b>4</b> (GPIO 4)</td></tr>
+            <tr><td><b>V+</b> (oder 5V/VCC)</td><td><b>5V</b></td></tr>
+            <tr><td><b>V-</b> (oder GND)</td><td><b>GND</b> (G)</td></tr>
+            <tr><td><b>IN</b> (oder DIN – die Seite mit IN, nicht OUT)</td><td><b>4</b> (GPIO 4)</td></tr>
           </tbody>
         </table>
         <p className="hint">Die Beschriftung steht neben den Lötpunkten am Rand des ESP32. Zum ersten Ausprobieren reichen Steckkabel; Widerstand und Elko sind optional.</p>

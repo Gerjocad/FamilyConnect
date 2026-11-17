@@ -13,9 +13,9 @@ den Stand für einen eigenen Chat fasst [UEBERGABE.md](UEBERGABE.md) zusammen.
 
 | Matrix | ESP32-S3-DevKitC-1 | ESP32-C3 SuperMini |
 | --- | --- | --- |
-| **5V** (oft „VCC“ oder „+5V“) | 5V | 5V |
-| **GND** | GND | GND |
-| **DIN** (Eingang – nicht DOUT!) | GPIO 4 | GPIO 4 |
+| **V+** (oder „5V“, „VCC“) | 5V | 5V |
+| **V-** (oder „GND“) | GND | GND |
+| **IN** (oder „DIN“ – Eingang, nicht OUT/DOUT!) | GPIO 4 | GPIO 4 |
 
 - Die Matrix hat zwei Anschlussseiten: **DIN** (Eingang) und **DOUT** (Ausgang zum nächsten Panel). Nur DIN benutzen –
   oft zeigt ein kleiner Pfeil auf der Platine *in* die Matrix hinein.
