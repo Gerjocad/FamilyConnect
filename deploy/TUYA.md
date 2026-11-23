@@ -43,7 +43,8 @@ Die kostenlose Testphase des Cloud-Projekts muss etwa alle 6 Monate verlängert 
 „Die Tuya-Testphase ist abgelaufen“. So verlängern (kostenlos):
 
 1. Auf https://platform.tuya.com anmelden.
-2. Links **Cloud → Cloud Services** öffnen (bzw. oben „Cloud“ → „Cloud Services“).
+2. Die Seite **https://www.tuya.com/vas/user/service** öffnen (Liste der abonnierten Dienste; steht auch in der
+   Erinnerungs-Mail von Tuya) – oder links **Cloud → Cloud Services**.
 3. Beim Dienst **IoT Core** auf **„Extend Trial Period“** (bzw. „Verlängern“) klicken.
 4. Im Formular ausfüllen: Nutzung **Personal / Individual developer**, Zweck z. B. *„Private smart home use,
    reading my own thermometers and switching my own plugs“*. Absenden.
