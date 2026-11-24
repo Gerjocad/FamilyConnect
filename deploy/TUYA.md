@@ -39,17 +39,15 @@ außerhalb der Grenzen oder ist die Batterie fast leer, bekommen Eltern eine Pus
 
 ## Wenn es nicht mehr geht
 
-Die kostenlose Testphase des Cloud-Projekts muss etwa alle 6 Monate verlängert werden. Dann zeigt die App
-„Die Tuya-Testphase ist abgelaufen“. So verlängern (kostenlos):
+Die kostenlose Testphase von **IoT Core** läuft ab (Tuya schickt vorher eine Mail „Service Expiration Notice“). Dann
+zeigt die App „Die Tuya-Testphase ist abgelaufen“. So neu holen (kostenlos):
 
-1. Auf https://platform.tuya.com anmelden.
-2. Die Seite **https://www.tuya.com/vas/user/service** öffnen (Liste der abonnierten Dienste; steht auch in der
-   Erinnerungs-Mail von Tuya) – oder links **Cloud → Cloud Services**.
-3. Beim Dienst **IoT Core** auf **„Extend Trial Period“** (bzw. „Verlängern“) klicken.
-4. Im Formular ausfüllen: Nutzung **Personal / Individual developer**, Zweck z. B. *„Private smart home use,
-   reading my own thermometers and switching my own plugs“*. Absenden.
-5. Die Freigabe kommt meist innerhalb von Minuten bis 1–2 Werktagen per E-Mail. Danach läuft alles von selbst
-   wieder – am Server muss nichts geändert werden (die Zugangsdaten bleiben gleich).
+1. https://www.tuya.com/vas/user/service öffnen und anmelden.
+2. Im Suchfeld `IoT Core` eingeben → **Search** → auf den blauen Link **IoT Core** klicken.
+3. Auf der Produktseite **„Trial Edition (For testing purposes only)“** wählen – Preis **$ 0.00**, Gültigkeit 1 Monat.
+4. **Buy Now** → in der Kasse prüfen, dass **0,00** dasteht → bestätigen. Es wird keine Kreditkarte gebraucht.
+   Steht dort ein Betrag über 0 oder werden Zahlungsdaten verlangt: abbrechen.
+5. Nach ein paar Minuten laufen Raumklima und Smart Home wieder – am Server muss nichts geändert werden.
 
-Steht dort statt „Extend“ nur „Buy“: nicht kaufen – meist ist die Verlängerung erst ab ein paar Tagen vor Ablauf
-oder nach Ablauf möglich, oder sie steht unter **My Services** beim Dienst „IoT Core“.
+Gibt es die Trial Edition nicht mehr: auf der Seite links **My Service Ticket** → Ticket „Please extend my IoT Core
+trial, private smart home use only“.
