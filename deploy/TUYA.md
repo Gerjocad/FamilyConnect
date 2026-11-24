@@ -40,14 +40,17 @@ außerhalb der Grenzen oder ist die Batterie fast leer, bekommen Eltern eine Pus
 ## Wenn es nicht mehr geht
 
 Die kostenlose Testphase von **IoT Core** läuft ab (Tuya schickt vorher eine Mail „Service Expiration Notice“). Dann
-zeigt die App „Die Tuya-Testphase ist abgelaufen“. So neu holen (kostenlos):
+zeigt die App „Die Tuya-Testphase ist abgelaufen“. Die „Trial Edition“ lässt sich **nicht neu abschließen**
+(„You have subscribed to the trial edition before“) – sie wird stattdessen **verlängert** (kostenlos):
 
-1. https://www.tuya.com/vas/user/service öffnen und anmelden.
-2. Im Suchfeld `IoT Core` eingeben → **Search** → auf den blauen Link **IoT Core** klicken.
-3. Auf der Produktseite **„Trial Edition (For testing purposes only)“** wählen – Preis **$ 0.00**, Gültigkeit 1 Monat.
-4. **Buy Now** → in der Kasse prüfen, dass **0,00** dasteht → bestätigen. Es wird keine Kreditkarte gebraucht.
-   Steht dort ein Betrag über 0 oder werden Zahlungsdaten verlangt: abbrechen.
-5. Nach ein paar Minuten laufen Raumklima und Smart Home wieder – am Server muss nichts geändert werden.
+1. Auf https://platform.tuya.com anmelden.
+2. Links **Cloud** → **Development** → das Projekt öffnen (in dem das Smart-Life-Konto verknüpft ist).
+3. Auf der Projektseite bzw. unter **Cloud → Cloud Services → IoT Core** steht bei abgelaufener Testphase
+   **„Extend Trial Period“** – anklicken und das Formular ausfüllen: Nutzung *Personal / individual developer*,
+   Zweck z. B. *„Private smart home use, reading my own thermometers and switching my own plugs“*.
+4. Die Freigabe kommt per E-Mail (meist innerhalb von 1–3 Werktagen). Danach läuft alles wieder – am Server muss
+   nichts geändert werden.
 
-Gibt es die Trial Edition nicht mehr: auf der Seite links **My Service Ticket** → Ticket „Please extend my IoT Core
-trial, private smart home use only“.
+Findet sich kein „Extend Trial Period“: unter https://www.tuya.com/vas/user/service links **My Service Ticket** →
+neues Ticket: *„My IoT Core trial expired. I use it only privately for my own smart home (a few thermometers, lamps
+and plugs). Please extend the trial period.“* Nichts kaufen – „Flagship“/„Corporate“ kosten Geld.
