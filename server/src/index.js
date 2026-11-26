@@ -8,6 +8,7 @@ import { loadServiceAccount, PushService } from './push.js';
 import { RecipeImporter } from './recipeImport.js';
 import { checkClimateAlerts } from './climate.js';
 import { ServerBackup, watchBackup } from './backup.js';
+import { syncAllFeeds } from './calendarFeeds.js';
 import { checkLoanReminders } from './loans.js';
 import { SpotifyClient } from './spotify.js';
 import { TuyaClient } from './tuya.js';
@@ -41,6 +42,10 @@ const spotify = new SpotifyClient({ configFile: process.env.SPOTIFY_CONFIG ?? '/
 const backup = new ServerBackup({ requestFile: process.env.BACKUP_REQUEST_FILE });
 const app = createApp(db, { staticDir: join(root, 'client', 'dist'), push, appRelease, uploadDir, recipeImporter, tuya, updater, spotify, backup });
 if (backup.enabled) watchBackup(db, backup, push);
+// Verbundene Kalender (Google) alle 15 Minuten abgleichen
+const syncFeeds = () => void syncAllFeeds(db, { publish: app.locals.publish }).catch((err) => console.error('Kalender-Abgleich:', err.message));
+setTimeout(syncFeeds, 30_000).unref();
+setInterval(syncFeeds, 15 * 60 * 1000).unref();
 // Alle 10 Minuten Grenzwerte prüfen und die Eltern warnen
 setInterval(() => void checkClimateAlerts(db, tuya, push).catch((err) => console.error('Raumklima-Prüfung:', err.message)), 10 * 60 * 1000).unref();
 // Rückgabe-Erinnerungen für Ausgeliehenes (Vortag 17 Uhr, Tag selbst 7 Uhr)

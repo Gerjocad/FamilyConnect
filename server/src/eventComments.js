@@ -1,5 +1,6 @@
 // Kommentare an Kalender-Terminen („Bringt jemand Getränke mit?“). Bei Serien hängt ein Kommentar
 // an einem Tag (date), sonst am Beginn des Termins.
+import { eventVisible, hiddenFeedIds } from './calendarFeeds.js';
 import { Router } from 'express';
 import { isValidDate } from './crud.js';
 import { isManager } from './permissions.js';
@@ -38,14 +39,17 @@ export function eventCommentsRouter(db, { auth, member, publish, push }) {
   const base = '/api/families/:familyId';
 
   router.get(`${base}/event-comments`, auth, member, (req, res) => {
-    res.json(db.prepare(
-      `SELECT ${COLUMNS} FROM event_comments WHERE family_id = ? ORDER BY created_at, id`
-    ).all(req.familyId));
+    const hidden = hiddenFeedIds(db, req.familyId, req.user.id);
+    const rows = db.prepare(
+      `SELECT ${COLUMNS.split(',').map((c) => `c.${c.trim()}`).join(', ')}, e.feed_id AS _feed FROM event_comments c JOIN events e ON e.id = c.event_id
+       WHERE c.family_id = ? ORDER BY c.created_at, c.id`
+    ).all(req.familyId);
+    res.json(rows.filter((r) => !r._feed || !hidden.has(r._feed)).map(({ _feed, ...r }) => r));
   });
 
   router.post(`${base}/events/:eventId/comments`, auth, member, (req, res) => {
     const event = db.prepare('SELECT * FROM events WHERE family_id = ? AND id = ?').get(req.familyId, Number(req.params.eventId));
-    if (!event) return res.status(404).json({ error: 'Termin nicht gefunden' });
+    if (!event || !eventVisible(db, event, req.user.id)) return res.status(404).json({ error: 'Termin nicht gefunden' });
     const text = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
     if (!text) return res.status(400).json({ error: 'Bitte einen Kommentar schreiben' });
     if (text.length > 1000) return res.status(400).json({ error: 'Der Kommentar ist zu lang' });
@@ -60,7 +64,7 @@ export function eventCommentsRouter(db, { auth, member, publish, push }) {
     const targets = memberIds.length
       ? [...memberIds, event.created_by]
       : db.prepare('SELECT user_id FROM memberships WHERE family_id = ?').all(req.familyId).map((m) => m.user_id);
-    push?.notify([...new Set(targets)].filter((id) => id && id !== req.user.id), {
+    push?.notify([...new Set(targets)].filter((id) => id && id !== req.user.id && eventVisible(db, event, id)), {
       title: `${req.user.name.split(' ')[0]} zu „${event.title}“`,
       body: text.length > 140 ? `${text.slice(0, 139)}…` : text,
       path: '/kalender',

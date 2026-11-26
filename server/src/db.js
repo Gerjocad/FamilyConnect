@@ -123,6 +123,8 @@ const ADDED_COLUMNS = [
   ['users', 'initials', 'TEXT'],
   // eigene Übersicht: { order: [...], hidden: [...] } als JSON; NULL = Standard
   ['users', 'dashboard', 'TEXT'],
+  // Termin aus einem verbundenen Kalender (Google): nur zum Ansehen, Sichtbarkeit über calendar_feeds
+  ['events', 'feed_id', 'INTEGER'],
   // NULL = Standard nach Rolle (Kinder sammeln Punkte)
   ['memberships', 'collects_points', 'INTEGER'],
   ['families', 'points_enabled', 'INTEGER NOT NULL DEFAULT 0'],
@@ -184,6 +186,21 @@ const ADDED_COLUMNS = [
 ];
 
 const ADDED_TABLES = `
+-- Verbundene Kalender (Google o. Ä. über die geheime iCal-Adresse); visibility: private | family | custom (viewer_ids)
+CREATE TABLE IF NOT EXISTS calendar_feeds (
+  id INTEGER PRIMARY KEY,
+  family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  visibility TEXT NOT NULL DEFAULT 'private',
+  viewer_ids TEXT NOT NULL DEFAULT '[]',
+  member_ids TEXT NOT NULL DEFAULT '[]',
+  last_sync_at TEXT,
+  last_error TEXT,
+  event_count INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 -- Schlaflicht / Aufsteh-Ampel: Zeiten (HH:MM) für Schultage und freie Tage, Helligkeit in %
 CREATE TABLE IF NOT EXISTS wake_lights (
   id INTEGER PRIMARY KEY,

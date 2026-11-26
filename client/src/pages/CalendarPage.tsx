@@ -57,6 +57,7 @@ export function OccurrenceRow({ occ, onClick, icons = [], comments = 0 }: {
           )}
           <span className="event-title">{event.title}</span>
           {cancelled && <span className="badge cancelled-badge">Abgesagt</span>}
+          {event.feed_id ? <span className="badge feed-badge" title="Aus einem verbundenen Kalender">📅 {event.source}</span> : null}
         </strong>
         {(event.location || event.recurrence !== 'none') && (
           <small className="muted">
@@ -392,7 +393,7 @@ export function CalendarPage() {
           occurrence={editing === 'new' ? undefined : editing.occurrence}
           defaultDay={selected}
           onClose={() => setEditing(null)}
-          readOnly={editing !== 'new' && !canEdit(editing.event)}
+          readOnly={editing !== 'new' && (!canEdit(editing.event) || Boolean(editing.event.feed_id))}
           onSave={async (data, scope) => {
             if (editing === 'new') return saveEvent(events, data);
             const { event, occurrence } = editing;

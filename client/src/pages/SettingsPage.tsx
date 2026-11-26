@@ -5,6 +5,7 @@ import { CHANGELOG, CURRENT_VERSION, hasUnseenChanges } from '../changelog';
 import { Link } from 'react-router';
 import { Avatar, initials as nameInitials } from '../components/Avatar';
 import { ClimateSettings } from '../components/ClimateSettings';
+import { CalendarFeeds } from '../components/CalendarFeeds';
 import { SmartSettings } from '../components/SmartSettings';
 import { ServerUpdateCard } from '../components/ServerUpdateCard';
 import { BackupCard } from '../components/BackupCard';
@@ -168,6 +169,10 @@ export function SettingsPage() {
           <PlaceSharing places={places} />
           <h3 className="step-title"><span className="step-no">3</span> Worüber möchte ich Bescheid bekommen?</h3>
           <PlaceNotifications places={places} />
+        </SettingsGroup>
+
+        <SettingsGroup id="kalender" icon="calendar" title="Kalender verbinden" summary="Google Kalender in der App anzeigen">
+          <CalendarFeeds />
         </SettingsGroup>
 
         {isAdmin && (

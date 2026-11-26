@@ -7,6 +7,7 @@ import { serialize } from './crud.js';
 import { violations } from './climate.js';
 import { localKey, localStamp, occurrences } from './occurrences.js';
 import { RESOURCES } from './resources.js';
+import { wallHiddenFeedIds } from './calendarFeeds.js';
 import { TuyaError } from './tuya.js';
 
 const EVENTS = RESOURCES.find((r) => r.path === 'events');
@@ -155,7 +156,10 @@ export function wallRouter(db, { auth, member, hub, weather, tuya, holidays, for
     // Termine heute und morgen, mit Logo
     const rules = db.prepare('SELECT keyword, only_with, highlight, image FROM event_icons WHERE family_id = ?').all(familyId);
     const iconFor = (title) => logosFor(rules, title, normalize);
-    const events = db.prepare('SELECT * FROM events WHERE family_id = ?').all(familyId).map((r) => serialize(EVENTS, r));
+    // private Kalender (Google) nicht an der Wand – dort sieht jeder alles
+    const wallHidden = wallHiddenFeedIds(db, familyId);
+    const events = db.prepare('SELECT * FROM events WHERE family_id = ?').all(familyId)
+      .filter((r) => !r.feed_id || !wallHidden.has(r.feed_id)).map((r) => serialize(EVENTS, r));
     const occ = events.flatMap((e) => occurrences(e, today, dayAfter))
       .sort((a, b) => Number(b.event.all_day) - Number(a.event.all_day) || a.start - b.start);
     const icon = new Map();

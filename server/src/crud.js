@@ -177,9 +177,11 @@ export function crudRouter(db, resource, publish, onChange) {
 
   router.get('/', (req, res) => {
     const limit = resource.limit ? ` LIMIT ${resource.limit}` : '';
-    const rows = db
+    let rows = db
       .prepare(`SELECT * FROM ${table} WHERE family_id = ? ORDER BY ${resource.order}${limit}`)
       .all(req.familyId);
+    // z. B. private Termine aus verbundenen Kalendern nur für die, die sie sehen dürfen
+    if (resource.listFilter) rows = rows.filter(resource.listFilter(db, req));
     res.json(rows.map((r) => serialize(resource, r)));
   });
 

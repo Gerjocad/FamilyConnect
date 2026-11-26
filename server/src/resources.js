@@ -1,4 +1,5 @@
 import { nextDueDate } from './dates.js';
+import { hiddenFeedIds } from './calendarFeeds.js';
 
 // Beschreibt die Familien-Ressourcen (Kalender, Listen, …) deklarativ.
 // Daraus erzeugt crud.js die REST-Endpunkte inkl. Validierung.
@@ -58,6 +59,14 @@ export const RESOURCES = [
     importKey: 'source_uid',
     importGroup: 'source',
     childRule: ownOnly('Kinder dürfen nur eigene Termine ändern'),
+    // Termine aus verbundenen Kalendern (Google): nur ansehen, und nur wer darf
+    listFilter(db, req) {
+      const hidden = hiddenFeedIds(db, req.familyId, req.user.id);
+      return (row) => !row.feed_id || !hidden.has(row.feed_id);
+    },
+    guard({ existing }) {
+      if (existing?.feed_id) return 'Dieser Termin kommt aus einem verbundenen Kalender (z. B. Google) – bitte dort ändern';
+    },
     check(row) {
       if (row.end < row.start) return 'Das Ende darf nicht vor dem Beginn liegen';
       if (row.until && row.until < row.start.slice(0, 10)) return 'Die Serie darf nicht vor ihrem Beginn enden';

@@ -188,7 +188,9 @@ export function EventForm({ event, occurrence, defaultDay, onSave, onDelete, onC
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
         </label>
         </fieldset>
-        {readOnly && <p className="hint">Diesen Termin können nur die Person, die ihn eingetragen hat, und die Eltern ändern.</p>}
+        {readOnly && (event?.feed_id
+          ? <p className="hint">📅 Aus dem verbundenen Kalender „{event.source}“ – ändern bitte dort (z. B. im Google Kalender). Die App gleicht alle 15 Minuten ab.</p>
+          : <p className="hint">Diesen Termin können nur die Person, die ihn eingetragen hat, und die Eltern ändern.</p>)}
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
           {onDelete && !readOnly && (

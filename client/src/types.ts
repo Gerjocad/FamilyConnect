@@ -81,6 +81,8 @@ export interface CalendarEvent extends Base {
   /** Name des importierten Kalenders (.ics), sonst leer */
   source: string;
   source_uid: string;
+  /** aus einem verbundenen Kalender (Google): nur ansehen */
+  feed_id?: number | null;
 }
 
 export interface List extends Base {

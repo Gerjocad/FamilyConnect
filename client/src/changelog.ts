@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.82',
+    date: '2026-11-26',
+    title: 'Google Kalender in der App',
+    changes: [
+      'Familie & Profil → Kalender verbinden: eigene Google-Kalender (z. B. „Familie“ und „Privat“) in der App anzeigen',
+      'Pro Kalender festlegen, wer die Termine sieht: nur ich, die ganze Familie oder ausgewählte Personen',
+      'Die App gleicht alle 15 Minuten ab; die Termine sind mit 📅 markiert und werden im Google Kalender geändert',
+      'Private Kalender erscheinen nicht auf dem Wanddisplay',
+    ],
+  },
+  {
     version: '1.81',
     date: '2026-11-17',
     title: 'Schlaflicht mit Zeiten aus der App',

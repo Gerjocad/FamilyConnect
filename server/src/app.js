@@ -13,6 +13,7 @@ import { climateRouter } from './climate.js';
 import { ServerBackup, backupRouter } from './backup.js';
 import { smartRouter } from './smart.js';
 import { wakeLightRouter } from './wakeLight.js';
+import { calendarFeedsRouter } from './calendarFeeds.js';
 import { ServerUpdate, serverUpdateRouter } from './serverUpdate.js';
 import { complaintsRouter } from './complaints.js';
 import { eventCommentsRouter, followEventDate } from './eventComments.js';
@@ -60,9 +61,11 @@ function cleanText(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), backup = new ServerBackup(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), publicUrl = process.env.PUBLIC_URL, locateAutoTimeoutMs } = {}) {
+export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeImporter, holidays = new HolidayService(), tuya = new TuyaClient(), updater = new ServerUpdate(), backup = new ServerBackup(), weather = new WeatherService(), geocoder = new Geocoder(), spotify = new SpotifyClient(), logoFinder = new LogoFinder(), formula1 = new Formula1Service(), calendarFetch = fetch, publicUrl = process.env.PUBLIC_URL, locateAutoTimeoutMs } = {}) {
   const app = express();
   const hub = new LiveHub();
+  // für Hintergrundaufgaben in index.js (z. B. Kalender-Abgleich)
+  app.locals.publish = (familyId, name) => hub.publish(familyId, name);
   const auth = requireUser(db);
   const member = requireMember(db);
 
@@ -455,6 +458,7 @@ export function createApp(db, { staticDir, push, appRelease, uploadDir, recipeIm
   app.use(postExtrasRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(weatherRouter(db, { auth, member, weather }));
   app.use(wallRouter(db, { auth, member, hub, weather, tuya, holidays, formula1 }));
+  app.use(calendarFeedsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), fetchImpl: calendarFetch }));
   app.use(wakeLightRouter(db, { auth, member, holidays, publish: (familyId, name) => hub.publish(familyId, name) }));
   app.use(pointsRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name), push }));
   app.use(financeRouter(db, { auth, member, publish: (familyId, name) => hub.publish(familyId, name) }));

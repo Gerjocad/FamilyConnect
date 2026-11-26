@@ -1,5 +1,6 @@
 // „Neuigkeiten“ oben in der App: was andere in letzter Zeit geschrieben haben, mit Ziel zum Hinspringen.
 // Gelesen-Stand je Person und Familie (memberships.activity_seen_at).
+import { hiddenFeedIds } from './calendarFeeds.js';
 import { Router } from 'express';
 
 const DAYS = 30;
@@ -32,7 +33,8 @@ export function activityRouter(db, { auth, member }) {
         `SELECT 'comment' AS kind, c.id, c.created_at AS at, c.user_id, e.title AS subject, c.text,
                 '/kalender?tag=' || c.date || '&termin=' || e.id AS path
          FROM event_comments c JOIN events e ON e.id = c.event_id
-         WHERE c.family_id = ? AND c.user_id != ? AND c.created_at >= ${since}`
+         WHERE c.family_id = ? AND c.user_id != ? AND c.created_at >= ${since}
+           AND (e.feed_id IS NULL OR e.feed_id NOT IN (${[...hiddenFeedIds(db, familyId, userId)].join(',') || '0'}))`
       ).all(familyId, userId),
       ...db.prepare(
         `SELECT 'event' AS kind, m.id, m.created_at AS at, m.by_user_id AS user_id, e.title AS subject, e.start AS text,
